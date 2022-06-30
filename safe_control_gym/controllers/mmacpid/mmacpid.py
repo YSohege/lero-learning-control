@@ -29,7 +29,7 @@ DefaultAttitudeControllerSet = [
                         ]
                 ]
 
-class MMAC_PID(BaseController):
+class MMACPID(BaseController):
     """ PID Class.
 
     """

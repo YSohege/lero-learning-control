@@ -1,6 +1,4 @@
 import random
-import time
-import pyvista as pv
 import scipy.integrate
 import datetime
 import signal

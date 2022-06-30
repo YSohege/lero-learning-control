@@ -134,6 +134,7 @@ class Quadrotor(BaseAviary):
         self.rew_act_weight = np.array(rew_act_weight, ndmin=1, dtype=float)
         self.rew_exponential = rew_exponential
         self.done_on_out_of_bound = done_on_out_of_bound
+
         if info_mse_metric_state_weight is None:
             if self.QUAD_TYPE == QuadType.ONE_D:
                 self.info_mse_metric_state_weight = np.array([1,0], ndmin=1, dtype=float)

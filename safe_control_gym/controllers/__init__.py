@@ -55,6 +55,14 @@ register(id="rap",
          entry_point="safe_control_gym.controllers.rarl.rap:RAP",
          config_entry_point="safe_control_gym.controllers.rarl:rap.yaml")
 
-register(id="mmac-pid",
-         entry_point="safe_control_gym.controllers.mmac-pid-3dquad.mmac-pid:MMAC_PID",
-         config_entry_point="safe_control_gym.controllers.mmac-pid-3dquad:mmac_pid.yaml")
+register(id="mmacpid",
+         entry_point="safe_control_gym.controllers.mmacpid.mmacpid:MMACPID",
+         config_entry_point="safe_control_gym.controllers.mmacpid:mmacpid.yaml")
+
+register(id="rbcpid",
+         entry_point="safe_control_gym.controllers.rbcpid.rbcpid:RBCPID",
+         config_entry_point="safe_control_gym.controllers.rbcpid:rbcpid.yaml")
+
+register(id="rbcmpc",
+         entry_point="safe_control_gym.controllers.rbcmpc.rbcmpc:RBCMPC",
+         config_entry_point="safe_control_gym.controllers.rbcmpc:rbcmpc.yaml")

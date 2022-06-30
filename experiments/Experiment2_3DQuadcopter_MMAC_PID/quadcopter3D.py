@@ -16,6 +16,7 @@ from safe_control_gym.utils.configuration import ConfigFactory
 from safe_control_gym.utils.registration import make
 
 
+
 def main():
     """The main function creating, running, and closing an environment.
 
@@ -23,6 +24,7 @@ def main():
 
     # Create an environment
     CONFIG_FACTORY = ConfigFactory()
+
     config = CONFIG_FACTORY.merge()
 
     # Set iterations and episode counter.
@@ -43,7 +45,7 @@ def main():
                        )
 
 
-    ctrl = make('mmac-pid',
+    ctrl = make("mmacpid",
                 env_func,
                 **config.mmac_pid
                 )

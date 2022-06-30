@@ -27,39 +27,3 @@ quadrotor_config:
   episode_len_sec: 60
   cost: quadratic
   done_on_out_of_bound: True
-
-algo_config:
-  g: 9.8
-
-  KF: 3.16e-10
-  KM: 7.94e-12
-
-  POSITION_CONTROLLER: [
-    [ .4, .4, 1.25 ],
-    [ .05, .05, .05 ],
-    [ .2, .2, .5 ]
-  ]
-
-  ATTITUDE_CONTROLLER_SET: [
-    [
-      [ 70000., 70000., 60000. ],
-      [ .0, .0, 500. ],
-      [ 20000., 20000., 12000. ]
-    ],
-    [
-      [ 70000., 70000., 60000. ],
-      [ .0, .0, 500. ],
-      [ 20000., 20000., 12000. ]
-    ],
-    [
-      [ 70000., 70000., 60000. ],
-      [ .0, .0, 500. ],
-      [ 20000., 20000., 12000. ]
-    ]
-  ]
-
-  PWM2RPM_SCALE: 0.2685
-  PWM2RPM_CONST: 4070.3
-
-  MIN_PWM: 20000
-  MAX_PWM: 65535
