@@ -40,27 +40,42 @@ class MPC(BaseController):
             additional_constraints (list): List of additional constraints
 
         """
+        # horizon = horizon[0] if len(horizon)> 1 else horizon
+        # self.q_mpc = q_mpc[0] if len(q_mpc)> 1 else q_mpc
+        self.q_mpc = q_mpc
+        # self.r_mpc = r_mpc[0] if len(r_mpc)> 1 else r_mpc
+        self.r_mpc = r_mpc
+        print(horizon, self.r_mpc, self.q_mpc)
+
+
+        self.warmstart =  warmstart
         for k, v in locals().items():
             if k != "self" and k != "kwargs" and "__" not in k:
                 self.__dict__.update({k: v})
         # Task.
         self.env = env_func()
-        if additional_constraints is not None:
-            additional_ConstraintsList = create_constraint_list(additional_constraints,
-                                                                GENERAL_CONSTRAINTS,
-                                                                self.env)
-            self.additional_constraints = additional_ConstraintsList.constraints
-            self.reset_constraints(self.env.constraints.constraints + self.additional_constraints)
+        if self.env.constraints is not None:
+            if additional_constraints is not None:
+                additional_ConstraintsList = create_constraint_list(additional_constraints,
+                                                                    GENERAL_CONSTRAINTS,
+                                                                    self.env)
+                self.additional_constraints = additional_ConstraintsList.constraints
+                self.reset_constraints(self.env.constraints.constraints + self.additional_constraints)
+            else:
+                self.reset_constraints(self.env.constraints.constraints)
+                self.additional_constraints = []
         else:
-            self.reset_constraints(self.env.constraints.constraints)
-            self.additional_constraints = []
+            self.constraints = ConstraintList([])
+            self.state_constraints_sym = self.constraints.get_state_constraint_symbolic_models()
+            self.input_constraints_sym = self.constraints.get_input_constraint_symbolic_models()
+
         # Model parameters
         self.model = self.env.symbolic
         self.dt = self.model.dt
         self.T = horizon
         self.Q = get_cost_weight_matrix(self.q_mpc, self.model.nx)
         self.R = get_cost_weight_matrix(self.r_mpc, self.model.nu)
-
+        self.reset()
     def reset_constraints(self,
                           constraints
                           ):
@@ -122,6 +137,8 @@ class MPC(BaseController):
             self.traj = self.env.X_GOAL.T
             # Step along the reference.
             self.traj_step = 0
+
+        self.reference = self.traj
         # Dynamics model.
         self.set_dynamics_func()
         # CasADi optimizer.

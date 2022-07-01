@@ -43,7 +43,7 @@ def main():
 
     if config.quadrotor_config.task == 'traj_tracking':
         reference_traj = ctrl.reference
-
+        print(len(reference_traj))
         # Plot trajectory.
         for i in range(0, reference_traj.shape[0], 10):
             p.addUserDebugLine(lineFromXYZ=[reference_traj[i-10,0], 0, reference_traj[i-10,2]],
@@ -62,6 +62,6 @@ def main():
         err = float(info[0]['mse'])
         total_trajectory_loss += err
 
-    print("Total Loss" + str(total_trajectory_loss))
+    print("Total Loss PID" + str(total_trajectory_loss))
 if __name__ == "__main__":
     main()

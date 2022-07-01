@@ -10,19 +10,22 @@ from safe_control_gym.controllers.base_controller import BaseController
 from safe_control_gym.controllers.rbcmpc.mpc_utils import get_cost_weight_matrix
 from safe_control_gym.envs.benchmark_env import Task
 from safe_control_gym.envs.constraints import ConstraintList, GENERAL_CONSTRAINTS, create_constraint_list
-
+from scipy.stats import dirichlet as DirichletDistribution
 
 class RBCMPC(BaseController):
     """MPC with full nonlinear model.
 
     """
+    DefaultHorizon = np.array([5,5])
+    DefaultQ_MPC =  np.array([[1],[1]])
+    DefaultR_MPC = np.array([[1],[1]])
 
     def __init__(
             self,
             env_func,
-            horizon=5,
-            q_mpc=[1],
-            r_mpc=[1],
+            horizon=DefaultHorizon,
+            q_mpc=DefaultQ_MPC,
+            r_mpc=DefaultR_MPC,
             warmstart=True,
             output_dir="results/temp",
             additional_constraints=None,
@@ -40,27 +43,63 @@ class RBCMPC(BaseController):
             additional_constraints (list): List of additional constraints
 
         """
+        self.numberControllers = len(horizon)
+
+        self.models = []
+        self.q_mpcs = q_mpc
+        self.r_mpcs = r_mpc
+
+        self.warmstart =False
         for k, v in locals().items():
             if k != "self" and k != "kwargs" and "__" not in k:
                 self.__dict__.update({k: v})
         # Task.
         self.env = env_func()
+        self.reference = self.env._get_reset_info()['x_reference']
 
-        if additional_constraints is not None:
-            additional_ConstraintsList = create_constraint_list(additional_constraints,
-                                                                GENERAL_CONSTRAINTS,
-                                                                self.env)
-            self.additional_constraints = additional_ConstraintsList.constraints
-            self.reset_constraints(self.env.constraints.constraints + self.additional_constraints)
+        if self.env.constraints is not None:
+            if additional_constraints is not None:
+                additional_ConstraintsList = create_constraint_list(additional_constraints,
+                                                                    GENERAL_CONSTRAINTS,
+                                                                    self.env)
+                self.additional_constraints = additional_ConstraintsList.constraints
+                self.reset_constraints(self.env.constraints.constraints + self.additional_constraints)
+            else:
+                self.reset_constraints(self.env.constraints.constraints)
+                self.additional_constraints = []
         else:
-            self.reset_constraints(self.env.constraints.constraints)
-            self.additional_constraints = []
-        # Model parameters
-        self.model = self.env.symbolic
-        self.dt = self.model.dt
-        self.T = horizon
-        self.Q = get_cost_weight_matrix(self.q_mpc, self.model.nx)
-        self.R = get_cost_weight_matrix(self.r_mpc, self.model.nu)
+            self.constraints = ConstraintList([])
+            self.state_constraints_sym = self.constraints.get_state_constraint_symbolic_models()
+            self.input_constraints_sym = self.constraints.get_input_constraint_symbolic_models()
+
+        for controller in range(self.numberControllers):
+            hor = horizon[controller]
+            q  = self.q_mpcs[controller]
+            r  = self.r_mpcs[controller]
+
+            # Model parameters
+            model = self.env.symbolic
+            dt = model.dt
+            T = hor
+            Q = get_cost_weight_matrix(q, model.nx)
+            R = get_cost_weight_matrix(r, model.nu)
+            modelConfig = { "model" : model,
+                            "dt" : dt,
+                            "T" : T,
+                            "Q" : Q,
+                            "R" : R
+                            }
+            self.models.append( modelConfig )
+
+
+        # initilize distribution with uniform density based on attitude controller set size
+        self.alpha = [2] * self.numberControllers
+        self.quantiles = [1 / self.numberControllers] * self.numberControllers
+        self.AttitudeControllerDistribution = DirichletDistribution
+        self.AttitudeControllerDistribution.pdf(self.quantiles, self.alpha)
+
+        # self.reset()
+
 
     def reset_constraints(self,
                           constraints
@@ -114,6 +153,10 @@ class RBCMPC(BaseController):
         """Prepares for training or evaluation.
 
         """
+        # initial_info = self.env._get_reset_info()
+
+        # self.reference = initial_info['x_reference']
+
         # Setup reference input.
         if self.env.TASK == Task.STABILIZATION:
             self.mode = "stabilization"
@@ -125,13 +168,16 @@ class RBCMPC(BaseController):
 
             # Step along the reference.
             self.traj_step = 0
+
+
         # Dynamics model.
         self.set_dynamics_func()
         # CasADi optimizer.
         self.setup_optimizer()
         # Previously solved states & inputs, useful for warm start.
-        self.x_prev = None
-        self.u_prev = None
+        for controller in range(self.numberControllers):
+            self.models[controller]['x_prev'] = None
+            self.models[controller]['u_prev'] = None
 
         self.reset_results_dict()
 
@@ -139,74 +185,93 @@ class RBCMPC(BaseController):
         """Updates symbolic dynamics with actual control frequency.
 
         """
-        self.dynamics_func = cs.integrator('fd', self.model.integration_algo,
-                                           {
-                                            'x': self.model.x_sym,
-                                            'p': self.model.u_sym,
-                                            'ode': self.model.x_dot
-                                            },
-                                           {'tf': self.dt})
+        for controller in range(self.numberControllers):
+
+            model = self.models[controller]['model']
+            dt =self.models[controller]['dt']
+            dynamics_func = cs.integrator('fd', model.integration_algo,
+                                               {
+                                                'x': model.x_sym,
+                                                'p': model.u_sym,
+                                                'ode': model.x_dot
+                                                },
+                                               {'tf': dt})
+
+            self.models[controller]["dynamics_func"] = dynamics_func
+
 
     def setup_optimizer(self):
         """Sets up nonlinear optimization problem.
 
         """
-        nx, nu = self.model.nx, self.model.nu
-        T = self.T
-        # Define optimizer and variables.
-        opti = cs.Opti()
-        # States.
-        x_var = opti.variable(nx, T + 1)
-        # Inputs.
-        u_var = opti.variable(nu, T)
-        # Initial state.
-        x_init = opti.parameter(nx, 1)
-        # Reference (equilibrium point or trajectory, last step for terminal cost).
-        x_ref = opti.parameter(nx, T + 1)
-        # Cost (cumulative).
-        cost = 0
-        cost_func = self.model.loss
-        for i in range(T):
-            # Can ignore the first state cost since fist x_var == x_init.
-            cost += cost_func(x=x_var[:, i],
-                              u=u_var[:, i],
-                              Xr=x_ref[:, i],
+        for controller in range(self.numberControllers):
+
+            model = self.models[controller]['model']
+            T =self.models[controller]['T']
+            Q =self.models[controller]['Q']
+            R =self.models[controller]['R']
+            dynamics_func = self.models[controller]["dynamics_func"]
+            nx, nu = model.nx, model.nu
+            T = T
+            # Define optimizer and variables.
+            opti = cs.Opti()
+            # States.
+            x_var = opti.variable(nx, T + 1)
+            # Inputs.
+            u_var = opti.variable(nu, T)
+            # Initial state.
+            x_init = opti.parameter(nx, 1)
+            # Reference (equilibrium point or trajectory, last step for terminal cost).
+            x_ref = opti.parameter(nx, T + 1)
+            # Cost (cumulative).
+            cost = 0
+            cost_func = model.loss
+            for i in range(T):
+                # Can ignore the first state cost since fist x_var == x_init.
+                cost += cost_func(x=x_var[:, i],
+                                  u=u_var[:, i],
+                                  Xr=x_ref[:, i],
+                                  Ur=np.zeros((nu, 1)),
+                                  Q=Q,
+                                  R=R)["l"]
+            # Terminal cost.
+            cost += cost_func(x=x_var[:, -1],
+                              u=np.zeros((nu, 1)),
+                              Xr=x_ref[:, -1],
                               Ur=np.zeros((nu, 1)),
-                              Q=self.Q,
-                              R=self.R)["l"]
-        # Terminal cost.
-        cost += cost_func(x=x_var[:, -1],
-                          u=np.zeros((nu, 1)),
-                          Xr=x_ref[:, -1],
-                          Ur=np.zeros((nu, 1)),
-                          Q=self.Q,
-                          R=self.R)["l"]
-        opti.minimize(cost)
-        # Constraints
-        for i in range(self.T):
-            # Dynamics constraints.
-            next_state = self.dynamics_func(x0=x_var[:, i], p=u_var[:, i])['xf']
-            opti.subject_to(x_var[:, i + 1] == next_state)
+                              Q=Q,
+                              R=R)["l"]
+            opti.minimize(cost)
+            # Constraints
+            for i in range(T):
+                # Dynamics constraints.
+                next_state = dynamics_func(x0=x_var[:, i], p=u_var[:, i])['xf']
+                opti.subject_to(x_var[:, i + 1] == next_state)
+                for state_constraint in self.state_constraints_sym:
+                    opti.subject_to(state_constraint(x_var[:,i]) < 0)
+                for input_constraint in self.input_constraints_sym:
+                    opti.subject_to(input_constraint(u_var[:,i]) < 0)
+            # Final state constraints.
             for state_constraint in self.state_constraints_sym:
-                opti.subject_to(state_constraint(x_var[:,i]) < 0)
-            for input_constraint in self.input_constraints_sym:
-                opti.subject_to(input_constraint(u_var[:,i]) < 0)
-        # Final state constraints.
-        for state_constraint in self.state_constraints_sym:
-            opti.subject_to(state_constraint(x_var[:, i]) < 0)
-        # Initial condition constraints.
-        opti.subject_to(x_var[:, 0] == x_init)
-        # Create solver (IPOPT solver in this version)
-        opts = {"ipopt.print_level": 0, "ipopt.sb": "yes", "print_time": 0}
-        opti.solver('ipopt', opts)
-        self.opti_dict = {
-            "opti": opti,
-            "x_var": x_var,
-            "u_var": u_var,
-            "x_init": x_init,
-            "x_ref": x_ref,
-            "cost": cost
-        }
+                opti.subject_to(state_constraint(x_var[:, i]) < 0)
+            # Initial condition constraints.
+            opti.subject_to(x_var[:, 0] == x_init)
+            # Create solver (IPOPT solver in this version)
+            opts = {"ipopt.print_level": 0, "ipopt.sb": "yes", "print_time": 0}
+            opti.solver('ipopt', opts)
+            opti_dict = {
+                "opti": opti,
+                "x_var": x_var,
+                "u_var": u_var,
+                "x_init": x_init,
+                "x_ref": x_ref,
+                "cost": cost
+            }
+
+            self.models[controller]['opti_dict'] = opti_dict
+
+        return
+
 
     def select_action(self,
                       obs
@@ -220,56 +285,69 @@ class RBCMPC(BaseController):
             np.array: input/action to the task/env. 
 
         """
-        opti_dict = self.opti_dict
-        opti = opti_dict["opti"]
-        x_var = opti_dict["x_var"]
-        u_var = opti_dict["u_var"]
-        x_init = opti_dict["x_init"]
-        x_ref = opti_dict["x_ref"]
-        cost = opti_dict["cost"]
-        # Assign the initial state.
-        opti.set_value(x_init, obs)
-        # Assign reference trajectory within horizon.
-        goal_states = self.get_references()
-        opti.set_value(x_ref, goal_states)
-        if self.mode == "tracking":
-            self.traj_step += 1
-        # Initial guess for optimization problem.
-        if self.warmstart and self.x_prev is not None and self.u_prev is not None:
-            # shift previous solutions by 1 step
-            x_guess = deepcopy(self.x_prev)
-            u_guess = deepcopy(self.u_prev)
-            x_guess[:, :-1] = x_guess[:, 1:]
-            u_guess[:-1] = u_guess[1:]
-            opti.set_initial(x_var, x_guess)
-            opti.set_initial(u_var, u_guess)
-        # Solve the optimization problem.
-        sol = opti.solve()
-        x_val, u_val = sol.value(x_var), sol.value(u_var)
-        self.x_prev = x_val
-        self.u_prev = u_val
-        self.results_dict['horizon_states'].append(deepcopy(self.x_prev))
-        self.results_dict['horizon_inputs'].append(deepcopy(self.u_prev))
-        # Take the first action from the solved action sequence.
-        if u_val.ndim > 1:
-            action = u_val[:, 0]
-        else:
-            action = np.array([u_val[0]])
-        self.prev_action = action
+        actions = []
+        for controller in range(self.numberControllers):
+
+            opti_dict =self.models[controller]['opti_dict']
+            x_prev =self.models[controller]['x_prev']
+            u_prev = self.models[controller]['u_prev']
+            opti = opti_dict["opti"]
+            x_var = opti_dict["x_var"]
+            u_var = opti_dict["u_var"]
+            x_init = opti_dict["x_init"]
+            x_ref = opti_dict["x_ref"]
+            cost = opti_dict["cost"]
+            # Assign the initial state.
+            opti.set_value(x_init, obs)
+            # Assign reference trajectory within horizon.
+            goal_states = self.get_references(controller)
+            opti.set_value(x_ref, goal_states)
+            if self.mode == "tracking":
+                self.traj_step += 1
+            # Initial guess for optimization problem.
+            if self.warmstart and x_prev is not None and u_prev is not None:
+                # shift previous solutions by 1 step
+                x_guess = deepcopy(x_prev)
+                u_guess = deepcopy(u_prev)
+                x_guess[:, :-1] = x_guess[:, 1:]
+                u_guess[:-1] = u_guess[1:]
+                opti.set_initial(x_var, x_guess)
+                opti.set_initial(u_var, u_guess)
+            # Solve the optimization problem.
+            sol = opti.solve()
+            x_val, u_val = sol.value(x_var), sol.value(u_var)
+            self.models[controller]['x_prev'] = x_val
+            self.models[controller]['u_prev'] = u_val
+
+
+            # Take the first action from the solved action sequence.
+            if u_val.ndim > 1:
+                action = u_val[:, 0]
+            else:
+                action = np.array([u_val[0]])
+
+            actions.append(action)
+
+        action = self._supervisoryControl( actions)
+
+        # self.results_dict['horizon_states'].append(deepcopy(x_val))
+        # self.results_dict['horizon_inputs'].append(deepcopy(x_val))
+
         return action
 
-    def get_references(self):
+    def get_references(self, controller):
         """Constructs reference states along mpc horizon.(nx, T+1).
 
         """
+        T = self.models[controller]["T"]
         if self.env.TASK == Task.STABILIZATION:
             # Repeat goal state for horizon steps.
-            goal_states = np.tile(self.env.X_GOAL.reshape(-1, 1), (1, self.T + 1))
+            goal_states = np.tile(self.env.X_GOAL.reshape(-1, 1), (1, T + 1))
         elif self.env.TASK == Task.TRAJ_TRACKING:
             # Slice trajectory for horizon steps, if not long enough, repeat last state.
             start = min(self.traj_step, self.traj.shape[-1])
-            end = min(self.traj_step + self.T + 1, self.traj.shape[-1])
-            remain = max(0, self.T + 1 - (end - start))
+            end = min(self.traj_step + T + 1, self.traj.shape[-1])
+            remain = max(0, T + 1 - (end - start))
             goal_states = np.concatenate([
                 self.traj[:, start:end],
                 np.tile(self.traj[:, -1:], (1, remain))
@@ -291,6 +369,20 @@ class RBCMPC(BaseController):
                               'horizon_states': []
         }
 
+    def _supervisoryControl(self, rpms):
+        self.Blend = self.AttitudeControllerDistribution.rvs(self.alpha, size=1)[0]
+        # print(self.Blend)
+        weightedActions = []
+        index = 0
+        for rpm in rpms:
+            weight = [self.Blend[index]] * len(rpm)
+            weightedActions.append(np.multiply(weight, rpm))
+            index += 1
+        action = list(map(sum, zip(*weightedActions)))
+        action = np.array(action)
+        return action
+
+
     def run(self,
             env=None,
             render=False,
@@ -311,8 +403,10 @@ class RBCMPC(BaseController):
             env = self.env
         self.reset()
 
-        self.x_prev = None
-        self.u_prev = None
+        for controller in range(self.numberControllers):
+            self.models[controller]['x_prev'] = None
+            self.models[controller]['u_prev'] = None
+
         obs, info = env.reset()
         print("Init State:")
         print(obs)
@@ -330,6 +424,8 @@ class RBCMPC(BaseController):
         self.terminate_loop = False
         while np.linalg.norm(obs - env.X_GOAL) > 1e-3 and i < MAX_STEPS and not(self.terminate_loop):
             action = self.select_action(obs)
+            print(action)
+
             if self.terminate_loop:
                 print("Infeasible MPC Problem")
                 break

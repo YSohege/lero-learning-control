@@ -39,6 +39,16 @@ def main():
                 env_func,
                 **config.algo_config
                 )
+    if config.quadrotor_config.task == 'traj_tracking':
+        reference_traj = ctrl.reference
+
+        # Plot trajectory.
+        print(len(reference_traj))
+        for i in range(0, reference_traj.shape[0], 10):
+            p.addUserDebugLine(lineFromXYZ=[reference_traj[i - 10, 0], 0, reference_traj[i - 10, 2]],
+                               lineToXYZ=[reference_traj[i, 0], 0, reference_traj[i, 2]],
+                               lineColorRGB=[1, 0, 0],
+                               physicsClientId=ctrl.env.PYB_CLIENT)
 
     # Run the experiment.
     results = ctrl.run()
@@ -52,7 +62,7 @@ def main():
         err = float(info[0]['mse'])
         total_trajectory_loss += err
 
-    print("Total Loss" + str(total_trajectory_loss))
+    print("Total Loss MPC" + str(total_trajectory_loss))
 
 if __name__ == "__main__":
     main()

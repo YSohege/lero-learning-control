@@ -12,7 +12,7 @@ import numpy as np
 import pybullet as p
 
 from safe_control_gym.envs.benchmark_env import Cost, Task
-from safe_control_gym.envs.constraints import GENERAL_CONSTRAINTS
+from safe_control_gym.envs.constraints import GENERAL_CONSTRAINTS, create_constraint_list
 from safe_control_gym.math_and_models.symbolic_systems import SymbolicModel
 from safe_control_gym.envs.gym_pybullet_drones.base_aviary import BaseAviary
 from safe_control_gym.envs.gym_pybullet_drones.quadrotor_utils import QuadType, cmd2pwm, pwm2rpm
@@ -250,6 +250,9 @@ class Quadrotor(BaseAviary):
                     np.zeros(POS_REF.shape[0]),
                     np.zeros(VEL_REF.shape[0])
                 ]).transpose()
+        # constraints = [{"constraint_form" : "default_constraint"}]
+        # self.constraints = create_constraint_list([]], GENERAL_CONSTRAINTS, self )
+        self.constraints = None
 
     def reset(self):
         """(Re-)initializes the environment to start an episode.
@@ -673,9 +676,9 @@ class Quadrotor(BaseAviary):
         # if (self.ctrl_step_counter + 1) / self.CTRL_FREQ >= self.EPISODE_LEN_SEC:
         #     return True
         # # Done if a constraint is violated.
-        # if self.constraints is not None:
-        #     if self.DONE_ON_VIOLATION and self.constraints.is_violated(self):
-        #         return True
+        if self.constraints is not None:
+            if self.DONE_ON_VIOLATION and self.constraints.is_violated(self):
+                return True
         # Done if state is out-of-bounds.
         if self.done_on_out_of_bound:
             if self.QUAD_TYPE == QuadType.ONE_D:

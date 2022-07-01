@@ -1,10 +1,8 @@
 # MPC args
-horizon: 10
-r_mpc:
-  - 1.
-q_mpc:
-  - 1.
-use_prev_start: True
+horizon: [10,10]
+r_mpc: [[1.],[1.]]
+q_mpc: [[1.], [1.]]
+use_prev_start: False
 
 # Runner args
 deque_size: 10

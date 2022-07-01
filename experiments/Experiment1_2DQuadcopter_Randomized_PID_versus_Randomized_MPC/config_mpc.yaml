@@ -20,7 +20,7 @@ quadrotor_config:
     stabilization_goal: [0, 1]
     stabilization_goal_tolerance: 0.01
     trajectory_type: figure8
-    num_cycles: 1
+    num_cycles: 5
     trajectory_plane: "xz"
     trajectory_position_offset: [0, 1]
     trajectory_scale: 1
@@ -33,12 +33,10 @@ quadrotor_config:
 
 algo_config:
   # MPC args
-  horizon: 10
-  r_mpc:
-    - 1.
-  q_mpc:
-    - 1.
-  use_prev_start: True
+  horizon: [10, 5]
+  r_mpc: [ [ 1. ],[ 1.5 ] ]
+  q_mpc: [ [ 1. ], [ 1.5 ] ]
+  use_prev_start: False
 
   # Runner args
   deque_size: 10
