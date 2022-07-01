@@ -2,7 +2,7 @@
 
 
 ### Tracking PID
-#python3 ./2DQuadcopter-RBC-PID.py --overrides ./config_pid.yaml
+python3 ./2DQuadcopter-RBC-PID.py --overrides ./config_pid.yaml
 
 ## Tracking MPC
 
