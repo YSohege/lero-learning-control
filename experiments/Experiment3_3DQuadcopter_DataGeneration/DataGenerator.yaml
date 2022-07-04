@@ -73,5 +73,5 @@ mmacpid:
   Z_XY_OFFSET: 500
 
 data_generator :
-  iterations : 2
+  iterations : 1000
   dbpath : "QuadcopterPIDControlData"
