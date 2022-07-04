@@ -125,7 +125,7 @@ def main():
             json.dump(dataBase, f)
         END = time.time()
         print(str(END-START) +" seconds run time")
-
+        numberRounds +=1
 
 
 if __name__ == "__main__":
