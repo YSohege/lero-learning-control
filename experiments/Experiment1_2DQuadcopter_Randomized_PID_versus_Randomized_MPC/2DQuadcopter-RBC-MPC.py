@@ -9,7 +9,6 @@ Run as:
 
 """
 import time
-import pybullet as p
 from functools import partial
 
 from safe_control_gym.utils.configuration import ConfigFactory
@@ -39,16 +38,6 @@ def main():
                 env_func,
                 **config.algo_config
                 )
-    if config.quadrotor_config.task == 'traj_tracking':
-        reference_traj = ctrl.reference
-
-        # Plot trajectory.
-        print(len(reference_traj))
-        for i in range(0, reference_traj.shape[0], 10):
-            p.addUserDebugLine(lineFromXYZ=[reference_traj[i - 10, 0], 0, reference_traj[i - 10, 2]],
-                               lineToXYZ=[reference_traj[i, 0], 0, reference_traj[i, 2]],
-                               lineColorRGB=[1, 0, 0],
-                               physicsClientId=ctrl.env.PYB_CLIENT)
 
     # Run the experiment.
     results = ctrl.run()

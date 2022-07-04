@@ -3,14 +3,17 @@
 """
 import numpy as np
 import casadi as cs
+import pybullet as p
 
 from copy import deepcopy
 
 from safe_control_gym.controllers.base_controller import BaseController
-from safe_control_gym.controllers.rbcmpc.mpc_utils import get_cost_weight_matrix
 from safe_control_gym.envs.benchmark_env import Task
 from safe_control_gym.envs.constraints import ConstraintList, GENERAL_CONSTRAINTS, create_constraint_list
 from scipy.stats import dirichlet as DirichletDistribution
+
+
+
 
 class RBCMPC(BaseController):
     """MPC with full nonlinear model.
@@ -56,6 +59,15 @@ class RBCMPC(BaseController):
         # Task.
         self.env = env_func()
         self.reference = self.env._get_reset_info()['x_reference']
+        # Setup reference input.
+        if self.env.TASK == Task.STABILIZATION:
+            self.mode = "stabilization"
+            self.x_goal = self.env.X_GOAL
+        elif self.env.TASK == Task.TRAJ_TRACKING:
+            self.mode = "tracking"
+            self.traj = self.env.X_GOAL.T
+            # Step along the reference.
+            self.traj_step = 0
 
         if self.env.constraints is not None:
             if additional_constraints is not None:
@@ -81,15 +93,23 @@ class RBCMPC(BaseController):
             model = self.env.symbolic
             dt = model.dt
             T = hor
-            Q = get_cost_weight_matrix(q, model.nx)
-            R = get_cost_weight_matrix(r, model.nu)
+            Q = self.get_cost_weight_matrix(q, model.nx)
+            R = self.get_cost_weight_matrix(r, model.nu)
             modelConfig = { "model" : model,
                             "dt" : dt,
                             "T" : T,
                             "Q" : Q,
-                            "R" : R
+                            "R" : R,
+                            "x_prev": None,
+                            "u_prev": None
                             }
             self.models.append( modelConfig )
+
+
+
+        self.set_dynamics_func()
+        # CasADi optimizer.
+        self.setup_optimizer()
 
 
         # initilize distribution with uniform density based on attitude controller set size
@@ -99,6 +119,20 @@ class RBCMPC(BaseController):
         self.AttitudeControllerDistribution.pdf(self.quantiles, self.alpha)
 
         # self.reset()
+
+    def get_cost_weight_matrix(self,weights,
+                               dim
+                               ):
+        """Gets weight matrix from input args.
+
+        """
+        if len(weights) == dim:
+            W = np.diag(weights)
+        elif len(weights) == 1:
+            W = np.diag(weights * dim)
+        else:
+            raise Exception("Wrong dimension for cost weights.")
+        return W
 
 
     def reset_constraints(self,
@@ -152,10 +186,14 @@ class RBCMPC(BaseController):
     def reset(self):
         """Prepares for training or evaluation.
 
-        """
-        # initial_info = self.env._get_reset_info()
+        # """
+        # self.env.close()
+        # self.env = self.env_func()
+        initial_obs, initial_info = self.env.reset()
 
-        # self.reference = initial_info['x_reference']
+        self.reference = initial_info['x_reference']
+
+
 
         # Setup reference input.
         if self.env.TASK == Task.STABILIZATION:
@@ -163,23 +201,45 @@ class RBCMPC(BaseController):
             self.x_goal = self.env.X_GOAL
         elif self.env.TASK == Task.TRAJ_TRACKING:
             self.mode = "tracking"
-
             self.traj = self.env.X_GOAL.T
-
             # Step along the reference.
             self.traj_step = 0
+            for i in range(0,  self.reference.shape[0], 10):
+                p.addUserDebugLine(lineFromXYZ=[self.reference[i - 10, 0], 0, self.reference[i - 10, 2]],
+                                   lineToXYZ=[self.reference[i, 0], 0, self.reference[i, 2]],
+                                   lineColorRGB=[1, 0, 0],
+                                   physicsClientId=self.env.PYB_CLIENT)
 
+        self.newModels = []
+        for controller in range(self.numberControllers):
+            hor = self.models[controller]["T"]
+            q = self.q_mpcs[controller]
+            r = self.r_mpcs[controller]
 
-        # Dynamics model.
+            # Model parameters
+            model = self.env.symbolic
+            dt = model.dt
+            T = hor
+            Q = self.get_cost_weight_matrix(q, model.nx)
+            R = self.get_cost_weight_matrix(r, model.nu)
+            modelConfig = {"model": model,
+                           "dt": dt,
+                           "T": T,
+                           "Q": Q,
+                           "R": R,
+                           "x_prev": None,
+                           "u_prev": None
+                           }
+            self.newModels.append(modelConfig)
+
+        self.models = self.newModels
         self.set_dynamics_func()
         # CasADi optimizer.
         self.setup_optimizer()
-        # Previously solved states & inputs, useful for warm start.
-        for controller in range(self.numberControllers):
-            self.models[controller]['x_prev'] = None
-            self.models[controller]['u_prev'] = None
 
         self.reset_results_dict()
+        return initial_obs, initial_info
+
 
     def set_dynamics_func(self):
         """Updates symbolic dynamics with actual control frequency.
@@ -287,7 +347,6 @@ class RBCMPC(BaseController):
         """
         actions = []
         for controller in range(self.numberControllers):
-
             opti_dict =self.models[controller]['opti_dict']
             x_prev =self.models[controller]['x_prev']
             u_prev = self.models[controller]['u_prev']
@@ -401,13 +460,10 @@ class RBCMPC(BaseController):
         """
         if env is None:
             env = self.env
-        self.reset()
 
-        for controller in range(self.numberControllers):
-            self.models[controller]['x_prev'] = None
-            self.models[controller]['u_prev'] = None
 
-        obs, info = env.reset()
+        obs, info =self.reset()
+
         print("Init State:")
         print(obs)
         ep_returns, ep_lengths = [], []
@@ -424,7 +480,7 @@ class RBCMPC(BaseController):
         self.terminate_loop = False
         while np.linalg.norm(obs - env.X_GOAL) > 1e-3 and i < MAX_STEPS and not(self.terminate_loop):
             action = self.select_action(obs)
-            print(action)
+            # print(action)
 
             if self.terminate_loop:
                 print("Infeasible MPC Problem")
@@ -437,12 +493,12 @@ class RBCMPC(BaseController):
             self.results_dict['info'].append(info)
             self.results_dict['action'].append(action)
             print(i, '-th step.')
-            print(action)
-            print(obs)
-            print(reward)
-            print(done)
+            # print(action)
+            # print(obs)
+            # print(reward)
+            # print(done)
             print(info)
-            print()
+            # print()
             if render:
                 env.render()
                 frames.append(env.render("rgb_array"))

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as Axes3D
 import sys
 import math
-
+import copy
 
 
 
@@ -187,9 +187,10 @@ class GUI():
         self.quads['l2'].set_3d_properties(points[2,2:4])
         # self.quads['hub'].set_data(points[0,5],points[1,5])
         # self.quads['hub'].set_3d_properties(points[2,5])
-        self.pos.append([self.quads['state'][0],
-                         self.quads['state'][1],
-                         self.quads['state'][2]])
+        pos = [self.quads['state'][0],
+               self.quads['state'][1],
+               self.quads['state'][2]]
+        self.pos.append(pos)
 
 
 
@@ -315,10 +316,10 @@ class Propeller():
     def set_speed(self,speed):
         self.speed = speed
         if self.fault_mag > 0:
-            #print(self.fault_mag)
-            #print("Speed before :" + str(self.speed))
+            # print(self.fault_mag)
+            # print("Speed before :" + str(self.speed))
             self.speed = self.speed * (1 - self.fault_mag)
-           # print("Speed after :" + str(self.speed))
+            # print("Speed after :" + str(self.speed))
         # From http://www.electricrcaircraftguy.com/2013/09/propeller-static-dynamic-thrust-equation.html
         self.thrust = 4.392e-8 * self.speed * math.pow(self.dia,3.5)/(math.sqrt(self.pitch))
         self.thrust = self.thrust*(4.23e-4 * self.speed * self.pitch)
@@ -341,16 +342,14 @@ class Quadcopter():
                  b=0.0245,
                  Env = DefaultEnv,
                  Path = DefaultPath,
-                 render=True
+                 render=False
                  ):
 
         self.CTRL_TIMESTEP = 500
         self.quads = Quad
         self.g = gravity
         self.b = b
-        self.Env = Env
-        self.faultModes = []
-        self.setEnv()
+
         self.Path = Path
 
         if self.Path['randomPath'] == 'True' :
@@ -359,7 +358,9 @@ class Quadcopter():
             self.setPath()
         self.total_time_outside_safety = 0
         self.done = False
-
+        self.Env = Env
+        self.faultModes = []
+        self.setEnv()
 
         self.ode =  scipy.integrate.ode(self.state_dot).set_integrator('vode',nsteps=self.CTRL_TIMESTEP,method='bdf')
         self.time = datetime.datetime.now()
@@ -529,17 +530,16 @@ class Quadcopter():
         # ===============Rotor Fault config====================
         keys = self.Env.keys()
 
-        if "RotorFault" in keys and self.Env['RotorFault']['enabled'] == 'True':
-            print(bool(self.Env['RotorFault']['enabled']))
+        if "RotorFault" in keys and self.Env['RotorFault']['enabled']:
             self.setupRotorFaults()
         # ===============Wind gust config=================
-        if "Wind" in keys and self.Env['Wind']['enabled'] == 'True':
+        if "Wind" in keys and self.Env['Wind']['enabled'] :
             self.setupWind()
         #============= Position Noise config===============
-        if "PositionNoise" in keys and self.Env['PositionNoise']['enabled']  == 'True':
+        if "PositionNoise" in keys and self.Env['PositionNoise']['enabled']:
             self.setupPositionSensorNoise()
         # ============= Attitude Noise config===============
-        if "AttitudeNoise" in keys and self.Env['AttitudeNoise']['enabled'] == 'True':
+        if "AttitudeNoise" in keys and self.Env['AttitudeNoise']['enabled']:
             self.setupAttitudeSensorNoise()
 
         return
@@ -656,7 +656,7 @@ class Quadcopter():
 
 #===============Simulation Functions ===========
 
-    def update(self, dt=0.05):
+    def update(self, dt=0.02):
         self.stepNum += 1
 
         # Handle Rotor Fault Here
@@ -839,7 +839,7 @@ class Quadcopter():
 
     def reset(self):
 
-        if self.Path['randomPath'] == 'True':
+        if self.Path['randomPath']:
             self.setRandomPath()
         else:
             self.setPath()
@@ -895,7 +895,7 @@ class Quadcopter():
         return
 
     def _get_obs(self):
-        obs = self.get_state()
+        obs = copy.deepcopy(self.get_state())
         if "PositionNoise" in self.faultModes:
             x_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
             y_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
@@ -910,7 +910,6 @@ class Quadcopter():
             obs[6] += roll_noise
             obs[7] += pitch_noise
             obs[8] += yaw_noise
-
         obs = np.concatenate((obs, self.target))
 
         return obs
@@ -931,7 +930,10 @@ class Quadcopter():
         return self.done
 
 
-
+    def close(self):
+        if self.rend:
+            self.GUI.close()
+        return
 #
 #
 # if __name__ == "__main__":

@@ -3,29 +3,29 @@ quadcopter3D:
       RotorFault:
           enabled: False
           min_magnitude : 0
-          magnitude : 0.3
+          magnitude : 0
           max_magnitude : 0.30
-          randomTime : False
-          starttime: 100
+          randomTime : True
+          starttime: 500
           endtime : 31000
           randomRotor : True
           faultRotorID : 1
       Wind:
           enabled: False
           min_magnitude : 0
-          magnitude : 2
+          magnitude : 0
           max_magnitude : 3
-          randomDirection :  True
+          randomDirection : False
           direction : 1
       PositionNoise:
           enabled: False
           min_magnitude: 0
-          magnitude: 0.3
+          magnitude: 0
           max_magnitude : 0.3
       AttitudeNoise:
-          enabled: True
+          enabled: False
           min_magnitude : 0
-          magnitude : 0.1
+          magnitude : 0
           max_magnitude : 0.1
     Quad:
         position: [0, 0, 0]
@@ -36,7 +36,7 @@ quadcopter3D:
         weight: 1.2
         control_freq: 200
     Path:
-      randomPath: False
+      randomPath: True
       randomSeed: 1234
       randomLimit: 8
       waypoints:
@@ -47,8 +47,8 @@ quadcopter3D:
       maxStepsPerRun: 3000
       stablilizationAtGoal: 50
       numberRounds: 10
-    render : True
-mmac_pid:
+    render : False
+mmacpid:
   POSITION_CONTROLLER : [
               [300, 300, 5000],
               [0.04, 0.04, 50],
@@ -56,9 +56,9 @@ mmac_pid:
        ]
   ATTITUDE_CONTROLLER_SET: [
                        [
-                         [4000 , 4000, 1500],
+                         [24000 , 24000, 1500],
                          [0,  0, 1.2],
-                         [1500,  1500, 0]
+                         [12000,  12000, 0]
                       ],[
                          [4000 , 4000, 1500],
                          [0,  0, 1.2],
@@ -71,3 +71,7 @@ mmac_pid:
   YAW_CONTROL_LIMITS : [-900, 900]
   YAW_RATE_SCALER : 0.18
   Z_XY_OFFSET: 500
+
+data_generator :
+  iterations : 100
+  dbpath : "QuadcopterPIDControlData"

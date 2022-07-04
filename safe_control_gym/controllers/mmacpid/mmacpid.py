@@ -80,7 +80,8 @@ class MMACPID(BaseController):
         self.positionErrors = [[0,0,0]]
         self.attitudeErrors = [[0,0,0]]
         self.active = 0
-        self.reset()
+        self.done = False
+        # self.reset()
 
     def run(self,
             iterations,
@@ -93,11 +94,12 @@ class MMACPID(BaseController):
             # Step the environment and print all returned information.
             obs, reward, done, info = self.env.step(action)
 
-            if done:
-                self.env.reset()
-                print("Resetting Env")
-                action = np.zeros(4)
-                obs, reward, done, info = self.env.step(action)
+            if done or self.done:
+                break
+                # self.env.reset()
+                # print("Resetting Env")
+                # action = np.zeros(4)
+                # obs, reward, done, info = self.env.step(action)
 
             state= obs[0:12]
             target = obs[12:15]
@@ -110,8 +112,7 @@ class MMACPID(BaseController):
 
             action = rpms[ActiveController]
 
-            # self.printState(obs, reward, done, info, action, target_euler)
-
+            self.updateResultDict(obs, reward, done, info, action)
 
         self.close_results_dict()
 
@@ -219,7 +220,7 @@ class MMACPID(BaseController):
         if info['mse'] > 50:
             print("OUT OF BOUND")
             print( info['mse'] )
-            self.active = 1
+            self.done = True
         return  self.active
 
 
@@ -247,7 +248,7 @@ class MMACPID(BaseController):
         The previous step's and integral errors for both position and attitude are set to zero.
 
         """
-        self.env = self.env_func()
+        # self.env = self.env_func()
         initial_obs, initial_info = self.env.reset()
         self.xi_term = 0
         self.yi_term = 0
@@ -265,12 +266,17 @@ class MMACPID(BaseController):
                              'info': [],
                              'action': [],
                              }
-    def printState(self, obs, reward, done, info,action, target_euler):
+        return initial_obs, initial_info
+
+    def updateResultDict(self, obs, reward, done, info, action):
         self.results_dict['obs'].append(obs)
         self.results_dict['reward'].append(reward)
         self.results_dict['done'].append(done)
         self.results_dict['info'].append(info)
         self.results_dict['action'].append(action)
+
+    def printState(self, obs, reward, done, info,action, target_euler):
+
 
 
 
