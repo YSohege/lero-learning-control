@@ -36,7 +36,7 @@ quadcopter3D:
         weight: 1.2
         control_freq: 200
     Path:
-      randomPath: False
+      randomPath: True
       randomSeed: 1234
       randomLimit: 8
       waypoints:
@@ -63,6 +63,11 @@ mmac_pid:
                          [4000 , 4000, 1500],
                          [0,  0, 1.2],
                          [1500, 1500, 0]
+                      ],
+                      [
+                        [ 4000 , 4000, 1500 ],
+                        [ 0,  0, 1.2 ],
+                        [ 1500, 1500, 0 ]
                       ]
                    ]
   Z_LIMITS : [0,10000]
