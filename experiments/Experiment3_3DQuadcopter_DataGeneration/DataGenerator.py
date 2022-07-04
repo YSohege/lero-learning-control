@@ -118,8 +118,8 @@ def main():
     with open(dbString, "w+") as f:
         dataBase = data
         json.dump(dataBase, f)
-
-
+    END = time.time()
+    print(str(END-START) +" seconds run time")
 
 
 
