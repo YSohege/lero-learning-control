@@ -63,11 +63,6 @@ def main():
 
     # Create controller.
 
-    env_conf = config.quadcopter3D
-    env_func = partial(make,
-                       'quadrotor3D',
-                       **config.quadcopter3D
-                       )
 
     maxP= 100000
     maxI= 100000
@@ -82,6 +77,15 @@ def main():
 
 
     for i in range(int(config.data_generator['iterations'])):
+        env_conf = config.quadcopter3D
+
+        #UPDATE ENV CONDITIONS HERE
+
+        env_func = partial(make,
+                           'quadrotor3D',
+                           **config.quadcopter3D
+                           )
+
         episode_config = config.mmacpid
 
         p1 = random.randint(1, maxP)
@@ -100,7 +104,7 @@ def main():
                     **episode_config
                     )
 
-        ITERATIONS= 2000
+        ITERATIONS= 1000
         results = ctrl.run(iterations=ITERATIONS)
         ctrl.close()
 
