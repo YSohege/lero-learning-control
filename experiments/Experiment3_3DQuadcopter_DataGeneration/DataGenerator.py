@@ -74,56 +74,57 @@ def main():
     #             key = "("+ str(p) + ","+str(i)+","+str(d)+")"
     #             print(key)
     #             data[key] = []
+    numberRounds = 0
+    maxround = 30
+    while numberRounds < maxround:
+        for i in range(int(config.data_generator['iterations'])):
+            env_conf = config.quadcopter3D
 
+            #UPDATE ENV CONDITIONS HERE
 
-    for i in range(int(config.data_generator['iterations'])):
-        env_conf = config.quadcopter3D
+            env_func = partial(make,
+                               'quadrotor3D',
+                               **config.quadcopter3D
+                               )
 
-        #UPDATE ENV CONDITIONS HERE
+            episode_config = config.mmacpid
 
-        env_func = partial(make,
-                           'quadrotor3D',
-                           **config.quadcopter3D
-                           )
+            p1 = random.randint(1, maxP)
+            i1 = random.randint(1, maxI)
+            d1 = random.randint(1, maxD)
+            episode_config.ATTITUDE_CONTROLLER_SET = [
+                           [
+                             [p1 , p1, 1500],
+                             [i1,  i1, 1.2],
+                             [d1,  d1, 0]
+                          ]
+                       ]
 
-        episode_config = config.mmacpid
+            ctrl = make("mmacpid",
+                        env_func,
+                        **episode_config
+                        )
 
-        p1 = random.randint(1, maxP)
-        i1 = random.randint(1, maxI)
-        d1 = random.randint(1, maxD)
-        episode_config.ATTITUDE_CONTROLLER_SET = [
-                       [
-                         [p1 , p1, 1500],
-                         [i1,  i1, 1.2],
-                         [d1,  d1, 0]
-                      ]
-                   ]
+            ITERATIONS= 1000
+            results = ctrl.run(iterations=ITERATIONS)
+            ctrl.close()
 
-        ctrl = make("mmacpid",
-                    env_func,
-                    **episode_config
-                    )
+            controller = "(" + str(p1) + "," + str(i1) + "," + str(d1) + ")"
+            datapoint = createDataPoint( results, env_conf, episode_config)
+            data[controller] = datapoint
+            print(controller)
+            print( str(i) + "/" +str(int(config.data_generator['iterations'])) + " - "+ str(numberRounds)+ "/" + str(maxround))
 
-        ITERATIONS= 1000
-        results = ctrl.run(iterations=ITERATIONS)
-        ctrl.close()
+        saveFolder = config.data_generator.dbpath
 
-        controller = "(" + str(p1) + "," + str(i1) + "," + str(d1) + ")"
-        datapoint = createDataPoint( results, env_conf, episode_config)
-        data[controller] = datapoint
-        print(controller)
-        print( str(i) + "/" +str(int(config.data_generator['iterations'])))
+        files = [f for f in os.listdir(saveFolder)]
+        dbString = saveFolder +"/Database" +str(len(files))+ ".json"
 
-    saveFolder = config.data_generator.dbpath
-
-    files = [f for f in os.listdir(saveFolder)]
-    dbString = saveFolder +"/Database" +str(len(files))+ ".json"
-
-    with open(dbString, "w+") as f:
-        dataBase = data
-        json.dump(dataBase, f)
-    END = time.time()
-    print(str(END-START) +" seconds run time")
+        with open(dbString, "w+") as f:
+            dataBase = data
+            json.dump(dataBase, f)
+        END = time.time()
+        print(str(END-START) +" seconds run time")
 
 
 
