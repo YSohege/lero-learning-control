@@ -44,14 +44,14 @@ def main():
     ctrl.close()
     total_trajectory_loss = 0
     # Plot the experiment.
-    for i in range(ITERATIONS):
+    for i in range(len(results['info'])):
         # Step the environment and print all returned information.
         obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], results['info'][
             i], results['action'][i]
         err = float(info[0]['mse'])
         total_trajectory_loss += err
 
-    print("Total Loss MPC" + str(total_trajectory_loss))
+    print("Total Loss MPC " + str(total_trajectory_loss))
 
 if __name__ == "__main__":
     main()

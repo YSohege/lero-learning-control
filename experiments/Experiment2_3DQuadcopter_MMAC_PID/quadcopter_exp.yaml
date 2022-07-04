@@ -47,7 +47,7 @@ quadcopter3D:
       maxStepsPerRun: 3000
       stablilizationAtGoal: 50
       numberRounds: 10
-    render : True
+    render : False
 mmac_pid:
   POSITION_CONTROLLER : [
               [300, 300, 5000],

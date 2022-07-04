@@ -464,8 +464,8 @@ class RBCMPC(BaseController):
 
         obs, info =self.reset()
 
-        print("Init State:")
-        print(obs)
+        # print("Init State:")
+        # print(obs)
         ep_returns, ep_lengths = [], []
         frames = []
         self.reset_results_dict()
@@ -492,12 +492,12 @@ class RBCMPC(BaseController):
             self.results_dict['done'].append(done)
             self.results_dict['info'].append(info)
             self.results_dict['action'].append(action)
-            print(i, '-th step.')
+            # print(i, '-th step.')
             # print(action)
             # print(obs)
             # print(reward)
             # print(done)
-            print(info)
+            # print(info)
             # print()
             if render:
                 env.render()

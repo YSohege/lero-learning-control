@@ -54,17 +54,16 @@ def main():
     # Run the experiment.
     results = ctrl.run(iterations=ITERATIONS)
 
-
-
+    total_trajectory_loss = 0
     # Plot the experiment.
-    for i in range(len(results['obs'])):
+    for i in range(len(results['info'])):
         # Step the environment and print all returned information.
-        obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], \
-                                          results['info'][i], results['action'][i]
+        obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], results['info'][
+            i], results['action'][i]
+        err = float(info[0]['mse'])
+        total_trajectory_loss += err
 
-        # Print the last action and the information returned at each step.
-        print(i, '-th step.')
-        print(action, '\n', obs, '\n', reward, '\n', done, '\n', info, '\n')
+    print("Total Loss PID " + str(total_trajectory_loss))
 
     ctrl.close()
 
