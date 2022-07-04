@@ -55,6 +55,7 @@ class MMACPID(BaseController):
 
         super().__init__(env_func, **kwargs)
 
+        self.env = env_func()
 
         self.PositionController = np.array(POSITION_CONTROLLER)
         self.AttitudeControllerSets = np.array(ATTITUDE_CONTROLLER_SET)
@@ -81,6 +82,13 @@ class MMACPID(BaseController):
         self.attitudeErrors = [[0,0,0]]
         self.active = 0
         self.done = False
+        self.results_dict = {'obs': [],
+                             'reward': [],
+                             'done': [],
+                             'info': [],
+                             'action': [],
+                             }
+
         # self.reset()
 
     def run(self,
