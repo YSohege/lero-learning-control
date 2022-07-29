@@ -1,7 +1,7 @@
 from setuptools import setup
 
-setup(name='safe_control_gym',
-    version='0.5.0',
+setup(name='lero_control_gym',
+    version='0.0.1',
     install_requires=[
         'matplotlib', 
         'Pillow', 

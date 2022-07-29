@@ -1,0 +1,6 @@
+quadsim :
+  dynamics : "NonLinear",
+  t_end : 100,
+  simulation_freq : 250,
+  control_freq : 50,
+  keep_history : False

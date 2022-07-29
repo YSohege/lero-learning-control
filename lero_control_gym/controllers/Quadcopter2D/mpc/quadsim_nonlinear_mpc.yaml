@@ -1,0 +1,5 @@
+nonlinearMPC:
+  t_end : 100,
+  n_horizon : 20,
+  c_step : 1 ,
+  s_step : 1
