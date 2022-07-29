@@ -350,7 +350,6 @@ class Quadcopter():
         self.quads = Quad
         self.g = gravity
         self.b = b
-
         self.Path = Path
         if self.Path['randomPath']:
             self.setRandomPath()
@@ -361,9 +360,10 @@ class Quadcopter():
         self.Env = Env
         self.faultModes = []
         self.setEnv()
-
+        print(self.fault_time)
         self.ode =  scipy.integrate.ode(self.state_dot).set_integrator('vode',nsteps=self.CTRL_TIMESTEP,method='bdf')
         self.time = datetime.datetime.now()
+
 
         self.stepNum = 0
         self.quads['state'] = np.zeros(12)
@@ -379,6 +379,8 @@ class Quadcopter():
         izz=((2*self.quads['weight']*self.quads['r']**2)/5)+(4*self.quads['weight']*self.quads['L']**2)
         self.quads['I'] = np.array([[ixx,0,0],[0,iyy,0],[0,0,izz]])
         self.quads['invI'] = np.linalg.inv(self.quads['I'])
+
+
 
         self.rend = render
         if self.rend: self.setupGUI()
@@ -547,6 +549,10 @@ class Quadcopter():
         else:
             count.append(0)
 
+        if sum(count) == 0:
+            #dont trrigger faults
+            self.fault_time = self.maxSteps*2
+
         while sum(count) > 1:
             selection = random.randint(0,len(count)-1)
             if count[selection] == 1:
@@ -575,6 +581,7 @@ class Quadcopter():
         return config
 
     def setEnv(self):
+        #if more than one mode is selected, choose a random one
         Env = self.randomizeQuadcopterEnvironment(self.Env)
 
         if Env == []:
@@ -584,22 +591,18 @@ class Quadcopter():
 
         if "RotorFault" in keys and Env['RotorFault']['enabled']:
             # print("Rotor")
-
             self.setupRotorFaults()
         # ===============Wind gust config=================
         if "Wind" in keys and Env['Wind']['enabled'] :
             # print("Wind")
-
             self.setupWind()
         #============= Position Noise config===============
         if "PositionNoise" in keys and Env['PositionNoise']['enabled']:
             # print("PositionNoise")
-
             self.setupPositionSensorNoise()
         # ============= Attitude Noise config===============
         if "AttitudeNoise" in keys and Env['AttitudeNoise']['enabled']:
             # print("AttitudeNoise")
-
             self.setupAttitudeSensorNoise()
 
         return
@@ -617,12 +620,16 @@ class Quadcopter():
         if bool(self.Env['RotorFault']['randomTime']):
             # randomly trigger in first half of simulation
             stime = random.randint(10, int(self.maxSteps / 2))
-            etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
+            # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
+            etime = self.Path['maxStepsPerRun']*2 # whole episode
+            self.fault_time = stime
             self.rotorFaultStart = stime
             self.rotorFaultEnd = etime
         else:
             self.rotorFaultStart = self.Env['RotorFault']['starttime']
             self.rotorFaultEnd = self.Env['RotorFault']['endtime']
+
+
 
         return
 
@@ -642,11 +649,15 @@ class Quadcopter():
         self.faultModes.append("PositionNoise")
         noise =  self.Env['PositionNoise']['magnitude']
         self.posNoiseMag = noise
+        stime = random.randint(10, int(self.maxSteps / 2))
+        self.fault_time = stime
 
     def setupAttitudeSensorNoise(self):
         self.faultModes.append("AttitudeNoise")
         noise = self.Env['AttitudeNoise']['magnitude']
         self.attNoiseMag = noise
+        stime = random.randint(10, int(self.maxSteps / 2))
+        self.fault_time = stime
 
     def setupWind(self):
         self.faultModes.append("Wind")
@@ -674,6 +685,8 @@ class Quadcopter():
         self.YWind = 0
         self.ZWind = 0
         self.setNormalWind(winds)
+        stime = random.randint(10, int(self.maxSteps / 2))
+        self.fault_time = stime
 
     def setWind(self, wind_vec):
         self.randWind = wind_vec
@@ -757,7 +770,7 @@ class Quadcopter():
         A = [ A_yz , A_xz  , A_xy  ] # cross sectional area in each axis perpendicular to velocity axis
 
         #if wind is active the velocity in each axis is subject to wind
-        if "Wind" in self.faultModes:
+        if "Wind" in self.faultModes and self.stepNum > self.fault_time:
             nomX = self.XWind
             nomY = self.YWind
             nomZ = self.ZWind
@@ -897,6 +910,11 @@ class Quadcopter():
 
 # ========Safe Control Repo Interface Functions ==========
 
+    def get_fault_time(self):
+
+        return  self.fault_time
+
+
     def reset(self):
 
         if self.Path['randomPath']:
@@ -960,20 +978,23 @@ class Quadcopter():
 
     def _get_obs(self):
         obs = copy.deepcopy(self.get_state())
-        if "PositionNoise" in self.faultModes:
-            x_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
-            y_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
-            z_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
-            obs[0] += x_noise
-            obs[1] += y_noise
-            obs[2] += z_noise
-        if "AttitudeNoise" in self.faultModes:
-            roll_noise = np.random.uniform(-self.attNoiseMag, self.attNoiseMag)
-            pitch_noise = np.random.uniform(-self.attNoiseMag, self.attNoiseMag)
-            yaw_noise = np.random.uniform(-self.attNoiseMag, self.attNoiseMag)
-            obs[6] += roll_noise
-            obs[7] += pitch_noise
-            obs[8] += yaw_noise
+        #apply the noise as a sudden fault
+        if self.stepNum > self.fault_time:
+            if "PositionNoise" in self.faultModes:
+                x_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
+                y_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
+                z_noise = np.random.uniform(-self.posNoiseMag, self.posNoiseMag)
+                obs[0] += x_noise
+                obs[1] += y_noise
+                obs[2] += z_noise
+            if "AttitudeNoise" in self.faultModes:
+                roll_noise = np.random.uniform(-self.attNoiseMag, self.attNoiseMag)
+                pitch_noise = np.random.uniform(-self.attNoiseMag, self.attNoiseMag)
+                yaw_noise = np.random.uniform(-self.attNoiseMag, self.attNoiseMag)
+                obs[6] += roll_noise
+                obs[7] += pitch_noise
+                obs[8] += yaw_noise
+
         obs = np.concatenate((obs, self.target))
 
         return obs

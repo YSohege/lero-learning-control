@@ -232,10 +232,11 @@ class ParticleSwarmOptimization():
 
                 self.particles[i] = newPos
                 self.particlePaths[i].append(self.particles[i])
-            # print("Global Best = " + str(self.globalBest) + " at " + str(currentWeight))
+            print("Global Best = " + str(self.globalBest) + " at " + str(currentWeight))
 
             if currentWeight > self.Wmin:
                 currentWeight -= 0.01
+                # print(currentWeight)
             else:
                 self.finished = True
 

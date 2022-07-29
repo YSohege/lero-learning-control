@@ -69,6 +69,11 @@ register(id="quad3d_mmacpid",
          entry_point="lero_control_gym.controllers.Quadcopter3D.mmacpid.mmacpid:MMACPID",
          config_entry_point="lero_control_gym.controllers.Quadcopter3D.mmacpid:mmacpid.yaml")
 
+register(id="quad3d_optimal_mmacpid",
+         entry_point="lero_control_gym.controllers.Quadcopter3D.optimal_mmacpid.optimal_mmacpid:OPTIMAL_MMACPID",
+         config_entry_point="lero_control_gym.controllers.Quadcopter3D.optimal_mmacpid:optimal_mmacpid.yaml")
+
+
 register(id="quad3d_rbcpid",
          entry_point="lero_control_gym.controllers.Quadcopter3D.rbcpid.rbcpid:RBCPID",
          config_entry_point="lero_control_gym.controllers.Quadcopter3D.rbcpid:rbcpid.yaml")
