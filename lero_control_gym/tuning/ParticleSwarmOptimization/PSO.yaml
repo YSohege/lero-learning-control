@@ -54,7 +54,7 @@ PSO :
           weight: 1.2
           control_freq: 200
       Path:
-        randomPath: True
+        randomPath: False
         randomSeed: 1234
         randomLimit: 8
         waypoints:
