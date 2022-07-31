@@ -1,5 +1,7 @@
+random_seed: 112358
+numberIterations: 10
 PSO :
-   NumberParticles  : 100
+   NumberParticles  : 50
    c1  : 3
    c2  : 2
    Wmin : 0.3
@@ -19,7 +21,7 @@ PSO :
    Env:
       Env :
         RotorFault:
-            enabled: True
+            enabled: False
             min_magnitude : 0
             magnitude : 0.3
             max_magnitude : 0.30
@@ -54,8 +56,7 @@ PSO :
           weight: 1.2
           control_freq: 200
       Path:
-        randomPath: False
-        randomSeed: 1234
+        randomPath: True
         randomLimit: 8
         waypoints:
           x: [0, 0, 5, 0, -5, 0  , 5, 0]

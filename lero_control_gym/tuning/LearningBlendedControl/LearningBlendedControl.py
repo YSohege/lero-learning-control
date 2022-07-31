@@ -26,12 +26,12 @@ def main():
     config = CONFIG_FACTORY.merge()
 
 
-    env = Blended_Control_Task(**config.Task )
+    env = Blended_Control_Task(config.Task.quadcopter3D, config.Task.rbc_pid )
 
 
 
-    model = PPO("MlpPolicy", env, verbose=1)
-    model.learn(total_timesteps=25000)
+    model = PPO("MlpPolicy", env, verbose=1, tensorboard_log="./trainingLog/" )
+    model.learn(total_timesteps=10000000)
     model.save("blendingAgent")
 
     exit()

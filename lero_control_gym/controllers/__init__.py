@@ -78,3 +78,10 @@ register(id="quad3d_rbcpid",
          entry_point="lero_control_gym.controllers.Quadcopter3D.rbcpid.rbcpid:RBCPID",
          config_entry_point="lero_control_gym.controllers.Quadcopter3D.rbcpid:rbcpid.yaml")
 
+register(id="quad3d_uniform_rbcpid",
+         entry_point="lero_control_gym.controllers.Quadcopter3D.uniform_rbcpid.uniform_rbcpid:UNIFORM_RBCPID",
+         config_entry_point="lero_control_gym.controllers.Quadcopter3D.uniform_rbcpid:fixed_dist_rbcpid.yaml")
+
+register(id="quad3d_fixed_dist_rbcpid",
+         entry_point="lero_control_gym.controllers.Quadcopter3D.fixed_dist_rbcpid.fixed_dist_rbcpid:FIXED_DIST_RBCPID",
+         config_entry_point="lero_control_gym.controllers.Quadcopter3D.fixed_dist_rbcpid:fixed_dist_rbcpid.yaml")

@@ -1,0 +1,27 @@
+
+rbc_pid:
+  POSITION_CONTROLLER : [
+                [300, 300, 7000],
+                [0.04, 0.04, 10],
+                [450, 450, 7000]
+         ]
+
+  ATTITUDE_CONTROLLER_SET: [
+                       [
+                         [11000 , 11000., 1500.],
+                         [.0, .0, 0.4],
+                         [2000., 2000., 0.]
+                      ],
+                      [
+                        [ 11000 , 11000., 1500. ],
+                        [ .0, .0, 0.4 ],
+                        [ 2000., 2000., 0. ]
+                      ],
+                   ]
+
+  RBC_DISTRIBUTION_PARAMETERS: [ 3, 3]
+  Z_LIMITS : [0,10000]
+  TILT_LIMITS : [-10,10]
+  MOTOR_LIMITS : [0, 9000]
+  YAW_CONTROL_LIMITS : [-900, 900]
+  YAW_RATE_SCALER : 0.18

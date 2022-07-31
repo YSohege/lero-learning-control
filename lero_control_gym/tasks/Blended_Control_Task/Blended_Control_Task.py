@@ -31,7 +31,7 @@ class Blended_Control_Task(gym.Env):
                     self.env_func,
                     **self.controller
                     )
-        self.maxConcentration = 5
+        self.maxConcentration = 3
         actionS = np.array([self.maxConcentration] *len(self.controller.RBC_DISTRIBUTION_PARAMETERS))
         self.action_space = spaces.MultiDiscrete(actionS)
 
@@ -66,9 +66,8 @@ class Blended_Control_Task(gym.Env):
     def step(self, action):
         #offset the action by one - min action is 1
         action = [a+1 for a in action]
-        # print(action)
         obs, rew, done , info = self.ctrl.step(action)
-
+        print(str(action) + " " + str(rew) )
         return  np.array(obs) , rew, done , info
 
 

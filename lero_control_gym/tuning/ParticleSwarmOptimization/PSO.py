@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import datetime
 import os
+import random
 from functools import partial
 from lero_control_gym.utils.registration import make
 from lero_control_gym.tasks.Quadcopter3D_Trajectory_Tracking.Quadcopter3D_Trajectory_Tracking import Task
@@ -232,7 +233,7 @@ class ParticleSwarmOptimization():
 
                 self.particles[i] = newPos
                 self.particlePaths[i].append(self.particles[i])
-            print("Global Best = " + str(self.globalBest) + " at " + str(currentWeight))
+            # print("Global Best = " + str(self.globalBest) + " at " + str(currentWeight))
 
             if currentWeight > self.Wmin:
                 currentWeight -= 0.01
@@ -294,11 +295,36 @@ def main():
 
     config = CONFIG_FACTORY.merge()
     print(config)
-    for i in range(10):
+
+    random.seed(config.random_seed)
+    results = []
+    for i in range(config.numberIterations):
         algo = ParticleSwarmOptimization(**config.PSO)
         result = algo.run()
-
+        results.append(result)
         print(result)
+
+    print("PSO Results")
+    print(results)
+    p_average = 0
+    i_average = 0
+    d_average = 0
+
+    for result in results:
+        p = result[0][0]
+        i = result[0][1]
+        d = result[0][2]
+        p_average+=p
+        i_average+=i
+        d_average+=d
+
+    p_average = p_average/len(results)
+    i_average = i_average/len(results)
+    d_average = d_average/len(results)
+
+    print(p_average)
+    print(i_average)
+    print(d_average)
 
     return
 

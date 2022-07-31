@@ -355,15 +355,15 @@ class Quadcopter():
             self.setRandomPath()
         else:
             self.setPath()
+        self.outsideSafezone = False
         self.total_time_outside_safety = 0
         self.done = False
         self.Env = Env
         self.faultModes = []
         self.setEnv()
-        print(self.fault_time)
+        # print(self.fault_time)
         self.ode =  scipy.integrate.ode(self.state_dot).set_integrator('vode',nsteps=self.CTRL_TIMESTEP,method='bdf')
         self.time = datetime.datetime.now()
-
 
         self.stepNum = 0
         self.quads['state'] = np.zeros(12)
@@ -522,6 +522,10 @@ class Quadcopter():
         self.current_distance_to_opt = self.getMinDistanceToReference()
         if  self.current_distance_to_opt > self.trackingAccuracy :
             self.total_time_outside_safety += 1
+            self.outsideSafezone = True
+        else:
+            self.outsideSafezone = False
+
         return
 
 
@@ -618,8 +622,8 @@ class Quadcopter():
         faults[rotor] = fault_mag
         self.rotorFault = faults
         if bool(self.Env['RotorFault']['randomTime']):
-            # randomly trigger in first half of simulation
-            stime = random.randint(10, int(self.maxSteps / 2))
+            # randomly trigger in first 500 steps
+            stime = random.randint(10, 500)
             # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
             etime = self.Path['maxStepsPerRun']*2 # whole episode
             self.fault_time = stime
@@ -627,6 +631,7 @@ class Quadcopter():
             self.rotorFaultEnd = etime
         else:
             self.rotorFaultStart = self.Env['RotorFault']['starttime']
+            self.fault_time = self.rotorFaultStart
             self.rotorFaultEnd = self.Env['RotorFault']['endtime']
 
 
@@ -649,8 +654,20 @@ class Quadcopter():
         self.faultModes.append("PositionNoise")
         noise =  self.Env['PositionNoise']['magnitude']
         self.posNoiseMag = noise
-        stime = random.randint(10, int(self.maxSteps / 2))
-        self.fault_time = stime
+        if bool(self.Env['PositionNoise']['randomTime']):
+            # randomly trigger in first 500 steps
+            stime = random.randint(10, 500)
+            # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
+            etime = self.Path['maxStepsPerRun'] * 2  # whole episode
+            self.fault_time = stime
+            self.PositionNoiseStart = stime
+            self.PositionNoiseEnd = etime
+        else:
+
+            self.PositionNoiseStart = self.Env['PositionNoise']['starttime']
+            self.fault_time = self.PositionNoiseStart
+
+            self.PositionNoiseEnd = self.Env['PositionNoise']['endtime']
 
     def setupAttitudeSensorNoise(self):
         self.faultModes.append("AttitudeNoise")
@@ -658,6 +675,19 @@ class Quadcopter():
         self.attNoiseMag = noise
         stime = random.randint(10, int(self.maxSteps / 2))
         self.fault_time = stime
+        if bool(self.Env['AttitudeNoise']['randomTime']):
+            # randomly trigger in first 500 steps
+            stime = random.randint(10, 500)
+            # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
+            etime = self.Path['maxStepsPerRun'] * 2  # whole episode
+            self.fault_time = stime
+            self.AttitudeNoiseStart = stime
+            self.AttitudeNoiseEnd = etime
+        else:
+            self.AttitudeNoiseStart = self.Env['AttitudeNoise']['starttime']
+            self.fault_time = self.AttitudeNoiseStart
+
+            self.AttitudeNoiseEnd = self.Env['AttitudeNoise']['endtime']
 
     def setupWind(self):
         self.faultModes.append("Wind")
@@ -685,8 +715,19 @@ class Quadcopter():
         self.YWind = 0
         self.ZWind = 0
         self.setNormalWind(winds)
-        stime = random.randint(10, int(self.maxSteps / 2))
-        self.fault_time = stime
+        if bool(self.Env['Wind']['randomTime']):
+            # randomly trigger in first 500 steps
+            stime = random.randint(10, 500)
+            # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
+            etime = self.Path['maxStepsPerRun'] * 2  # whole episode
+            self.fault_time = stime
+            self.windStart = stime
+            self.windEnd = etime
+        else:
+            self.windStart = self.Env['Wind']['starttime']
+            self.fault_time = self.windStart
+
+            self.windEnd = self.Env['Wind']['endtime']
 
     def setWind(self, wind_vec):
         self.randWind = wind_vec
@@ -960,6 +1001,9 @@ class Quadcopter():
     def step(self, action):
         self.set_motor_speeds(action)
         self.update()
+        # if self.stepNum == self.fault_time:
+            # print("Fault Occured")
+
         obs = self._get_obs()
         info = self._get_info()
         rew = self._get_rew()
@@ -1001,11 +1045,20 @@ class Quadcopter():
 
     def _get_info(self):
         #calculate error - distance to safezone
-        info = {"mse": self.getMinDistanceToReference()}
+        distance = self.getMinDistanceToReference() - self.trackingAccuracy
+        #negative distance means inside safezone
+        if distance < 0:
+            distance_to_safezone = 0
+        else:
+            distance_to_safezone = distance
+        info = {"mse": self.getMinDistanceToReference(),
+                "distance_to_safezone": distance_to_safezone ,
+                "outside_safezone": 1 if self.outsideSafezone else 0
+                }
         return info
 
     def _get_rew(self):
-        rew = self.total_time_outside_safety
+        rew = -1 if self.outsideSafezone else 0
         return rew
 
     def _get_done(self):

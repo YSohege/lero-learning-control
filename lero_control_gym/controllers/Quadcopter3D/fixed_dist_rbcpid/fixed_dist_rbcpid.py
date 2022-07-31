@@ -6,6 +6,7 @@ import numpy as np
 import math
 from scipy.spatial.transform import Rotation
 from munch import munchify
+from scipy.stats import dirichlet as DirichletDistribution
 
 from lero_control_gym.controllers.base_controller import BaseController
 from lero_control_gym.envs.benchmark_env import Task
@@ -28,7 +29,8 @@ DefaultAttitudeControllerSet = [
                         ]
                 ]
 
-class OPTIMAL_MMACPID(BaseController):
+
+class FIXED_DIST_RBCPID(BaseController):
     """ PID Class.
 
     """
@@ -37,12 +39,14 @@ class OPTIMAL_MMACPID(BaseController):
                  env_func=None,
                  POSITION_CONTROLLER=DefaultPositionController,
                  ATTITUDE_CONTROLLER_SET= DefaultAttitudeControllerSet,
+                 RBC_DISTRIBUTION_PARAMETERS = [1]* len(DefaultAttitudeControllerSet),
                  Z_LIMITS=[0,10000],
                  TILT_LIMITS = [-10, 10],
                  MOTOR_LIMITS = [0, 9000],
                  Z_XY_OFFSET = 500,
                  YAW_CONTROL_LIMITS = [-900, 900],
                  YAW_RATE_SCALER = 0.18,
+                 SEED = 87463,
                  **kwargs
                  ):
         """Common control classes __init__ method.
@@ -55,9 +59,11 @@ class OPTIMAL_MMACPID(BaseController):
         super().__init__(env_func, **kwargs)
 
         self.env = env_func()
+        self.random_seed = SEED
 
         self.PositionController = np.array(POSITION_CONTROLLER)
         self.AttitudeControllerSets = np.array(ATTITUDE_CONTROLLER_SET)
+        self.numberControllers = len(self.AttitudeControllerSets)
         #integral position controller
         self.xi_term= 0
         self.yi_term=0
@@ -80,12 +86,27 @@ class OPTIMAL_MMACPID(BaseController):
         self.positionErrors = [[0,0,0]]
         self.attitudeErrors = [[0,0,0]]
 
+        # initilize distribution with uniform density based on attitude controller set size
+        if RBC_DISTRIBUTION_PARAMETERS == None:
+            self.alpha = [1] * self.numberControllers
+        else:
 
-        self.faultTime = self.env.get_fault_time()
+            if not len(ATTITUDE_CONTROLLER_SET) == len(RBC_DISTRIBUTION_PARAMETERS):
+                print("Controller set and Distribution not same size")
+                exit()
 
-        self.faultController = 1
+            self.alpha = RBC_DISTRIBUTION_PARAMETERS
+        print(self.alpha)
+        self.quantiles = [1 / self.numberControllers] * self.numberControllers #must sum to 1
+        self.AttitudeControllerDistribution = DirichletDistribution(self.alpha, seed=self.random_seed)
+        self.AttitudeControllerDistribution.pdf(self.quantiles)
+
+
+
+
+        self.obs, self.info = self.env.reset()
+        self.rew = 0
         self.done = False
-
 
         self.results_dict = {'obs': [],
                              'reward': [],
@@ -114,22 +135,46 @@ class OPTIMAL_MMACPID(BaseController):
                 # action = np.zeros(4)
                 # obs, reward, done, info = self.env.step(action)
 
-            state= obs[0:12]
+            state = obs[0:12]
             target = obs[12:15]
 
-            ActiveController = self._supervisoryControl(i)
 
-            throttle, target_euler, pos_e = self._PIDPositionControl(state, target )
 
-            rpms = self._PIDAttitudeControl( state, throttle, target_euler )
+            throttle, target_euler, pos_e = self._PIDPositionControl(state, target)
 
-            action = rpms[ActiveController]
+            rpms = self._PIDAttitudeControl(state, throttle, target_euler)
+
+            action = self._supervisoryControl(rpms)
 
             self.updateResultDict(obs, reward, done, info, action)
 
         self.close_results_dict()
 
         return self.results_dict
+
+    def step(self, action):
+
+        self.alpha = action
+        self.AttitudeControllerDistribution = DirichletDistribution(self.alpha, seed=self.random_seed)
+        self.AttitudeControllerDistribution.pdf(self.quantiles)
+
+        #apply previous action to env
+
+        state = self.obs[0:12]
+        target = self.obs[12:15]
+
+        throttle, target_euler, pos_e = self._PIDPositionControl(state, target)
+
+        rpms = self._PIDAttitudeControl(state, throttle, target_euler)
+
+        #Blended RPM commands from all Attitude controllers based on action input
+        self.control_action = self._supervisoryControl(rpms)
+
+        self.obs, self.rew, self.done, self.info = self.env.step(self.control_action)
+
+        self.updateResultDict(self.obs, self.rew, self.done, self.info , self.control_action)
+
+        return self.obs, self.rew, self.done, self.info
 
     def _PIDPositionControl(self,
                                state,
@@ -222,19 +267,19 @@ class OPTIMAL_MMACPID(BaseController):
 
         return rpms
 
+    def _supervisoryControl(self, rpms):
 
-    def _supervisoryControl(self,
-                            step
-                            ):
-        """ performs the supervisory control action to identify faults
-            and switch the active controller
-        """
+        self.Blend = self.AttitudeControllerDistribution.rvs(size=1)[0]
 
-        if step >= self.faultTime:
-            # print("Fault controller")
-            return self.faultController
-
-        return  0
+        weightedActions = []
+        index = 0
+        for rpm in rpms:
+            weight = [self.Blend[index]] * len(rpm)
+            weightedActions.append(np.multiply(weight, rpm))
+            index += 1
+        action = list(map(sum, zip(*weightedActions)))
+        action = np.array(action)
+        return action
 
 
     def close(self):
@@ -269,8 +314,6 @@ class OPTIMAL_MMACPID(BaseController):
         self.thetai_term = 0
         self.phii_term = 0
         self.gammai_term = 0
-
-        self.active = 0
 
 
         self.results_dict = {'obs': [],
