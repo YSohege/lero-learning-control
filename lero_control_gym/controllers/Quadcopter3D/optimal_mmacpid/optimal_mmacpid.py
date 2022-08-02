@@ -37,6 +37,7 @@ class OPTIMAL_MMACPID(BaseController):
                  env_func=None,
                  POSITION_CONTROLLER=DefaultPositionController,
                  ATTITUDE_CONTROLLER_SET= DefaultAttitudeControllerSet,
+                 SWITCHING_DELAY= 0,
                  Z_LIMITS=[0,10000],
                  TILT_LIMITS = [-10, 10],
                  MOTOR_LIMITS = [0, 9000],
@@ -58,6 +59,7 @@ class OPTIMAL_MMACPID(BaseController):
 
         self.PositionController = np.array(POSITION_CONTROLLER)
         self.AttitudeControllerSets = np.array(ATTITUDE_CONTROLLER_SET)
+        self.switching_delay = SWITCHING_DELAY
         #integral position controller
         self.xi_term= 0
         self.yi_term=0
@@ -229,9 +231,10 @@ class OPTIMAL_MMACPID(BaseController):
         """ performs the supervisory control action to identify faults
             and switch the active controller
         """
-
-        if step >= self.faultTime:
-            # print("Fault controller")
+        # if self.faultTime == step:
+            # print(step)
+        if step >= (self.faultTime + self.switching_delay):
+            # print(step)
             return self.faultController
 
         return  0

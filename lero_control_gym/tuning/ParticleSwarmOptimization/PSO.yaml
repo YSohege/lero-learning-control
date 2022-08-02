@@ -1,20 +1,20 @@
-random_seed: 112358
-numberIterations: 10
+random_seed: 11235813
+numberIterations: 1
 PSO :
    NumberParticles  : 50
-   c1  : 3
-   c2  : 2
+   c1  : 2
+   c2  : 1.5
    Wmin : 0.3
    Wmax : 1
    w  : 1
-   maxVelocity : 500
+   maxVelocity : 1000
    ParameterRanges  :
      P :
        min : 1
        max : 20000
      I :
        min : 1
-       max : 5000
+       max : 1
      D :
        min : 1
        max : 10000
@@ -25,7 +25,7 @@ PSO :
             min_magnitude : 0
             magnitude : 0.3
             max_magnitude : 0.30
-            randomTime : True
+            randomTime : False
             starttime: 100
             endtime : 31000
             randomRotor : True
@@ -57,6 +57,7 @@ PSO :
           control_freq: 200
       Path:
         randomPath: True
+        randomSeed: 11235813
         randomLimit: 8
         waypoints:
           x: [0, 0, 5, 0, -5, 0  , 5, 0]
@@ -68,11 +69,11 @@ PSO :
         numberRounds: 1
       render : False
    Controller:
-      POSITION_CONTROLLER : [
-                [300, 300, 7000],
-                [0.04, 0.04, 10],
-                [450, 450, 7000]
-         ]
+      POSITION_CONTROLLER: [
+       [ 200, 200, 7000 ],
+       [ 0.05, 0.05, 25 ],
+       [ 400, 400, 7000 ]
+      ]
       ATTITUDE_CONTROLLER_SET: [
                          [
                            [0 , 0, 1500],

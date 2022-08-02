@@ -67,7 +67,7 @@ class Blended_Control_Task(gym.Env):
         #offset the action by one - min action is 1
         action = [a+1 for a in action]
         obs, rew, done , info = self.ctrl.step(action)
-        print(str(action) + " " + str(rew) )
+        # print(str(action) + " " + str(rew) )
         return  np.array(obs) , rew, done , info
 
 

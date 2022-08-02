@@ -132,6 +132,8 @@ class GUI():
         self.radius = radius
         self.min_distances_points = []
         self.min_distances = []
+        self.update_freq = 20
+        self.update_count = 0
         plt.ion()
         plt.show()
 
@@ -170,38 +172,41 @@ class GUI():
 
 
     def update(self, quad, bound):
-        self.safe_bound = bound
-        self.quads = quad
-        self.ax.cla()
-        self.init_plot()
-        self.set_plot_bounds()
-        R = self.rotation_matrix(self.quads['orientation'])
-        L = self.quads['L']
-        points = np.array([ [-L,0,0], [L,0,0], [0,-L,0], [0,L,0], [0,0,0], [0,0,0] ]).T
-        points = np.dot(R,points)
-        points[0,:] += self.quads['state'][0]
-        points[1,:] += self.quads['state'][1]
-        points[2,:] += self.quads['state'][2]
-        self.quads['l1'].set_data(points[0,0:2],points[1,0:2])
-        self.quads['l1'].set_3d_properties(points[2,0:2])
-        self.quads['l2'].set_data(points[0,2:4],points[1,2:4])
-        self.quads['l2'].set_3d_properties(points[2,2:4])
-        # self.quads['hub'].set_data(points[0,5],points[1,5])
-        # self.quads['hub'].set_3d_properties(points[2,5])
-        pos = [self.quads['state'][0],
-               self.quads['state'][1],
-               self.quads['state'][2]]
-        self.pos.append(pos)
+        self.update_count+=1
+        if self.update_count > self.update_freq:
+            self.update_count = 0
+            self.safe_bound = bound
+            self.quads = quad
+            self.ax.cla()
+            self.init_plot()
+            self.set_plot_bounds()
+            R = self.rotation_matrix(self.quads['orientation'])
+            L = self.quads['L']
+            points = np.array([ [-L,0,0], [L,0,0], [0,-L,0], [0,L,0], [0,0,0], [0,0,0] ]).T
+            points = np.dot(R,points)
+            points[0,:] += self.quads['state'][0]
+            points[1,:] += self.quads['state'][1]
+            points[2,:] += self.quads['state'][2]
+            self.quads['l1'].set_data(points[0,0:2],points[1,0:2])
+            self.quads['l1'].set_3d_properties(points[2,0:2])
+            self.quads['l2'].set_data(points[0,2:4],points[1,2:4])
+            self.quads['l2'].set_3d_properties(points[2,2:4])
+            # self.quads['hub'].set_data(points[0,5],points[1,5])
+            # self.quads['hub'].set_3d_properties(points[2,5])
+            pos = [self.quads['state'][0],
+                   self.quads['state'][1],
+                   self.quads['state'][2]]
+            self.pos.append(pos)
 
 
 
 
-        self.updateQuadLine()
-        self.showWaypoints()
-        self.updatePathToGoal()
-        self.showDistanceToRef()
+            self.updateQuadLine()
+            self.showWaypoints()
+            self.updatePathToGoal()
+            self.showDistanceToRef()
 
-        plt.pause(0.0001)
+            plt.pause(0.0001)
 
 
     def showDistanceToRef(self):
@@ -345,8 +350,8 @@ class Quadcopter():
                  Path = DefaultPath,
                  render=False
                  ):
-
-        self.CTRL_TIMESTEP = 500
+        self.lastFaultStart = 300
+        self.CTRL_TIMESTEP = Quad.control_freq
         self.quads = Quad
         self.g = gravity
         self.b = b
@@ -402,7 +407,7 @@ class Quadcopter():
         self.maxSteps = self.Path['maxStepsPerRun']
         self.requiredStableAtGoal = self.Path['stablilizationAtGoal']
         limit = self.Path['randomLimit']
-        # np.random.seed(self.Path['randomSeed'])
+        np.random.seed(self.Path['randomSeed'])
         x_dest = np.random.randint(-limit, limit)
         y_dest = np.random.randint(-limit, limit)
         z_dest = np.random.randint(5, limit)
@@ -623,7 +628,7 @@ class Quadcopter():
         self.rotorFault = faults
         if bool(self.Env['RotorFault']['randomTime']):
             # randomly trigger in first 500 steps
-            stime = random.randint(10, 500)
+            stime = random.randint(10,  self.lastFaultStart)
             # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
             etime = self.Path['maxStepsPerRun']*2 # whole episode
             self.fault_time = stime
@@ -656,7 +661,7 @@ class Quadcopter():
         self.posNoiseMag = noise
         if bool(self.Env['PositionNoise']['randomTime']):
             # randomly trigger in first 500 steps
-            stime = random.randint(10, 500)
+            stime = random.randint(10,  self.lastFaultStart)
             # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
             etime = self.Path['maxStepsPerRun'] * 2  # whole episode
             self.fault_time = stime
@@ -677,7 +682,7 @@ class Quadcopter():
         self.fault_time = stime
         if bool(self.Env['AttitudeNoise']['randomTime']):
             # randomly trigger in first 500 steps
-            stime = random.randint(10, 500)
+            stime = random.randint(10,  self.lastFaultStart)
             # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
             etime = self.Path['maxStepsPerRun'] * 2  # whole episode
             self.fault_time = stime
@@ -717,7 +722,7 @@ class Quadcopter():
         self.setNormalWind(winds)
         if bool(self.Env['Wind']['randomTime']):
             # randomly trigger in first 500 steps
-            stime = random.randint(10, 500)
+            stime = random.randint(10, self.lastFaultStart)
             # etime = random.randint(int(self.maxSteps / 2), self.maxSteps)
             etime = self.Path['maxStepsPerRun'] * 2  # whole episode
             self.fault_time = stime
@@ -772,7 +777,7 @@ class Quadcopter():
 
     def update(self, dt=0.02):
         self.stepNum += 1
-
+        # print(self.stepNum)
         # Handle Rotor Fault Here
         if "RotorFault" in  self.faultModes:
             if self.stepNum > self.rotorFaultStart:

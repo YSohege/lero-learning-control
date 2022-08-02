@@ -17,6 +17,7 @@ class ParticleSwarmOptimization():
     DefaultRanges = []
 
     def __init__(self,
+                 random_seed = 123,
                  NumberParticles=50,
                  c1=3,
                  c2=2,
@@ -27,8 +28,9 @@ class ParticleSwarmOptimization():
                  ParameterRanges=DefaultRanges,
                  Env = DefaultEnv,
                  Controller = DefaultController,
-                 render=False):
+                 render=True):
 
+        random.seed(random_seed)
         # print(NumberParticles)
         self.NumberParticles = NumberParticles
         self.c1 = c1
@@ -42,14 +44,13 @@ class ParticleSwarmOptimization():
         self.controllerConfig = Controller
         self.env = Env
         self.databaseConfig = {
-            "NewFile": False,
-            "folder" : None,
-            "path" : ""
+            "NewFile": True,
+            "folder" : "./results/"
         }
         if bool(self.databaseConfig['NewFile']):
             dt = str(datetime.datetime.now())[:16].replace(":","-")
             FileName = self.databaseConfig['folder']+"PSO_Results-"+dt+".json"
-            print(FileName)
+            # print(FileName)
             if not os.path.exists(FileName):
                 with open(FileName, 'w') as db:
                     json.dump([], db)
@@ -65,15 +66,28 @@ class ParticleSwarmOptimization():
         self.globalBest = None
         self.render = render
         self.particlePaths = [[]] * self.NumberParticles
+        self.numberDims = 0
         if self.render:
-            self.fig = plt.figure()
-            self.ax = self.fig.add_subplot(111, projection='3d')
-            self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
-            self.ax.set_ylim(self.ParameterRanges.I.min, self.ParameterRanges.I.max)
-            self.ax.set_zlim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
-            self.ax.set_xlabel("P")
-            self.ax.set_ylabel("I")
-            self.ax.set_zlabel("D")
+
+            self.numberDims +=1 if ( self.ParameterRanges.P.max - self.ParameterRanges.P.min )> 0 else 0
+            self.numberDims +=1 if ( self.ParameterRanges.I.max - self.ParameterRanges.I.min )> 0 else 0
+            self.numberDims +=1 if ( self.ParameterRanges.D.max - self.ParameterRanges.D.min )> 0 else 0
+            if self.numberDims >2:
+                self.fig = plt.figure()
+                self.ax = self.fig.add_subplot(111, projection='3d')
+                self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
+                self.ax.set_ylim(self.ParameterRanges.I.min, self.ParameterRanges.I.max)
+                self.ax.set_zlim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+                self.ax.set_xlabel("P")
+                self.ax.set_ylabel("I")
+                self.ax.set_zlabel("D")
+            else:
+                self.fig = plt.figure()
+                self.ax = self.fig.add_subplot(111)
+                self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
+                self.ax.set_ylim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+                self.ax.set_xlabel("P")
+                self.ax.set_ylabel("D")
         self.initilizeParticles()
 
         self.finished = False
@@ -118,23 +132,36 @@ class ParticleSwarmOptimization():
         self.globalBest = (self.particles[i],-(self.env['Path']['maxStepsPerRun']+1)) #
 
         if self.render:
+            self.renderCount = 0
             self.render3D()
+
         return
 
     def evaluateParticle(self, controller):
 
         controlConfig = self.controllerConfig
         #override the pid controllers
-        controlConfig.ATTITUDE_CONTROLLER_SET = [
-                         [
-                           [controller[0] , controller[0], 1500],
-                           [controller[1],  controller[1], 1.2],
-                           [controller[2],  controller[2], 0]
-                        ]
-                     ]
+        # print(controller)
+        if len(controller)>2:
+
+            controlConfig.ATTITUDE_CONTROLLER_SET = [
+                             [
+                               [controller[0] , controller[0], 1500],
+                               [controller[1],  controller[1], 1.2],
+                               [controller[2],  controller[2], 0]
+                            ]
+                         ]
+        else:
+            controlConfig.ATTITUDE_CONTROLLER_SET = [
+                [
+                    [controller[0], controller[0], 1500],
+                    [0, 0, 1.2],
+                    [controller[1], controller[1], 0]
+                ]
+            ]
 
         quadConfig = self.env
-
+        quadConfig.Path.randomSeed = random.randint(0,100000)
         task = Task( quadConfig, controlConfig)
 
         results = task.executeTask()
@@ -143,31 +170,34 @@ class ParticleSwarmOptimization():
 
 
         # print(str(controller) + " " + str(particlePerformance))
-        # self.saveResult(controllerParameters, particlePerformance)
+        self.saveResult(controlConfig, quadConfig.Env.toDict(), results)
         return  results
 
-    # def saveResult(self, controllerParameters, particlePerformance):
-    #     datapoint = {'ControllerParameters': controllerParameters,
-    #                  'Environment': self.Environment,
-    #                  'performance': particlePerformance}
-    #     self.database.append(datapoint)
-    #     # print(self.database)
-    #     data = []
-    #     with open(self.databaseConfig['path'], 'r') as db:
-    #         try:
-    #             data = json.load(db)
-    #         except Exception:
-    #             data = []
-    #     data.append(datapoint)
-    #     # print(len(self.database))
-    #     # print(len(data))
-    #     with open(self.databaseConfig['path'], 'w') as db:
-    #         json.dump(data, db)
-    #     return
+    def saveResult(self, controllerParameters, quadconf,  particlePerformance):
+
+        datapoint = {'ControllerParameters': controllerParameters,
+                     'Environment': quadconf,
+                     'performance': particlePerformance}
+        self.database.append(datapoint)
+        # print(self.database)
+        data = []
+        with open(self.databaseConfig['path'], 'r') as db:
+            try:
+                data = json.load(db)
+            except Exception:
+                data = []
+        data.append(datapoint)
+        # print(len(self.database))
+        # print(len(data))
+
+
+        with open(self.databaseConfig['path'], 'w') as db:
+            json.dump(data, db)
+        return
 
     def run(self):
-        # print("PSO running")
-        currentWeight = self.w
+        # print("PSO-Images-Nominal-2 running")
+        self.currentWeight = self.w
         while not self.finished:
             for i in range(len(self.particles)):
 
@@ -214,7 +244,7 @@ class ParticleSwarmOptimization():
                 newVel = [0] * len(self.particles[i])
                 # print(self.particles[i])
                 for param in range(len(newVel)):
-                    newVel[param] = (InteriaComp[param] + CognitiveComp[param] + SocialComp[param])* currentWeight
+                    newVel[param] = (InteriaComp[param] + CognitiveComp[param] + SocialComp[param])* self.currentWeight
 
                 self.velocities[i] = newVel
 
@@ -235,8 +265,8 @@ class ParticleSwarmOptimization():
                 self.particlePaths[i].append(self.particles[i])
             # print("Global Best = " + str(self.globalBest) + " at " + str(currentWeight))
 
-            if currentWeight > self.Wmin:
-                currentWeight -= 0.01
+            if self.currentWeight > self.Wmin:
+                self.currentWeight -= 0.01
                 # print(currentWeight)
             else:
                 self.finished = True
@@ -246,9 +276,15 @@ class ParticleSwarmOptimization():
         return self.globalBest
 
     def render3D(self):
+        self.renderCount+=1
         if self.render:
             self.ax.cla()
+            Env = "Nominal"
+            faults = self.env.Env.toDict()
+            if faults['RotorFault']['enabled']:
+                Env = "Rotor Fault - " + str(faults['RotorFault']['magnitude'])
 
+            self.ax.set_title("Particle Swarm Optimization -"+Env +"- iteration:"+ str(self.renderCount))
             xdata = []
             ydata = []
             zdata = []
@@ -257,34 +293,43 @@ class ParticleSwarmOptimization():
             for i in range(self.NumberParticles):
                 xdata.append(self.particles[i][0])
                 ydata.append(self.particles[i][1])
-                zdata.append(self.particles[i][2])
+                # zdata.append(self.particles[i][2])
                 sizes.append(50)
 
-            if len(self.particlePaths[i]) > 1:
+            if len(self.particlePaths[0]) > 1:
                 for particleHistory in self.particlePaths:
                     xPath = []
                     yPath = []
-                    zPath = []
+                    # zPath = []
+                    ind = len(self.particlePaths[0]) if len(self.particlePaths[0]) <= 5 else 5
+                    particleHistory = particleHistory[-5:] if len(particleHistory) > 5 else particleHistory
                     for point in particleHistory:
                         xPath.append(point[0])
                         yPath.append(point[1])
-                        zPath.append(point[2])
+                        # zPath.append(point[2])
 
-                    self.ax.plot(xPath, yPath, zPath)
-                    # self.ax.plot(xPath, yPath)
+                    # self.ax.plot(xPath, yPath, zPath)
+                    self.ax.plot(xPath, yPath)
 
-            self.ax.scatter(xdata, ydata, zdata, s=sizes, alpha=0.8, c='k', edgecolor="k", linewidth=0.4)
-            # self.ax.scatter(xdata, ydata, s=sizes, alpha=0.8, c='k', edgecolor="k", linewidth=0.4)
+            # self.ax.scatter(xdata, ydata, zdata, s=sizes, alpha=0.8, c='k', edgecolor="k", linewidth=0.4)
+            # self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
+            # self.ax.set_ylim(self.ParameterRanges.I.min, self.ParameterRanges.I.max)
+            # self.ax.set_zlim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+            # self.ax.set_xlabel("P")
+            # self.ax.set_ylabel("I")
+            # self.ax.set_zlabel("D")
+
+            self.ax.scatter(xdata, ydata, s=sizes, alpha=0.8, c='k', edgecolor="k", linewidth=0.4)
             self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
-            self.ax.set_ylim(self.ParameterRanges.I.min, self.ParameterRanges.I.max)
-            self.ax.set_zlim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+            # self.ax.set_lim(self.ParameterRanges.I.min, self.ParameterRanges.I.max)
+            self.ax.set_ylim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
             self.ax.set_xlabel("P")
-            self.ax.set_ylabel("I")
-            self.ax.set_zlabel("D")
+            # self.ax.set_ylabel("I")
+            self.ax.set_ylabel("D")
             plt.draw()
 
             plt.pause(0.0001)
-            # plt.savefig("PSO/" + str(renderCount) + ".png")
+            plt.savefig("PSO-Images/" + str(self.renderCount) + ".png")
 
         return
 
@@ -304,7 +349,7 @@ def main():
         results.append(result)
         print(result)
 
-    print("PSO Results")
+
     print(results)
     p_average = 0
     i_average = 0
@@ -313,18 +358,18 @@ def main():
     for result in results:
         p = result[0][0]
         i = result[0][1]
-        d = result[0][2]
+        # d = result[0][2]
         p_average+=p
         i_average+=i
-        d_average+=d
+        # d_average+=d
 
     p_average = p_average/len(results)
     i_average = i_average/len(results)
-    d_average = d_average/len(results)
+    # d_average = d_average/len(results)
 
     print(p_average)
     print(i_average)
-    print(d_average)
+
 
     return
 

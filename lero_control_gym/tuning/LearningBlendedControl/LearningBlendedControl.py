@@ -1,15 +1,5 @@
-import json
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import datetime
-import os
-import gym
-import stable_baselines3
+import torch as th
 from stable_baselines3 import PPO
-
-from functools import partial
-from lero_control_gym.utils.registration import make
 from lero_control_gym.tasks.Blended_Control_Task.Blended_Control_Task import Blended_Control_Task
 from lero_control_gym.utils.configuration import ConfigFactory
 
@@ -28,9 +18,11 @@ def main():
 
     env = Blended_Control_Task(config.Task.quadcopter3D, config.Task.rbc_pid )
 
+    policy_kwargs = dict(activation_fn=th.nn.ReLU,
+                         net_arch=[dict(pi=[32, 32], vf=[32, 32])])
 
 
-    model = PPO("MlpPolicy", env, verbose=1, tensorboard_log="./trainingLog/" )
+    model = PPO("MlpPolicy", env, policy_kwargs=policy_kwargs, verbose=1, tensorboard_log="./trainingLog/" )
     model.learn(total_timesteps=10000000)
     model.save("blendingAgent")
 

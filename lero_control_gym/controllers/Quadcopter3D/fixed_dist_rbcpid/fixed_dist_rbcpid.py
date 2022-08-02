@@ -96,7 +96,7 @@ class FIXED_DIST_RBCPID(BaseController):
                 exit()
 
             self.alpha = RBC_DISTRIBUTION_PARAMETERS
-        print(self.alpha)
+        # print(self.alpha)
         self.quantiles = [1 / self.numberControllers] * self.numberControllers #must sum to 1
         self.AttitudeControllerDistribution = DirichletDistribution(self.alpha, seed=self.random_seed)
         self.AttitudeControllerDistribution.pdf(self.quantiles)
