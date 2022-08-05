@@ -1,5 +1,5 @@
 import random
-
+import time
 import numpy as np
 
 from lero_control_gym.utils.configuration import ConfigFactory
@@ -44,8 +44,12 @@ def main():
     config = CONFIG_FACTORY.merge()
     Exp = Experiment(config)
     print("===============================")
+    START = time.time()
     print("Running PSO - Rotor Loss of Effectiveness Conditions")
+    Exp = Experiment(config)
     result = Exp.run()
+    END = time.time()
+    print("Experiment took " + str(END - START) + " milli seconds")
     print("PSO Result - Rotor Loss of Effectiveness Conditions")
     print(result)
     print("===============================")

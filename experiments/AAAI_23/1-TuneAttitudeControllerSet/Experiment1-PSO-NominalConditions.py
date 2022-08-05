@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import time
 from lero_control_gym.utils.configuration import ConfigFactory
 from lero_control_gym.tuning.ParticleSwarmOptimization.PSO import ParticleSwarmOptimization as PSO
 
@@ -13,6 +14,7 @@ class Experiment():
 
     def run(self):
         results = []
+
         for i in range(self.generalConfig.Experiment.numberIterations):
             self.generalConfig.Experiment.PSO.random_seed = random.randint(0, 10000)
             algo = PSO(**self.generalConfig.Experiment.PSO)
@@ -42,9 +44,12 @@ def main():
 
     config = CONFIG_FACTORY.merge()
     print("===============================")
+    START = time.time()
     print("Running PSO - Nominal Conditions")
     Exp = Experiment(config)
     result = Exp.run()
+    END = time.time()
+    print("Experiment took " + str(END-START) + " milli seconds" )
     print("PSO Result - Nominal Conditions")
     print(result)
     print("===============================")
