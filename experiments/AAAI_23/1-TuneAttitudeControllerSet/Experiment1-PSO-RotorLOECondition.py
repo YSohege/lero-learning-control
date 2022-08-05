@@ -20,7 +20,7 @@ class Experiment():
             algo = PSO(**self.generalConfig.Experiment.PSO)
             result = algo.run()
             results.append(result)
-            # print(result)
+            print(result)
 
         # print(results)
         p_average = 0

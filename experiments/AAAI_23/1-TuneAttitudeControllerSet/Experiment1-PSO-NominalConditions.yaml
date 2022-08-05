@@ -1,8 +1,8 @@
 Experiment :
-  random_seed: 1123581321
-  numberIterations: 10
+  random_seed: 31415
+  numberIterations: 5
   PSO :
-     random_seed: 1123581321
+     random_seed: 1
      NumberParticles  : 50
      c1  : 2
      c2  : 1.5
@@ -59,14 +59,14 @@ Experiment :
             control_freq: 200
         Path:
           randomPath: True
-          randomSeed: 1123581321
-          randomLimit: 8
+          randomSeed: 1
+          randomLimit: 7
           waypoints:
             x: [0, 0, 5, 0, -5, 0  , 5, 0]
             y: [0, 0, 0, 5,  0, -5 , 0, 0]
             z: [0, 5, 5, 5,  5, 5  , 5, 5]
           safetyRadius: 1
-          maxStepsPerRun: 3000
+          maxStepsPerRun: 1000
           stablilizationAtGoal: 50
           numberRounds: 1
         render : False

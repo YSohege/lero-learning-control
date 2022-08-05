@@ -7,7 +7,8 @@ import math
 from scipy.spatial.transform import Rotation
 from munch import munchify
 from scipy.stats import dirichlet as DirichletDistribution
-
+from stable_baselines3 import PPO
+import gym
 from lero_control_gym.controllers.base_controller import BaseController
 from lero_control_gym.envs.benchmark_env import Task
 
@@ -30,22 +31,24 @@ DefaultAttitudeControllerSet = [
                 ]
 
 
-class RBCPID(BaseController):
+class RL_RBCPID(BaseController):
     """ PID Class.
 
     """
 
     def __init__(self,
                  env_func=None,
+                 TRAINED_NETWORK_PATH = "./default_network/trained_network",
                  POSITION_CONTROLLER=DefaultPositionController,
                  ATTITUDE_CONTROLLER_SET= DefaultAttitudeControllerSet,
-                 RBC_DISTRIBUTION_PARAMETERS = None,
+                 RBC_DISTRIBUTION_PARAMETERS = [1]* len(DefaultAttitudeControllerSet),
                  Z_LIMITS=[0,10000],
                  TILT_LIMITS = [-10, 10],
                  MOTOR_LIMITS = [0, 9000],
                  Z_XY_OFFSET = 500,
                  YAW_CONTROL_LIMITS = [-900, 900],
                  YAW_RATE_SCALER = 0.18,
+                 SEED = 87463,
                  **kwargs
                  ):
         """Common control classes __init__ method.
@@ -57,7 +60,11 @@ class RBCPID(BaseController):
 
         super().__init__(env_func, **kwargs)
 
+
+
         self.env = env_func()
+        self.model = PPO.load(TRAINED_NETWORK_PATH)
+        self.random_seed = SEED
 
         self.PositionController = np.array(POSITION_CONTROLLER)
         self.AttitudeControllerSets = np.array(ATTITUDE_CONTROLLER_SET)
@@ -94,13 +101,15 @@ class RBCPID(BaseController):
                 exit()
 
             self.alpha = RBC_DISTRIBUTION_PARAMETERS
-
+        # print(self.alpha)
         self.quantiles = [1 / self.numberControllers] * self.numberControllers #must sum to 1
-        self.AttitudeControllerDistribution = DirichletDistribution
-        self.AttitudeControllerDistribution.pdf(self.quantiles, self.alpha)
+        self.AttitudeControllerDistribution = DirichletDistribution(self.alpha, seed=self.random_seed)
+        self.AttitudeControllerDistribution.pdf(self.quantiles)
+
+
+
 
         self.obs, self.info = self.env.reset()
-        self.info['condensedObs'] = [0,0,0,0]
         self.rew = 0
         self.done = False
 
@@ -134,18 +143,13 @@ class RBCPID(BaseController):
             state = obs[0:12]
             target = obs[12:15]
 
-            ActiveController = self._supervisoryControl(info)
+
 
             throttle, target_euler, pos_e = self._PIDPositionControl(state, target)
 
             rpms = self._PIDAttitudeControl(state, throttle, target_euler)
 
-            action = rpms[ActiveController]
-
-            roll_err = target_euler[0] - state[6]
-            pitch_err = target_euler[1] - state[7]
-            yaw_err = target_euler[2] - state[8]
-            info['condensedObs'] = [ info['mse'], roll_err, pitch_err, yaw_err]
+            action = self._supervisoryControl(obs, rpms)
 
             self.updateResultDict(obs, reward, done, info, action)
 
@@ -156,9 +160,8 @@ class RBCPID(BaseController):
     def step(self, action):
 
         self.alpha = action
-        self.quantiles = [1 / self.numberControllers] * self.numberControllers  # must sum to 1
-        self.AttitudeControllerDistribution = DirichletDistribution
-        self.AttitudeControllerDistribution.pdf(self.quantiles, self.alpha)
+        self.AttitudeControllerDistribution = DirichletDistribution(self.alpha, seed=self.random_seed)
+        self.AttitudeControllerDistribution.pdf(self.quantiles)
 
         #apply previous action to env
 
@@ -176,12 +179,7 @@ class RBCPID(BaseController):
 
         self.updateResultDict(self.obs, self.rew, self.done, self.info , self.control_action)
 
-        roll_err =target_euler[0] - state[6]
-        pitch_err=target_euler[1] - state[7]
-        yaw_err  =target_euler[2] - state[8]
-
-        self.info['condensedObs'] = [self.info['mse'],roll_err,pitch_err,yaw_err ]
-        return self.info['condensedObs'] , self.rew, self.done, self.info
+        return self.obs, self.rew, self.done, self.info
 
     def _PIDPositionControl(self,
                                state,
@@ -274,8 +272,15 @@ class RBCPID(BaseController):
 
         return rpms
 
-    def _supervisoryControl(self, rpms):
-        self.Blend = self.AttitudeControllerDistribution.rvs(self.alpha, size=1)[0]
+    def _supervisoryControl(self, obs, rpms):
+        #predict the blending distribution parameters using the trained network
+        obs = obs.reshape((1,15))
+        action = self.model.predict(obs)[0]
+        action = [a+1 for a in action]
+        self.alpha = action
+        self.AttitudeControllerDistribution = DirichletDistribution(self.alpha, seed=self.random_seed)
+        self.AttitudeControllerDistribution.pdf(self.quantiles)
+        self.Blend = self.AttitudeControllerDistribution.rvs(size=1)[0]
 
         weightedActions = []
         index = 0
@@ -328,8 +333,6 @@ class RBCPID(BaseController):
                              'info': [],
                              'action': [],
                              }
-
-
         return initial_obs, initial_info
 
     def updateResultDict(self, obs, reward, done, info, action):

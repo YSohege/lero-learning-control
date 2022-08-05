@@ -85,7 +85,7 @@ class OPTIMAL_MMACPID(BaseController):
 
         self.faultTime = self.env.get_fault_time()
 
-        self.faultController = 1
+        self.faultController = len(self.AttitudeControllerSets)-1
         self.done = False
 
 

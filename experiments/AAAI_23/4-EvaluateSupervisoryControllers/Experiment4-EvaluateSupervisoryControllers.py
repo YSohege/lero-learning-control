@@ -7,6 +7,7 @@ from lero_control_gym.utils.configuration import ConfigFactory
 from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Uniform_RBC.Quadcopter3D_Uniform_RBC import Task as Uniform_RBC_Task
 from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Optimal_Switching.Quadcopter3D_Optimal_Switching import Task as Optimal_Switching_Task
 from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Fixed_Distribution_RBC.Quadcopter3D_Fixed_Distribution_RBC import Task as Fixed_Distribution_RBC_Task
+from lero_control_gym.tasks.AAAI_23.Quadcopter3D_RL_Distribution_RBC.Quadcopter3D_RL_Distribution_RBC import Task as RL_RBC_Task
 
 
 class Experiment():
@@ -18,8 +19,8 @@ class Experiment():
                  optimal_mmac_pid_1 ,
                  optimal_mmac_pid_2 ,
                  optimal_mmac_pid_3 ,
-                 # optimal_mmac_pid_4 ,
                  uniform_rbc_pid,
+                 rl_rbc_pid,
                  fixed_dist_rbc_pid):
         self.generalConfig = experiment_config
         random.seed(self.generalConfig.random_seed)
@@ -38,11 +39,15 @@ class Experiment():
         self.uniform_rbcpid = uniform_rbc_pid
         self.uniform_rbcpid.SEED = self.generalConfig.random_seed
 
+        self.rl_rbc_pid = rl_rbc_pid
+
         self.fixed_dist_rbcpid = fixed_dist_rbc_pid
         self.fixed_dist_rbcpid.SEED = self.generalConfig.random_seed
 
 
         return
+
+
 
     def run(self):
 
@@ -54,6 +59,7 @@ class Experiment():
         OptSwitch3 = []
         # OptSwitch4 = []
         UniRBC = []
+        RLRBC = []
         FixedRBC = []
 
         for i in range(self.generalConfig.number_iterations):
@@ -88,22 +94,16 @@ class Experiment():
             optimal_switching_result3 = optimal_switching_task3.executeTask()
             OptSwitch3.append(optimal_switching_result3)
 
-            # optimal_switching_task4 = Optimal_Switching_Task(self.quadcopter_config, self.optimal_mmac_pid_4)
-            # optimal_switching_result4 = optimal_switching_task4.executeTask()
-            # OptSwitch4.append(optimal_switching_result4)
-
-
-
             uniform_rbc_task = Uniform_RBC_Task(self.quadcopter_config, self.uniform_rbcpid)
             uniform_rbc_result = uniform_rbc_task.executeTask()
-            # print("uniform_rbc_result")
-            # print(uniform_rbc_result)
             UniRBC.append(uniform_rbc_result)
+
+            rl_rbc_task = RL_RBC_Task(self.quadcopter_config, self.rl_rbc_pid)
+            rl_rbc_result = rl_rbc_task.executeTask()
+            RLRBC.append(rl_rbc_result)
 
             fixed_dist_rbc_task = Fixed_Distribution_RBC_Task(self.quadcopter_config, self.fixed_dist_rbcpid)
             fixed_dist_rbc_result = fixed_dist_rbc_task.executeTask()
-            # print("fixed_dist_rbc_result")
-            # print(fixed_dist_rbc_result)
             FixedRBC.append(fixed_dist_rbc_result)
 
             print("Baseline Controller 1 ")
@@ -127,6 +127,9 @@ class Experiment():
             print("Uni RBC Average")
             print(np.average(UniRBC))
 
+            print("RL RBC Average")
+            print(np.average(RLRBC))
+
             print("Fixed RBC Average")
             print(np.average(FixedRBC))
             print("-------------"+ str(i+1)+"/"+str(self.generalConfig.number_iterations)+"----------")
@@ -138,8 +141,8 @@ class Experiment():
                        OptSwitch1,
                        OptSwitch2,
                        OptSwitch3,
-                       # OptSwitch4,
                        UniRBC,
+                       RLRBC,
                        FixedRBC]
 
         return results

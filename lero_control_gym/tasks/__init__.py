@@ -26,3 +26,7 @@ register(id="AAAI_23_Quadcopter3D_Uniform_RBC",
 register(id="AAAI_23_Quadcopter3D_Fixed_Dist_RBC",
          entry_point="lero_control_gym.tasks.AAAI_23.Quadcopter3D_Fixed_Distribution_RBC.Quadcopter3D_Fixed_Distribution_RBC:Task",
          config_entry_point="lero_control_gym.tasks.AAAI_23.Quadcopter3D_Fixed_Distribution_RBC:Quadcopter3D_Fixed_Distribution_RBC.yaml")
+
+register(id="AAAI_23_Quadcopter3D_RL_Distribution_RBC",
+         entry_point="lero_control_gym.tasks.AAAI_23.Quadcopter3D_RL_Distribution_RBC.Quadcopter3D_RL_Distribution_RBC:Quadcopter3D_RL_Distribution_RBC",
+         config_entry_point="lero_control_gym.tasks.AAAI_23.Quadcopter3D_RL_Distribution_RBC:Quadcopter3D_RL_Distribution_RBC.yaml")

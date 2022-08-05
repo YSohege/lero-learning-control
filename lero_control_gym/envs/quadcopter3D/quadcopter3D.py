@@ -350,7 +350,7 @@ class Quadcopter():
                  Path = DefaultPath,
                  render=False
                  ):
-        self.lastFaultStart = 300
+        self.lastFaultStart = 100
         self.CTRL_TIMESTEP = Quad.control_freq
         self.quads = Quad
         self.g = gravity
@@ -399,7 +399,7 @@ class Quadcopter():
 
 #==========Path related functions =========================
 
-    def setRandomPath(self):
+    def setRandomPath(self, number_waypoints=2):
         self.stepsToGoal = 0
         self.goals = []
         self.safe_region = []
@@ -408,15 +408,17 @@ class Quadcopter():
         self.requiredStableAtGoal = self.Path['stablilizationAtGoal']
         limit = self.Path['randomLimit']
         np.random.seed(self.Path['randomSeed'])
-        x_dest = np.random.randint(-limit, limit)
-        y_dest = np.random.randint(-limit, limit)
-        z_dest = np.random.randint(5, limit)
-        x_dest2 = np.random.randint(-limit, limit)
-        y_dest2 = np.random.randint(-limit, limit)
-        z_dest2 = np.random.randint(5, limit)
-        x_path = [0, 0, x_dest, x_dest2]
-        y_path = [0, 0, y_dest, y_dest2]
-        z_path = [0, 5, z_dest, z_dest2]
+        x_path = [0]
+        y_path = [0]
+        z_path = [0]
+        for i in range(number_waypoints):
+            x_dest = np.random.randint(-limit, limit)
+            y_dest = np.random.randint(-limit, limit)
+            z_dest = np.random.randint(5,10)
+            x_path.append(x_dest)
+            y_path.append(y_dest)
+            z_path.append(z_dest)
+
         steps = len(x_path)
         interval_steps = 50
         self.goals = []
@@ -451,6 +453,7 @@ class Quadcopter():
             "y": y_path,
             "z": z_path
         }
+        # print(self.Path)
         return
 
     def setPath(self):
@@ -563,6 +566,7 @@ class Quadcopter():
             self.fault_time = self.maxSteps*2
 
         while sum(count) > 1:
+            #TODO set sampling distribution of faults
             selection = random.randint(0,len(count)-1)
             if count[selection] == 1:
                 newcount = [0] * len(count)
