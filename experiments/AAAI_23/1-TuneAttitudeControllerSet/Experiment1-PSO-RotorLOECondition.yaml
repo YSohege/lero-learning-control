@@ -3,7 +3,7 @@ Experiment :
   numberIterations: 5
   PSO :
      random_seed: 1
-     NumberParticles  : 5
+     NumberParticles  : 50
      c1  : 2
      c2  : 1.5
      Wmin : 0.3
