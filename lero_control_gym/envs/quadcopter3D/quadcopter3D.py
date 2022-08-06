@@ -399,7 +399,7 @@ class Quadcopter():
 
 #==========Path related functions =========================
 
-    def setRandomPath(self, number_waypoints=2):
+    def setRandomPath(self):
         self.stepsToGoal = 0
         self.goals = []
         self.safe_region = []
@@ -407,6 +407,7 @@ class Quadcopter():
         self.maxSteps = self.Path['maxStepsPerRun']
         self.requiredStableAtGoal = self.Path['stablilizationAtGoal']
         limit = self.Path['randomLimit']
+        number_waypoints = self.Path['number_waypoints']
         np.random.seed(self.Path['randomSeed'])
         x_path = [0]
         y_path = [0]

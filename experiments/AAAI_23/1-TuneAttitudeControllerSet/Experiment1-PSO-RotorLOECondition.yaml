@@ -60,13 +60,14 @@ Experiment :
         Path:
           randomPath: True
           randomSeed: 1
-          randomLimit: 7
+          number_waypoints: 2
+          randomLimit: 10
           waypoints:
             x: [0, 0, 5, 0, -5, 0  , 5, 0]
             y: [0, 0, 0, 5,  0, -5 , 0, 0]
             z: [0, 5, 5, 5,  5, 5  , 5, 5]
           safetyRadius: 1
-          maxStepsPerRun: 1000
+          maxStepsPerRun: 1500
           stablilizationAtGoal: 50
           numberRounds: 1
         render : False
