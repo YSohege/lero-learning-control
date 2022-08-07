@@ -1,10 +1,10 @@
 Experiment :
-  random_seed: 31415
+  random_seed: 70822
   numberIterations: 5
   PSO :
      random_seed: 1
      NumberParticles  : 50
-     c1  : 2
+     c1  : 1
      c2  : 1.5
      Wmin : 0.3
      Wmax : 1
@@ -60,7 +60,7 @@ Experiment :
         Path:
           randomPath: True
           randomSeed: 1
-          number_waypoints: 2
+          number_waypoints: 5
           randomLimit: 10
           waypoints:
             x: [0, 0, 5, 0, -5, 0  , 5, 0]
@@ -75,7 +75,7 @@ Experiment :
         POSITION_CONTROLLER: [
          [ 200, 200, 7000 ],
          [ 0.05, 0.05, 25 ],
-         [ 400, 400, 7000 ]
+         [ 300, 300, 7000 ]
         ]
         ATTITUDE_CONTROLLER_SET: [
                            [
