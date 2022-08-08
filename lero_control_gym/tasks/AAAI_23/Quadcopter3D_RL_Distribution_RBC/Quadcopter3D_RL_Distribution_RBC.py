@@ -114,7 +114,7 @@ class Task(gym.Env):
             obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], \
                                               results['info'][
                                                   i], results['action'][i]
-            err = float(info[0]['distance_to_safezone'])
+            err = float(info[0]['outside_safezone'])
             total_trajectory_loss += err
 
         total_trajectory_loss = -total_trajectory_loss

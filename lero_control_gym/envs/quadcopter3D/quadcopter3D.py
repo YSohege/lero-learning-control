@@ -409,13 +409,13 @@ class Quadcopter():
         limit = self.Path['randomLimit']
         number_waypoints = self.Path['number_waypoints']
         np.random.seed(self.Path['randomSeed'])
-        x_path = [0]
-        y_path = [0]
-        z_path = [0]
+        x_path = [0,0]
+        y_path = [0,0]
+        z_path = [0,5]
         for i in range(number_waypoints):
             x_dest = np.random.randint(-limit, limit)
             y_dest = np.random.randint(-limit, limit)
-            z_dest = np.random.randint(5,10)
+            z_dest = 5 # np.random.randint(5,5)
             x_path.append(x_dest)
             y_path.append(y_dest)
             z_path.append(z_dest)

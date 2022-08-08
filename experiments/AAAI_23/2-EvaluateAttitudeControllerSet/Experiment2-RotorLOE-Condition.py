@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 from lero_control_gym.utils.configuration import ConfigFactory
-
+from scipy import stats
 from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Uniform_RBC.Quadcopter3D_Uniform_RBC import Task as Uniform_RBC_Task
 from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Optimal_Switching.Quadcopter3D_Optimal_Switching import Task as Optimal_Switching_Task
 
@@ -34,7 +34,7 @@ class Experiment():
 
         Baseline1 = []
         Baseline2 = []
-        UniRBC = []
+
 
 
         for i in range(self.generalConfig.number_iterations):
@@ -53,47 +53,39 @@ class Experiment():
             baseline_result2 = baseline_task2.executeTask()
             Baseline2.append(baseline_result2)
 
-            uniform_rbc_task = Uniform_RBC_Task(self.quadcopter_config, self.uniform_rbcpid)
-            uniform_rbc_result = uniform_rbc_task.executeTask()
-            UniRBC.append(uniform_rbc_result)
 
 
-            # print("Baseline Controller 1 ")
-            # print(np.average(Baseline1))
-            #
-            # print("Baseline Controller 2 ")
-            # print(np.average(Baseline2))
-            #
-            # print("Uni RBC Average")
-            # print(np.average(UniRBC))
 
+            results = [Baseline1,
+                       Baseline2,
 
-            results = [np.average(Baseline1),
-                       np.average(Baseline2),
-                       np.average(UniRBC)
-                   ]
-            # print("Iteration -LOE- "+ str(i)+ "/"+ str(self.generalConfig.number_iterations))
-            # print("Controller 1 , Controller 2, Uni RBC")
-            # print(results)
-            # print("----------------")
-        return results
+                       ]
+
+        wilcoxon_results = stats.wilcoxon(results[0], results[1])
+        # print("Iteration - Rotor LOE- "+ str(i)+ "/"+ str(self.generalConfig.number_iterations))
+        # print("Controller 1 , Controller 2, Uni RBC")
+        # print(results)
+        # print("----------------")
+        return wilcoxon_results, results
 
 def main():
     # Create an environment
     CONFIG_FACTORY = ConfigFactory()
     config = CONFIG_FACTORY.merge()
     print("----------------")
-    print("Comparison on LOE Conditions - Running")
+    print("Comparison on RotorLOE Conditions - Running")
     Experiment1 = Experiment(**config.Experiment)
-    experimental_results = Experiment1.run()
+    wilcoxon_results, experimental_results = Experiment1.run()
+    print(wilcoxon_results)
+    print("Baseline Controller 1 -  MEAN, STD")
+    print(np.mean(experimental_results[0]), np.std(experimental_results[0]))
+    print("Baseline Controller 2 -  MEAN, STD")
+    print(np.mean(experimental_results[1]), np.std(experimental_results[1]))
 
-    print("Controller 1 , Controller 2, Uni RBC")
-    print(experimental_results)
-    print("----------------")
+
+    # print(experimental_results)
 
     return
-
-
 
 if __name__ == "__main__":
     main()

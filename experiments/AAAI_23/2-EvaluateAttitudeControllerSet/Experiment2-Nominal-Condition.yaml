@@ -1,8 +1,7 @@
 Experiment:
   experiment_config:
-    number_iterations: 100
-    random_seed: 3141
-
+    number_iterations: 50
+    random_seed: 70822
   quadcopter3D:
     Env:
       RotorFault:
@@ -52,7 +51,8 @@ Experiment:
     Path:
       randomPath: True
       randomSeed: 1
-      randomLimit: 8
+      number_waypoints: 5
+      randomLimit: 10
       waypoints:
         x: [ 0, 0, 5, 0, -5, 0  , 5, 0 ]
         y: [ 0, 0, 0, 5,  0, -5 , 0, 0 ]
@@ -66,13 +66,13 @@ Experiment:
     POSITION_CONTROLLER: [
       [ 200, 200, 7000 ],
       [ 0.05, 0.05, 25 ],
-      [ 400, 400, 7000 ]
+      [ 300, 300, 7000 ]
     ]
     ATTITUDE_CONTROLLER_SET: [
       [
-        [ 14782 , 14782, 1500 ],
+        [ 16408 , 16408, 1500 ],
         [ 0,  0, 1.2 ],
-        [ 2030,  2030, 0 ]
+        [ 3959,  3959, 0 ]
       ]
     ]
     SWITCH_DELAY: 10000
@@ -86,13 +86,13 @@ Experiment:
     POSITION_CONTROLLER: [
       [ 200, 200, 7000 ],
       [ 0.05, 0.05, 25 ],
-      [ 400, 400, 7000 ]
+      [ 300, 300, 7000 ]
     ]
     ATTITUDE_CONTROLLER_SET: [
       [
-        [ 18209 , 18209, 1500 ],
+        [ 24542 , 24542, 1500 ],
         [ 0,  0, 1.2 ],
-        [ 5826, 5826, 0 ]
+        [ 6260, 6260, 0 ]
       ]
     ]
     SWITCH_DELAY: 10000
@@ -106,18 +106,18 @@ Experiment:
     POSITION_CONTROLLER: [
       [ 200, 200, 7000 ],
       [ 0.05, 0.05, 25 ],
-      [ 400, 400, 7000 ]
+      [ 300, 300, 7000 ]
     ]
     ATTITUDE_CONTROLLER_SET: [
       [
-        [ 14782 , 14782, 1500 ],
+        [ 16408 , 16408, 1500 ],
         [ 0,  0, 1.2 ],
-        [ 2030,  2030, 0 ]
+        [ 3959,  3959, 0 ]
       ],
       [
-        [ 18209 , 18209, 1500 ],
+        [ 24542 , 24542, 1500 ],
         [ 0,  0, 1.2 ],
-        [ 5826, 5826, 0 ]
+        [ 6260, 6260, 0 ]
       ]
     ]
     RBC_DISTRIBUTION_PARAMETERS: [ 1,1 ]
