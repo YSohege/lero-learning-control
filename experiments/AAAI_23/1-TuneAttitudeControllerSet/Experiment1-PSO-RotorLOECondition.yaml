@@ -1,129 +1,93 @@
-Experiment:
-  experiment_config:
-    number_iterations: 100
-    random_seed: 70822
-
-  quadcopter3D:
-    Env:
-      RotorFault:
-        enabled: True
-        min_magnitude: 0
-        magnitude: 0.3
-        max_magnitude: 0.30
-        randomTime: True
-        starttime: 300
-        endtime: 31000
-        randomRotor: True
-        faultRotorID: 1
-      Wind:
-        enabled: False
-        min_magnitude: 0
-        magnitude: 2
-        max_magnitude: 3
-        randomTime: True
-        starttime: 100
-        endtime: 31000
-        randomDirection: True
-        direction: 1
-      PositionNoise:
-        enabled: False
-        min_magnitude: 0
-        magnitude: 0.3
-        max_magnitude: 0.3
-        randomTime: True
-        starttime: 100
-        endtime: 31000
-      AttitudeNoise:
-        enabled: False
-        min_magnitude: 0
-        magnitude: 0.1
-        max_magnitude: 0.1
-        randomTime: True
-        starttime: 100
-        endtime: 31000
-    Quad:
-      position: [ 0, 0, 0 ]
-      orientation: [ 0, 0, 0 ]
-      L: 0.3
-      r: 0.1
-      prop_size: [ 10, 4.5 ]
-      weight: 1.2
-      control_freq: 200
-    Path:
-      randomPath: True
-      randomSeed: 1
-      number_waypoints: 5
-      randomLimit: 10
-      waypoints:
-        x: [ 0, 0, 5, 0, -5, 0  , 5, 0 ]
-        y: [ 0, 0, 0, 5,  0, -5 , 0, 0 ]
-        z: [ 0, 5, 5, 5,  5, 5  , 5, 5 ]
-      safetyRadius: 1
-      maxStepsPerRun: 3000
-      stablilizationAtGoal: 50
-      numberRounds: 1
-    render: False
-  baseline_controller1:
-    POSITION_CONTROLLER: [
-      [ 200, 200, 7000 ],
-      [ 0.05, 0.05, 25 ],
-      [ 300, 300, 7000 ]
-    ]
-    ATTITUDE_CONTROLLER_SET: [
-      [
-        [ 16408 , 16408, 1500 ],
-        [ 0,  0, 1.2 ],
-        [ 3959,  3959, 0 ]
-      ]
-    ]
-    SWITCH_DELAY: 10000
-    Z_LIMITS: [ 0,10000 ]
-    TILT_LIMITS: [ -10,10 ]
-    MOTOR_LIMITS: [ 0, 9000 ]
-    YAW_CONTROL_LIMITS: [ -900, 900 ]
-    YAW_RATE_SCALER: 0.18
-    Z_XY_OFFSET: 500
-  baseline_controller2:
-    POSITION_CONTROLLER: [
-      [ 200, 200, 7000 ],
-      [ 0.05, 0.05, 25 ],
-      [ 300, 300, 7000 ]
-    ]
-    ATTITUDE_CONTROLLER_SET: [
-      [
-        [ 24542 , 24542, 1500 ],
-        [ 0,  0, 1.2 ],
-        [ 6260, 6260, 0 ]
-      ]
-    ]
-    SWITCH_DELAY: 10000
-    Z_LIMITS: [ 0,10000 ]
-    TILT_LIMITS: [ -10,10 ]
-    MOTOR_LIMITS: [ 0, 9000 ]
-    YAW_CONTROL_LIMITS: [ -900, 900 ]
-    YAW_RATE_SCALER: 0.18
-    Z_XY_OFFSET: 500
-  uniform_rbc_pid:
-    POSITION_CONTROLLER: [
-      [ 200, 200, 7000 ],
-      [ 0.05, 0.05, 25 ],
-      [ 300, 300, 7000 ]
-    ]
-    ATTITUDE_CONTROLLER_SET: [
-      [
-        [ 16408 , 16408, 1500 ],
-        [ 0,  0, 1.2 ],
-        [ 3959,  3959, 0 ]
-      ],
-      [
-        [ 24542 , 24542, 1500 ],
-        [ 0,  0, 1.2 ],
-        [ 6260, 6260, 0 ]
-      ]
-    ]
-    RBC_DISTRIBUTION_PARAMETERS: [ 1,1 ]
-    Z_LIMITS: [ 0,10000 ]
-    TILT_LIMITS: [ -10,10 ]
-    MOTOR_LIMITS: [ 0, 9000 ]
-    YAW_CONTROL_LIMITS: [ -900, 900 ]
-    YAW_RATE_SCALER: 0.18
+Experiment :
+  random_seed: 70822
+  numberIterations: 5
+  PSO :
+     random_seed: 1
+     NumberParticles  : 50
+     c1  : 1
+     c2  : 1.5
+     Wmin : 0.3
+     Wmax : 1
+     w  : 1
+     maxVelocity : 500
+     ParameterRanges  :
+       P :
+         min : 1
+         max : 30000
+       I :
+         min : 1
+         max : 1
+       D :
+         min : 1
+         max : 10000
+     Env:
+        Env :
+          RotorFault:
+              enabled: True
+              min_magnitude : 0
+              magnitude : 0.3
+              max_magnitude : 0.30
+              randomTime : True
+              starttime: 100
+              endtime : 31000
+              randomRotor : True
+              faultRotorID : 1
+          Wind:
+              enabled: False
+              min_magnitude : 0
+              magnitude : 2
+              max_magnitude : 3
+              randomDirection :  True
+              direction : 1
+          PositionNoise:
+              enabled: False
+              min_magnitude: 0
+              magnitude: 0.3
+              max_magnitude : 0.3
+          AttitudeNoise:
+              enabled: False
+              min_magnitude : 0
+              magnitude : 0.1
+              max_magnitude : 0.1
+        Quad:
+            position: [0, 0, 0]
+            orientation: [0, 0, 0]
+            L: 0.3
+            r: 0.1
+            prop_size: [10, 4.5]
+            weight: 1.2
+            control_freq: 200
+        Path:
+          randomPath: True
+          randomSeed: 1
+          number_waypoints: 5
+          randomLimit: 10
+          waypoints:
+            x: [0, 0, 5, 0, -5, 0  , 5, 0]
+            y: [0, 0, 0, 5,  0, -5 , 0, 0]
+            z: [0, 5, 5, 5,  5, 5  , 5, 5]
+          safetyRadius: 1
+          maxStepsPerRun: 1500
+          stablilizationAtGoal: 50
+          numberRounds: 1
+        render : False
+     Controller:
+        POSITION_CONTROLLER: [
+         [ 200, 200, 7000 ],
+         [ 0.05, 0.05, 25 ],
+         [ 300, 300, 7000 ]
+        ]
+        ATTITUDE_CONTROLLER_SET: [
+                           [
+                             [0 , 0, 1500],
+                             [0,  0, 1.2],
+                             [0,  0, 0]
+                          ]
+                       ]
+        Z_LIMITS : [0,10000]
+        TILT_LIMITS : [-10,10]
+        MOTOR_LIMITS : [0, 9000]
+        YAW_CONTROL_LIMITS : [-900, 900]
+        YAW_RATE_SCALER : 0.18
+        Z_XY_OFFSET: 500
+     render : False
