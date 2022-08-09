@@ -181,7 +181,7 @@ class RBCPID(BaseController):
         yaw_err  =target_euler[2] - state[8]
 
         self.info['condensedObs'] = [self.info['mse'],roll_err,pitch_err,yaw_err ]
-        return self.info['condensedObs'] , self.rew, self.done, self.info
+        return self.obs, self.rew, self.done, self.info
 
     def _PIDPositionControl(self,
                                state,

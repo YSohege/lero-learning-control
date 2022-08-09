@@ -20,7 +20,7 @@ class Blended_Control_Task(gym.Env):
     def __init__(self, quadcopter3D , rbc_pid ):
         self.quadcopter = quadcopter3D
         self.controller = rbc_pid
-
+        self.faultChance = 5 # 80 percent chance
         # Create controller.
         self.env_func = partial(make,
                            'quadcopter3D',
@@ -31,13 +31,13 @@ class Blended_Control_Task(gym.Env):
                     self.env_func,
                     **self.controller
                     )
-        self.maxConcentration = 3
+        self.maxConcentration = 5
         actionS = np.array([self.maxConcentration] *len(self.controller.RBC_DISTRIBUTION_PARAMETERS))
         self.action_space = spaces.MultiDiscrete(actionS)
 
-
+        self.obsLen =15
         #state and target of quadcopter
-        self.observation_space = spaces.Box(low=0, high=1, shape=( 1, 4))
+        self.observation_space = spaces.Box(low=0, high=1, shape=( 1, self.obsLen))
         obs, info = self.ctrl.reset()
 
 
@@ -70,6 +70,10 @@ class Blended_Control_Task(gym.Env):
         self.actions = []
         self.episode_cum_rew = 0
         self.quadcopter.Path.randomSeed = random.randint(1,100000)
+        #gives a small chance of nominal conditions and large chance of fault
+        self.quadcopter.Env.RotorFault.enabled = False if random.randint(1,self.faultChance) == 1 else True
+
+
         self.env_func = partial(make,
                                 'quadcopter3D',
                                 **self.quadcopter
@@ -82,8 +86,8 @@ class Blended_Control_Task(gym.Env):
 
         #initial step with default parameters
         obs, info = self.ctrl.reset()
-        info['condensedObs'] = [0,0,0,0]
-        obs = info['condensedObs']
+        # info['condensedObs'] = [0] * self.obsLen
+        # obs = info['condensedObs']
 
         return np.array(obs)
 
@@ -93,7 +97,7 @@ class Blended_Control_Task(gym.Env):
         obs, rew, done , info = self.ctrl.step(action)
         # print(str(action) + " " + str(rew) )
 
-        obs = info['condensedObs']
+        # obs = info['condensedObs']
         self.actions.append(action)
         self.episode_cum_rew += rew
 

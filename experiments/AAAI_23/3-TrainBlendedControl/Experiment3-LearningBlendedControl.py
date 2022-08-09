@@ -19,13 +19,13 @@ def main():
     env = Blended_Control_Task(config.Task.quadcopter3D, config.Task.rbc_pid )
 
     policy_kwargs = dict(activation_fn=th.nn.LeakyReLU,
-                         net_arch=[dict(pi=[64,64,64], vf=[64, 64,64])])
+                         net_arch=[dict(pi=[32,32,32], vf=[32, 32,32])])
 
     random.seed(config.Task.random_seed)
     model = PPO("MlpPolicy", env, policy_kwargs=policy_kwargs, verbose=1, tensorboard_log="./trainingLog/" )
     # model = PPO.load("blendingAgent", env=env)
     model.learn(total_timesteps=config.Task.number_steps)
-    model.save("blendingAgent-2")
+    model.save("blendingAgent-3")
 
 
     return

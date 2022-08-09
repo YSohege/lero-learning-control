@@ -61,7 +61,7 @@ class Experiment():
         UniRBC = []
         RLRBC = []
         FixedRBC = []
-
+        NN_average_output = [[],[]]
         for i in range(self.generalConfig.number_iterations):
             self.quadcopter_config.Path.randomSeed = random.randint(0, 100000)
             faultStart = random.randint(0, 1000)
@@ -99,39 +99,51 @@ class Experiment():
             UniRBC.append(uniform_rbc_result)
 
             rl_rbc_task = RL_RBC_Task(self.quadcopter_config, self.rl_rbc_pid)
-            rl_rbc_result = rl_rbc_task.executeTask()
+            rl_rbc_result, average_action = rl_rbc_task.executeTask()
             RLRBC.append(rl_rbc_result)
+            NN_average_output[0].append(average_action[0])
+            NN_average_output[1].append(average_action[1])
 
             fixed_dist_rbc_task = Fixed_Distribution_RBC_Task(self.quadcopter_config, self.fixed_dist_rbcpid)
             fixed_dist_rbc_result = fixed_dist_rbc_task.executeTask()
             FixedRBC.append(fixed_dist_rbc_result)
 
-            print("Baseline Controller 1 ")
-            print(np.average(Baseline1))
+            print("Baseline Controller 1 mean, std ")
+            print(np.mean(Baseline1))
+            print(np.std(Baseline1))
 
-            print("Baseline Controller 2 ")
-            print(np.average(Baseline2))
+            print("Baseline Controller 2 mean, std ")
+            print(np.mean(Baseline2))
+            print(np.std(Baseline2))
 
-            print("Opt Switching Average - "+str(self.optimal_mmac_pid_0.SWITCH_DELAY)+" delay ")
-            print(np.average(OptSwitch0))
+            print("Opt Switching mean, std - "+str(self.optimal_mmac_pid_0.SWITCH_DELAY)+" delay ")
+            print(np.mean(OptSwitch0))
+            print(np.std(OptSwitch0))
 
-            print("Opt Switching Average -  "+str(self.optimal_mmac_pid_1.SWITCH_DELAY)+" delay ")
-            print(np.average(OptSwitch1))
+            print("Opt Switching mean, std -  "+str(self.optimal_mmac_pid_1.SWITCH_DELAY)+" delay ")
+            print(np.mean(OptSwitch1))
+            print(np.std(OptSwitch1))
 
-            print("Opt Switching Average -  "+str(self.optimal_mmac_pid_2.SWITCH_DELAY)+" delay ")
-            print(np.average(OptSwitch2))
+            print("Opt Switching mean, std -  "+str(self.optimal_mmac_pid_2.SWITCH_DELAY)+" delay ")
+            print(np.mean(OptSwitch2))
+            print(np.std(OptSwitch2))
 
-            print("Opt Switching Average - "+str(self.optimal_mmac_pid_3.SWITCH_DELAY)+" delay ")
-            print(np.average(OptSwitch3))
+            print("Opt Switching mean, std - "+str(self.optimal_mmac_pid_3.SWITCH_DELAY)+" delay ")
+            print(np.mean(OptSwitch3))
+            print(np.std(OptSwitch3))
 
-            print("Uni RBC Average")
-            print(np.average(UniRBC))
+            print("Uni RBC mean, std")
+            print(np.mean(UniRBC))
+            print(np.std(UniRBC))
 
-            print("RL RBC Average")
-            print(np.average(RLRBC))
+            print("RL RBC mean, std")
+            print(np.mean(RLRBC))
+            print(np.std(RLRBC))
+            print(np.average(NN_average_output[0]), np.average(NN_average_output[1]))
 
-            print("Fixed RBC Average")
-            print(np.average(FixedRBC))
+            print("Fixed RBC mean, std")
+            print(np.mean(FixedRBC))
+            print(np.std(FixedRBC))
             print("-------------"+ str(i+1)+"/"+str(self.generalConfig.number_iterations)+"----------")
 
 

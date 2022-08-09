@@ -120,6 +120,24 @@ class Task(gym.Env):
         total_trajectory_loss = -total_trajectory_loss
         return total_trajectory_loss
 
+    def get_average_action(self, results):
+
+        av_action_P = []
+        av_action_D = []
+        # Plot the experiment.
+        for i in range(len(results['info'])):
+            # Step the environment and print all returned information.
+            obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], \
+                                              results['info'][i], results['action'][i]
+            av_action_P.append(float(action[0]))
+            av_action_D.append(float(action[1]))
+
+        action_P = np.average(av_action_P)
+        action_D = np.average(av_action_D)
+
+        return [action_P, action_D]
+
+
     def executeTask(self):
         """The main function creating, running, and closing an environment.
 
@@ -146,13 +164,14 @@ class Task(gym.Env):
         results = ctrl.run(iterations=STEPS)
 
         total_trajectory_loss = self.get_result(results)
+        average_action = self.get_average_action(results)
         savePath = "Experiment_Database"
         datapoint = self.createDataPoint(results, self.quadcopter, self.controller, savePath=savePath)
 
         END = time.time()
         # print(str(END - START) + " seconds run time")
 
-        return total_trajectory_loss
+        return total_trajectory_loss , average_action
 
 
 

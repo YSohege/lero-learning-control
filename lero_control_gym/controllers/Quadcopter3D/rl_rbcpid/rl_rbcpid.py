@@ -148,10 +148,11 @@ class RL_RBCPID(BaseController):
             throttle, target_euler, pos_e = self._PIDPositionControl(state, target)
 
             rpms = self._PIDAttitudeControl(state, throttle, target_euler)
+            supervisoryObs = np.array([pos_e, target_euler[0]-state[6],  target_euler[1]-state[7], target_euler[2]-state[8] ])
+            # print(supervisoryObs)
+            action = self._supervisoryControl(supervisoryObs, rpms)
 
-            action = self._supervisoryControl(obs, rpms)
-
-            self.updateResultDict(obs, reward, done, info, action)
+            self.updateResultDict(obs, reward, done, info, self.alpha)
 
         self.close_results_dict()
 
@@ -177,7 +178,7 @@ class RL_RBCPID(BaseController):
 
         self.obs, self.rew, self.done, self.info = self.env.step(self.control_action)
 
-        self.updateResultDict(self.obs, self.rew, self.done, self.info , self.control_action)
+        self.updateResultDict(self.obs, self.rew, self.done, self.info , self.alpha)
 
         return self.obs, self.rew, self.done, self.info
 
@@ -274,7 +275,7 @@ class RL_RBCPID(BaseController):
 
     def _supervisoryControl(self, obs, rpms):
         #predict the blending distribution parameters using the trained network
-        obs = obs.reshape((1,15))
+        obs = obs.reshape((1,4))
         action = self.model.predict(obs)[0]
         action = [a+1 for a in action]
         self.alpha = action
