@@ -1,6 +1,6 @@
 Task:
-  random_seed: 70822
-  number_steps : 10000000
+  random_seed: 100822
+  number_steps : 30000000
   quadcopter3D:
     Env:
       RotorFault:

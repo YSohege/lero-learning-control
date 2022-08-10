@@ -1,5 +1,5 @@
 import random
-
+import matplotlib.pyplot as plt
 import numpy as np
 
 from lero_control_gym.utils.configuration import ConfigFactory
@@ -168,6 +168,14 @@ def main():
     Experiment1 = Experiment(**config.Experiment)
     experimental_results = Experiment1.run()
     # print(experimental_results)
+    fig = plt.figure(figsize =(12, 7))
+    ax =fig.add_subplot(111)
+    labels = ['C1', 'C2', 'OS- 0 delay', 'OS- 1s delay','OS- 2s delay', 'OS- 3s delay', 'RBC-Uni', 'RBC-Man', 'RBC-NN']
+    ax.boxplot(experimental_results)
+    ax.set_xticklabels(labels)
+    plt.title("Nominal Conditions")
+    plt.savefig('NominalConditions.png')
+
 
     return
 
