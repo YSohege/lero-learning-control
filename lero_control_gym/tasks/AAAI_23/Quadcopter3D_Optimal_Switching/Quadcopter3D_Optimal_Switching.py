@@ -92,7 +92,7 @@ class Task():
 
         total_trajectory_loss = get_result(results)
 
-        datapoint = createDataPoint(results, self.quadcopter, self.controller, savePath=savePath)
+        # datapoint = createDataPoint(results, self.quadcopter, self.controller, savePath=savePath)
 
         END = time.time()
         # print(str(END - START) + " seconds run time")

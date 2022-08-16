@@ -27,12 +27,12 @@ def main():
             # model = PPO.load("blendingAgent", env=env)
             model.learn(total_timesteps=config.Task.number_steps)
 
-            files = [f for f in os.listdir("./trainedAgents")]
-            model.save("./trainedAgents/Agent-" + str(len(files)))
+            files = [f for f in os.listdir("trainedAgentsAAAI23")]
+            model.save("./trainedAgentsAAAI23/Agent-" + str(len(files)))
 
         except Exception:
-            files = [f for f in os.listdir("./trainedAgents")]
-            model.save("./trainedAgents/InterruptedAgent-" + str(len(files)))
+            files = [f for f in os.listdir("trainedAgentsAAAI23")]
+            model.save("./trainedAgentsAAAI23/InterruptedAgent-" + str(len(files)))
 
 
     return

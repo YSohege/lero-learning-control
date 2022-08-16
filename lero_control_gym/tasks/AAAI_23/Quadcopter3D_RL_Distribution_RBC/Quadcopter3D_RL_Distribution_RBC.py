@@ -166,7 +166,7 @@ class Task(gym.Env):
         total_trajectory_loss = self.get_result(results)
         average_action = self.get_average_action(results)
         savePath = "Experiment_Database"
-        datapoint = self.createDataPoint(results, self.quadcopter, self.controller, savePath=savePath)
+        # datapoint = self.createDataPoint(results, self.quadcopter, self.controller, savePath=savePath)
 
         END = time.time()
         # print(str(END - START) + " seconds run time")

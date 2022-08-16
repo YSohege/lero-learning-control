@@ -70,14 +70,14 @@ class Experiment():
             self.quadcopter_config.Env.PositionNoise.starttime = faultStart
             self.quadcopter_config.Env.AttitudeNoise.starttime = faultStart
 
-            baseline_task1 = Optimal_Switching_Task(self.quadcopter_config, self.baseline_controller1)
-            baseline_result1 = baseline_task1.executeTask()
-            Baseline1.append(baseline_result1)
-
-            baseline_task2 = Optimal_Switching_Task(self.quadcopter_config, self.baseline_controller2)
-            baseline_result2 = baseline_task2.executeTask()
-            Baseline2.append(baseline_result2)
+            # baseline_task1 = Optimal_Switching_Task(self.quadcopter_config, self.baseline_controller1)
+            # baseline_result1 = baseline_task1.executeTask()
+            # Baseline1.append(baseline_result1)
             #
+            # baseline_task2 = Optimal_Switching_Task(self.quadcopter_config, self.baseline_controller2)
+            # baseline_result2 = baseline_task2.executeTask()
+            # Baseline2.append(baseline_result2)
+            # #
             optimal_switching_task0 = Optimal_Switching_Task(self.quadcopter_config, self.optimal_mmac_pid_0)
             optimal_switching_result0 = optimal_switching_task0.executeTask()
             OptSwitch0.append(optimal_switching_result0)
@@ -108,13 +108,13 @@ class Experiment():
             fixed_dist_rbc_result = fixed_dist_rbc_task.executeTask()
             FixedRBC.append(fixed_dist_rbc_result)
 
-            print("Baseline Controller 1 mean, std ")
-            print(np.mean(Baseline1))
-            print(np.std(Baseline1))
-
-            print("Baseline Controller 2 mean, std ")
-            print(np.mean(Baseline2))
-            print(np.std(Baseline2))
+            # print("Baseline Controller 1 mean, std ")
+            # print(np.mean(Baseline1))
+            # print(np.std(Baseline1))
+            #
+            # print("Baseline Controller 2 mean, std ")
+            # print(np.mean(Baseline2))
+            # print(np.std(Baseline2))
 
             print("Opt Switching mean, std - "+str(self.optimal_mmac_pid_0.SWITCH_DELAY)+" delay ")
             print(np.mean(OptSwitch0))
@@ -147,8 +147,7 @@ class Experiment():
             print("-------------"+ str(i+1)+"/"+str(self.generalConfig.number_iterations)+"----------")
 
 
-            results = [Baseline1,
-                       Baseline2,
+            results = [
                        OptSwitch0,
                        OptSwitch1,
                        OptSwitch2,
@@ -166,13 +165,35 @@ def main():
 
     Experiment1 = Experiment(**config.Experiment)
     experimental_results = Experiment1.run()
+
+
     # print(experimental_results)
     fig = plt.figure(figsize =(12, 7))
     ax = fig.add_subplot(111)
-    labels = ['C1', 'C2', 'OS- 0 delay', 'OS- 1s delay', 'OS- 2s delay', 'OS- 3s delay', 'RBC-Uni', 'RBC-Man', 'RBC-NN']
-    ax.boxplot(experimental_results)
-    ax.set_xticklabels(labels)
-    plt.title("Rotor LOE - 30%")
+
+    labels = ('Trad-0', 'Trad-1', 'Trad-2', 'Trad-3', 'RBC-Uni', 'RBC-Man', 'RBC-RL')
+    y_pos = np.arange(len(labels))
+    performance = [
+                          np.mean( experimental_results[0]),
+                          np.mean( experimental_results[1]),
+                          np.mean( experimental_results[2]),
+                          np.mean( experimental_results[3]),
+                          np.mean( experimental_results[4]),
+                          np.mean( experimental_results[5]),
+                          np.mean( experimental_results[6])
+    ]
+
+    plt.bar(y_pos, performance, align='center', alpha=0.8, color=['grey','deepskyblue', 'darkorange', 'seagreen', 'purple', 'lightcoral', 'gold'])
+
+    plt.rcParams.update({'font.size': 16})
+
+    plt.xticks(y_pos, labels ,fontsize=16)
+
+
+    plt.ylabel('Operational Volume Loss - mean (1000 eps)',fontsize=16)
+
+    # plt.gca().set_ylim([-250, -400])
+    plt.title("Supervisory Controller Comparison - Rotor LOE 30%")
     plt.savefig('RotorLOE.png')
     return
 
