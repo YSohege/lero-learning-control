@@ -1,7 +1,7 @@
 Experiment:
   experiment_config:
-    number_iterations: 3
-    random_seed: 1008
+    number_iterations: 1000
+    random_seed: 160822
   quadcopter3D:
     Env:
       RotorFault:
@@ -228,7 +228,7 @@ Experiment:
     YAW_RATE_SCALER: 0.18
     Z_XY_OFFSET: 500
   rl_rbc_pid:
-    TRAINED_NETWORK_PATH : './trainedAgents/blendingAgent-GPU'
+    TRAINED_NETWORK_PATH : './trainedAgentsAAAI23/Agent-0'
     POSITION_CONTROLLER: [
       [ 200, 200, 7000 ],
       [ 0.05, 0.05, 25 ],

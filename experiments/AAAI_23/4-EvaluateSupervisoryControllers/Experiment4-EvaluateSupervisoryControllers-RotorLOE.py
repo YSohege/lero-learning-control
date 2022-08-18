@@ -116,35 +116,35 @@ class Experiment():
             # print(np.mean(Baseline2))
             # print(np.std(Baseline2))
 
-            print("Opt Switching mean, std - "+str(self.optimal_mmac_pid_0.SWITCH_DELAY)+" delay ")
-            print(np.mean(OptSwitch0))
-            print(np.std(OptSwitch0))
-
-            print("Opt Switching mean, std -  "+str(self.optimal_mmac_pid_1.SWITCH_DELAY)+" delay ")
-            print(np.mean(OptSwitch1))
-            print(np.std(OptSwitch1))
-
-            print("Opt Switching mean, std -  "+str(self.optimal_mmac_pid_2.SWITCH_DELAY)+" delay ")
-            print(np.mean(OptSwitch2))
-            print(np.std(OptSwitch2))
-
-            print("Opt Switching mean, std - "+str(self.optimal_mmac_pid_3.SWITCH_DELAY)+" delay ")
-            print(np.mean(OptSwitch3))
-            print(np.std(OptSwitch3))
-
-            print("Uni RBC mean, std")
-            print(np.mean(UniRBC))
-            print(np.std(UniRBC))
-
-            print("RL RBC mean, std")
-            print(np.mean(RLRBC))
-            print(np.std(RLRBC))
-            print(np.average(NN_average_output[0]), np.average(NN_average_output[1]))
-
-            print("Fixed RBC mean, std")
-            print(np.mean(FixedRBC))
-            print(np.std(FixedRBC))
-            print("-------------"+ str(i+1)+"/"+str(self.generalConfig.number_iterations)+"----------")
+            # print("Opt Switching mean, std - "+str(self.optimal_mmac_pid_0.SWITCH_DELAY)+" delay ")
+            # print(np.mean(OptSwitch0))
+            # print(np.std(OptSwitch0))
+            #
+            # print("Opt Switching mean, std -  "+str(self.optimal_mmac_pid_1.SWITCH_DELAY)+" delay ")
+            # print(np.mean(OptSwitch1))
+            # print(np.std(OptSwitch1))
+            #
+            # print("Opt Switching mean, std -  "+str(self.optimal_mmac_pid_2.SWITCH_DELAY)+" delay ")
+            # print(np.mean(OptSwitch2))
+            # print(np.std(OptSwitch2))
+            #
+            # print("Opt Switching mean, std - "+str(self.optimal_mmac_pid_3.SWITCH_DELAY)+" delay ")
+            # print(np.mean(OptSwitch3))
+            # print(np.std(OptSwitch3))
+            #
+            # print("Uni RBC mean, std")
+            # print(np.mean(UniRBC))
+            # print(np.std(UniRBC))
+            #
+            # print("RL RBC mean, std")
+            # print(np.mean(RLRBC))
+            # print(np.std(RLRBC))
+            # print(np.average(NN_average_output[0]), np.average(NN_average_output[1]))
+            #
+            # print("Fixed RBC mean, std")
+            # print(np.mean(FixedRBC))
+            # print(np.std(FixedRBC))
+            # print("-------------"+ str(i+1)+"/"+str(self.generalConfig.number_iterations)+"----------")
 
 
             results = [
@@ -167,11 +167,12 @@ def main():
     experimental_results = Experiment1.run()
 
 
+
     # print(experimental_results)
     fig = plt.figure(figsize =(12, 7))
     ax = fig.add_subplot(111)
 
-    labels = ('Trad-0', 'Trad-1', 'Trad-2', 'Trad-3', 'RBC-Uni', 'RBC-Man', 'RBC-RL')
+    labels = ('', 'Trad-0', 'Trad-1', 'Trad-2', 'Trad-3', 'RBC-Uni', 'RBC-Man', 'RBC-RL')
     y_pos = np.arange(len(labels))
     performance = [
                           np.mean( experimental_results[0]),
@@ -184,15 +185,15 @@ def main():
     ]
 
     plt.bar(y_pos, performance, align='center', alpha=0.8, color=['grey','deepskyblue', 'darkorange', 'seagreen', 'purple', 'lightcoral', 'gold'])
-
+    #plt.boxplot(experimental_results)
     plt.rcParams.update({'font.size': 16})
-
+    print(experimental_results)
     plt.xticks(y_pos, labels ,fontsize=16)
 
 
-    plt.ylabel('Operational Volume Loss - mean (1000 eps)',fontsize=16)
+    plt.ylabel('Operational Volume Loss - (1000 eps)',fontsize=16)
 
-    # plt.gca().set_ylim([-250, -400])
+    # plt.gca().set_ylim([0, -400])
     plt.title("Supervisory Controller Comparison - Rotor LOE 30%")
     plt.savefig('RotorLOE.png')
     return
