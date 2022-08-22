@@ -4,10 +4,10 @@ import numpy as np
 
 from lero_control_gym.utils.configuration import ConfigFactory
 
-from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Uniform_RBC.Quadcopter3D_Uniform_RBC import Task as Uniform_RBC_Task
-from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Optimal_Switching.Quadcopter3D_Optimal_Switching import Task as Optimal_Switching_Task
-from lero_control_gym.tasks.AAAI_23.Quadcopter3D_Fixed_Distribution_RBC.Quadcopter3D_Fixed_Distribution_RBC import Task as Fixed_Distribution_RBC_Task
-from lero_control_gym.tasks.AAAI_23.Quadcopter3D_RL_Distribution_RBC.Quadcopter3D_RL_Distribution_RBC import Task as RL_RBC_Task
+from lero_control_gym.tasks.Quadcopter3D_Uniform_RBC.Quadcopter3D_Uniform_RBC import Task as Uniform_RBC_Task
+from lero_control_gym.tasks.Quadcopter3D_Optimal_Switching.Quadcopter3D_Optimal_Switching import Task as Optimal_Switching_Task
+from lero_control_gym.tasks.Quadcopter3D_Fixed_Distribution_RBC.Quadcopter3D_Fixed_Distribution_RBC import Task as Fixed_Distribution_RBC_Task
+from lero_control_gym.tasks.Quadcopter3D_RL_Distribution_RBC.Quadcopter3D_RL_Distribution_RBC import Task as RL_RBC_Task
 
 
 class Experiment():
