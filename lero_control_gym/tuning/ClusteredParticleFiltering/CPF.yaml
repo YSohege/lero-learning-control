@@ -1,13 +1,12 @@
 random_seed: 11235813
 numberIterations: 1
-PSO :
-   NumberParticles  : 50
-   c1  : 2
-   c2  : 1.5
-   Wmin : 0.3
-   Wmax : 1
-   w  : 1
-   maxVelocity : 1000
+CPF :
+   NumberParticlesPerDimension: 50
+   numberOfParticlesToSample: 50
+   averagePerformanceLength: 10
+   MaxIter: 100
+   StartingPerformance: -300
+   performanceThreshold: -1000
    ParameterRanges  :
      P :
        min : 1
@@ -18,14 +17,14 @@ PSO :
      D :
        min : 1
        max : 10000
-   Env:
+   Task:
       Env :
         RotorFault:
-            enabled: False
+            enabled: True
             min_magnitude : 0
             magnitude : 0.3
             max_magnitude : 0.30
-            randomTime : False
+            randomTime : True
             starttime: 100
             endtime : 31000
             randomRotor : True

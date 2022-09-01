@@ -318,14 +318,30 @@ class Propeller():
         self.speed = 0 #RPM
         self.thrust = 0
         self.fault_mag = 0
+        self.intermittent_fault = False
+        self.mu = 0.5
+        self.sigma = 0.2  # mean and standard deviation
+
+    def set_intermittent(self, inter , mu, sigma):
+        self.intermittent_fault = inter
+        self.mu = mu
+        self.sigma = sigma
 
     def set_speed(self,speed):
         self.speed = speed
         if self.fault_mag > 0:
             # print(self.fault_mag)
             # print("Speed before :" + str(self.speed))
-            self.speed = self.speed * (1 - self.fault_mag)
+            if self.intermittent_fault:
+                active = np.random.normal(self.mu, self.sigma, 1)
+                if active > 0.5:
+                    self.speed = self.speed * (1 - self.fault_mag)
+                else:
+                    self.speed = self.speed
+            else:
+                self.speed = self.speed * (1 - self.fault_mag)
             # print("Speed after :" + str(self.speed))
+
         # From http://www.electricrcaircraftguy.com/2013/09/propeller-static-dynamic-thrust-equation.html
         self.thrust = 4.392e-8 * self.speed * math.pow(self.dia,3.5)/(math.sqrt(self.pitch))
         self.thrust = self.thrust*(4.23e-4 * self.speed * self.pitch)
@@ -363,9 +379,7 @@ class Quadcopter():
         self.outsideSafezone = False
         self.total_time_outside_safety = 0
         self.done = False
-        self.Env = Env
-        self.faultModes = []
-        self.setEnv()
+
         # print(self.fault_time)
         self.ode =  scipy.integrate.ode(self.state_dot).set_integrator('vode',nsteps=self.CTRL_TIMESTEP,method='bdf')
         self.time = datetime.datetime.now()
@@ -385,7 +399,9 @@ class Quadcopter():
         self.quads['I'] = np.array([[ixx,0,0],[0,iyy,0],[0,0,izz]])
         self.quads['invI'] = np.linalg.inv(self.quads['I'])
 
-
+        self.Env = Env
+        self.faultModes = []
+        self.setEnv()
 
         self.rend = render
         if self.rend: self.setupGUI()
@@ -541,7 +557,7 @@ class Quadcopter():
 #==========Environment related functions =========================
 
     def randomizeQuadcopterEnvironment(self, quad):
-
+        # print(quad)
         config = quad
         count = []
 
@@ -644,6 +660,21 @@ class Quadcopter():
             self.fault_time = self.rotorFaultStart
             self.rotorFaultEnd = self.Env['RotorFault']['endtime']
 
+        if self.Env.RotorFault.enabled and self.Env.RotorFault.intermittent_fault :
+            self.quads['m1'].set_intermittent(True,
+                                              self.Env.RotorFault.intermittent_fault_mean,
+                                              self.Env.RotorFault.intermittent_fault_std)
+            self.quads['m2'].set_intermittent(True,
+                                              self.Env.RotorFault.intermittent_fault_mean,
+                                              self.Env.RotorFault.intermittent_fault_std)
+            self.quads['m3'].set_intermittent(True,
+                                              self.Env.RotorFault.intermittent_fault_mean,
+                                              self.Env.RotorFault.intermittent_fault_std)
+            self.quads['m4'].set_intermittent(True,
+                                              self.Env.RotorFault.intermittent_fault_mean,
+                                              self.Env.RotorFault.intermittent_fault_std)
+
+            # print("Intermittent Fault active")
 
 
         return
