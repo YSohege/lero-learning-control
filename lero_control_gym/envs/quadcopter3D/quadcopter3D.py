@@ -752,6 +752,7 @@ class Quadcopter():
         self.windMag = WindMag
         self.airspeed = 15 # default airspeed
         self.randWind = self.generate_wind_turbulence(5)
+        # print(self.randWind)
         self.XWind = 0
         self.YWind = 0
         self.ZWind = 0
@@ -786,7 +787,7 @@ class Quadcopter():
         mean = 0
         std = 1
         # create a sequence of 1000 equally spaced numeric values from 0 - 5
-        num_samples = self.maxSteps
+        num_samples = self.maxSteps+10
         t_p = np.linspace(0, 10, num_samples)
         samples1 = 10 * np.random.normal(mean, std, size=num_samples)
         samples2 = 10 * np.random.normal(mean, std, size=num_samples)
@@ -905,9 +906,9 @@ class Quadcopter():
 
     def updatePathPosition(self):
 
-        if self.stepNum > self.maxSteps:
+        if self.stepNum >= self.maxSteps:
             self.done = True
-
+            return
         if (self.isAtPosition(self.goals[self.currentWaypoint])):
 
             # if there is another waypoint then set the quadcopters next goal and safety margin

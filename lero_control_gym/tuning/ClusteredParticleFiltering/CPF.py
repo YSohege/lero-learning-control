@@ -113,8 +113,8 @@ class ClusteredParticleFilteringOptimization():
             # for i  in range(I_min, I_max, I_step):
                 for d  in range(D_min, D_max, D_step):
                     # self.particles.append((p, i, d))
-                    startPerf = random.uniform(self.StartingPerformance, -500)
-                    # startPerf = self.StartingPerformance
+                    # startPerf = random.uniform(self.StartingPerformance, -500)
+                    startPerf = self.StartingPerformance
                     self.particles.append((p, d))
                     self.performances.append([startPerf])
                     self.avgPerformances.append(startPerf)
@@ -455,7 +455,7 @@ class ClusteredParticleFilteringOptimization():
             self.cbar = plt.colorbar(p)
 
 
-            self.ax.set_title("Clustered Particle Filtering - Nominal Conditions")
+            self.ax.set_title("Clustered Particle Filtering - Wind")
             # self.ax.set_xlim(self.ParameterRanges.P.min,
             #                  self.ParameterRanges.P.max)
             #
@@ -513,8 +513,8 @@ class ClusteredParticleFilteringOptimization():
                 # if self.render:
                 #     self.render3D()
                 #
-        ControllerParameterSet = [[0,0]]
-        # ControllerParameterSet = self.getCombinedHull()
+        # ControllerParameterSet = [[0,0]]
+        ControllerParameterSet = self.getCombinedHull()
         if EnvCount == 0:
             #Run nominal conditions
             EnvCount += 1

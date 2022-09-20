@@ -1,10 +1,10 @@
 Experiment :
-  random_seed: 194576
+  random_seed: 534289
   numberIterations: 1
   CPF:
     NumberParticlesPerDimension: 20
     numberOfParticlesToSample: 50
-    averagePerformanceLength: 10
+    averagePerformanceLength: 5
     MaxIter: 500
     StartingPerformance: -3000
     performanceThreshold: -500
@@ -36,11 +36,14 @@ Experiment :
           intermittent_fault_mean: 0.5
           intermittent_fault_std: 0.2
         Wind:
-          enabled: False
+          enabled: True
           min_magnitude : 0
-          magnitude : 2
+          magnitude : 3
           max_magnitude : 3
           randomDirection :  True
+          randomTime: True
+          starttime: 300
+          endtime: 31000
           direction : 1
         PositionNoise:
           enabled: False
@@ -61,9 +64,9 @@ Experiment :
         weight: 1.2
         control_freq: 200
       Path:
-        randomPath: False
+        randomPath: True
         randomSeed: 1234
-        number_waypoints: 5
+        number_waypoints: 3
         randomLimit: 10
         waypoints:
             x: [0, 0, 5, 0, -5, 0  , 5, 0]
