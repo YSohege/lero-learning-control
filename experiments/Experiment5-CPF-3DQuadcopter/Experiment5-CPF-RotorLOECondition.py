@@ -19,7 +19,7 @@ class Experiment():
         img_array = []
         for i in range(len(os.listdir("CPF-Images"))):  # (The only change I have made is here to the filepath.)
             img = cv2.imread('CPF-Images/'+str(i+1)+'.png')
-            print(i)
+            # print(i)
             height, width, layers = img.shape
             size = (width, height)
             img_array.append(img)
@@ -53,22 +53,25 @@ class Experiment():
         # p_average = p_average / len(results)
         # d_average = d_average / len(results)
 
-        # return [p_average, d_average]
+        return results
 
 def main():
     # Create an environment
     CONFIG_FACTORY = ConfigFactory()
 
     config = CONFIG_FACTORY.merge()
+
+
+
     Exp = Experiment(config)
     print("===============================")
     START = time.time()
-    print("Running CPF - Rotor Loss of Effectiveness Conditions")
+    print("Running CPF ")
     Exp = Experiment(config)
     result = Exp.run()
     END = time.time()
     print("Experiment took " + str(END - START) + " milli seconds")
-    print("CPF Result - Rotor Loss of Effectiveness Conditions")
+    print("=============CPF Result==================")
     print(result)
     print("===============================")
 

@@ -121,7 +121,7 @@ class ClusteredParticleFilteringOptimization():
 
         for _ in self.particles:
             self.weights.append(1 / len(self.particles))
-
+        self.finished = False
         return
 
 
@@ -281,19 +281,19 @@ class ClusteredParticleFilteringOptimization():
             # if self.avgPerformances[index] >= self.CPFConfig['StartingPerformance']:
                 goodParticles.append(particle)
             index += 1
-        print(len(goodParticles))
+        # print(len(goodParticles))
         if (len(goodParticles) > self.min_sample):
             dbClusters = DBSCAN(eps=self.epsilon, min_samples=self.min_sample).fit(goodParticles)
             labels = dbClusters.labels_
-            print(labels)
+            # print(labels)
             numClusters = max(labels) + 1
             if numClusters == 0:
-                print("no clusters found")
+                # print("no clusters found")
                 self.clusterPoints = []
                 return []
             else:
-                print("Found Clusters: ")
-                print(max(labels) + 1)
+                # print("Found Clusters: ")
+                # print(max(labels) + 1)
                 largestClusterIndex = None
                 largestClusterSize = 0
                 for clusterIndex in set(labels):
@@ -316,12 +316,12 @@ class ClusteredParticleFilteringOptimization():
                 # for ind in ClusterIndexes:
                 #     print(ind)
                 #     ClusterParticles.append(self.particles[ind])
-                print("Good Particles ")
-                print(goodParticles)
-                print("ClusterIndexes of largest cluster")
-                print(ClusterIndexes)
-                print("Particles of largest cluster")
-                print(ClusterParticles)
+                # print("Good Particles ")
+                # print(goodParticles)
+                # print("ClusterIndexes of largest cluster")
+                # print(ClusterIndexes)
+                # print("Particles of largest cluster")
+                # print(ClusterParticles)
                 self.clusterPoints = ClusterParticles
                 hull = ConvexHull(self.clusterPoints)
                 self.currentHull = hull
@@ -330,27 +330,52 @@ class ClusteredParticleFilteringOptimization():
         return []
 
     def calculateClusterAndHull(self):
-
-        cluster = self.clusterParticles()
-        clusterPoints = np.array(cluster)
-        hull = []
-        if not cluster == []:
-            try:
-                hull = ConvexHull(clusterPoints)
-                self.IntermediateHulls.append(hull)
-            except:#
-                print("Hull failed")
-                hull = []
-
+        if not self.currentHull == []:
+            # print(self.clusterPoints[self.currentHull.vertices,0], self.clusterPoints[self.currentHull.vertices,1])
+            hull_indices = np.array(self.currentHull.vertices)
+            hull_pts = []
+            for ind in hull_indices:
+                hull_pts.append(self.clusterPoints[ind])
+            print(hull_pts)
+            self.IntermediateHulls.append(hull_pts)
+        else:
+            print("No Hull Found")
         return
 
+
+    #     cluster = self.clusterParticles()
+    #     clusterPoints = np.array(cluster)
+    #     if not cluster == []:
+    #         try:
+    #             self.currentHull = ConvexHull(clusterPoints)
+    #
+    #         except:
+    #             print("Hull failed")
+    #             hull = []
+
+        # return
+
     def getCombinedHull(self):
-        cluster = self.IntermediateHulls
-        clusterPoints = np.array(cluster)
-        hull = []
-        if not cluster == []:
-            hull = ConvexHull(clusterPoints)
-        return  hull
+        # print(self.IntermediateHulls)
+
+        allpoints = []
+        for hull in self.IntermediateHulls:
+            for point in hull:
+                allpoints.append(point)
+
+
+        if not allpoints == []:
+            hull = ConvexHull(allpoints)
+            hull_indices = np.array(hull.vertices)
+            hull_pts = []
+            for ind in hull_indices:
+                hull_pts.append(allpoints[ind])
+            print("Final Result =" + str(hull_pts))
+            self.clusterPoints = allpoints
+            self.currentHull = hull
+        else:
+            print("Failed combined hull")
+        return hull_pts
 
     def render3D(self):
         self.renderCount +=1
@@ -365,8 +390,6 @@ class ClusteredParticleFilteringOptimization():
             ClusterC = [ 1 for a in clusterPoints ]
             # print(clusterPoints)
             ind = 0
-
-
 
             tileSize =1000/self.NumberParticlesPerDimension
             particles= []
@@ -397,22 +420,10 @@ class ClusteredParticleFilteringOptimization():
 
                 ind += 1
 
-            x = np.arange(self.ParameterRanges.P.min, self.ParameterRanges.P.max,
-                          ((self.ParameterRanges.P.max - self.ParameterRanges.P.min)/self.NumberParticlesPerDimension))
-            y = np.arange(self.ParameterRanges.D.min, self.ParameterRanges.D.max,
-                          ((self.ParameterRanges.D.max - self.ParameterRanges.D.min) / self.NumberParticlesPerDimension))
-
-            X, Y = np.meshgrid(x, y)
-            Z = np.array(particleC) # [self.performanceThreshold] * len(X)
-            # ZData = []
-            # for x in range(1,len(xdata)-1):
-            #     ZData.append([])
-            #     for y in range(1,len(ydata)-1):
-            #         print(x*y)
-            #         perf = self.avgPerformances[y*x]
-            #         print(perf)
-            #         ZData[x-1].append( perf)
-            # print(ZData)
+            # x = np.arange(self.ParameterRanges.P.min, self.ParameterRanges.P.max,
+            #               ((self.ParameterRanges.P.max - self.ParameterRanges.P.min)/self.NumberParticlesPerDimension))
+            # y = np.arange(self.ParameterRanges.D.min, self.ParameterRanges.D.max,
+            #               ((self.ParameterRanges.D.max - self.ParameterRanges.D.min) / self.NumberParticlesPerDimension))
 
             # self.ax1.scatter(particles.T[0], particles.T[1], particles.T[2], alpha=0.01, s=particleS, c=particleC, cmap="Set1")
             p = self.ax.scatter(xdata,ydata, particleC,
@@ -425,9 +436,6 @@ class ClusteredParticleFilteringOptimization():
                             vmin=0,
                             vmax=3000)
 
-            # ============2d scatter plot
-            # self.ax.plot_surface(X,Y, Z, alpha=0.5)
-
             if (len(clusterPoints) > 0):
                 # self.ax.scatter(clusterPoints.T[0], clusterPoints.T[1], clusterPints.T[2], alpha=0.01 , s=ClusterS, c=ClusterC, cmap="Set1")
                 self.ax.scatter(clusterPoints.T[0], clusterPoints.T[1], alpha=1 , marker="s", s=ClusterS, edgecolor="k")
@@ -436,10 +444,10 @@ class ClusteredParticleFilteringOptimization():
                     s = np.append(s, s[0])  # Here we cycle back to the first coordinate
                     self.ax.plot(clusterPoints[s, 0], clusterPoints[s, 1], "k-", linewidth=3)
 
-            for hull in self.IntermediateHulls:
-                for s in hull.simplices:
-                    s = np.append(s, s[0])  # Here we cycle back to the first coordinate
-                    self.ax.plot(clusterPoints[s, 0], clusterPoints[s, 1], "k-")
+            # for hull in self.IntermediateHulls:
+            #     for s in hull.simplices:
+            #         s = np.append(s, s[0])  # Here we cycle back to the first coordinate
+            #         self.ax.plot(clusterPoints[s, 0], clusterPoints[s, 1], "k-")
             # =======
 
 
@@ -455,7 +463,7 @@ class ClusteredParticleFilteringOptimization():
             self.cbar = plt.colorbar(p)
 
 
-            self.ax.set_title("Clustered Particle Filtering - Wind")
+            self.ax.set_title("Clustered Particle Filtering -" + str(self.title))
             # self.ax.set_xlim(self.ParameterRanges.P.min,
             #                  self.ParameterRanges.P.max)
             #
@@ -495,51 +503,48 @@ class ClusteredParticleFilteringOptimization():
     def run(self):
         print("CPF running")
         self.renderCount = 0
+        self.title = ""
         EnvCount = 0
+        Envs = []
         for env in self.Task.Env:
             if self.Task.Env[env].enabled:
-                EnvCount +=1
-                self.initilizeParticles()
+                Envs.append(env)
 
-                if self.render:
-                    self.render3D()
 
-                self.setTaskEnv(env)
+        if Envs == []:
+            Envs.append(None)
 
-                self.runParticleFiltering()
-
-                self.calculateClusterAndHull()
-                #
-                # if self.render:
-                #     self.render3D()
-                #
-        # ControllerParameterSet = [[0,0]]
-        ControllerParameterSet = self.getCombinedHull()
-        if EnvCount == 0:
-            #Run nominal conditions
-            EnvCount += 1
+        for env in Envs:
+            print( "Running " + env)
+            self.title = env
+            EnvCount +=1
             self.initilizeParticles()
 
             if self.render:
                 self.render3D()
 
-            self.setTaskEnv(None)
+            self.setTaskEnv(env)
 
             self.runParticleFiltering()
 
             self.calculateClusterAndHull()
 
 
+            self.currentHull = []
+
+
+
+        ControllerParameterSet = self.getCombinedHull()
+        if self.render:
+            self.render3D()
+        time.sleep(10)
         return ControllerParameterSet
 
 
 def main():
     # Create an environment
     CONFIG_FACTORY = ConfigFactory()
-
     config = CONFIG_FACTORY.merge()
-    # print(config)
-
     random.seed(config.random_seed)
     results = []
     for i in range(config.numberIterations):
@@ -549,24 +554,24 @@ def main():
 
 
 
-    p_average = 0
-    # i_average = 0
-    d_average = 0
-
-    for result in results:
-        p = result[0][0]
-        d = result[0][1]
-        # d = result[0][2]
-        p_average+=p
-        d_average+=d
-        # d_average+=d
-
-    p_average = p_average/len(results)
-    d_average = d_average/len(results)
+    # p_average = 0
+    # # i_average = 0
+    # d_average = 0
+    #
+    # for result in results:
+    #     p = result[0][0]
+    #     d = result[0][1]
+    #     # d = result[0][2]
+    #     p_average+=p
+    #     d_average+=d
+    #     # d_average+=d
+    #
+    # p_average = p_average/len(results)
     # d_average = d_average/len(results)
-
-    print(p_average)
-    print(d_average)
+    # # d_average = d_average/len(results)
+    #
+    # print(p_average)
+    # print(d_average)
 
 
     return
@@ -575,7 +580,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
