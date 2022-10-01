@@ -1,11 +1,11 @@
 Experiment :
-  random_seed: 1342
+  random_seed: 123412341
   numberIterations: 1
   CPF:
     NumberParticlesPerDimension: 20
-    numberOfParticlesToSample: 100
-    averagePerformanceLength: 5
-    MaxIter: 100
+    numberOfParticlesToSample: 50
+    averagePerformanceLength: 10
+    MaxIter: 200
     StartingPerformance: -3000
     performanceThreshold: -500
     min_samples: 4

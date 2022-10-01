@@ -373,9 +373,11 @@ class ClusteredParticleFilteringOptimization():
             print("Final Result =" + str(hull_pts))
             self.clusterPoints = allpoints
             self.currentHull = hull
+            return hull_pts
         else:
             print("Failed combined hull")
-        return hull_pts
+            return []
+
 
     def render3D(self):
         self.renderCount +=1
