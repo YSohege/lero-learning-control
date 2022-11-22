@@ -1,13 +1,13 @@
 Experiment :
-  random_seed: 123412341
+  random_seed: 1123
   numberIterations: 1
   CPF:
     NumberParticlesPerDimension: 20
-    numberOfParticlesToSample: 50
-    averagePerformanceLength: 10
-    MaxIter: 200
+    numberOfParticlesToSample: 20
+    averagePerformanceLength: 5
+    MaxIter: 1000
     StartingPerformance: -3000
-    performanceThreshold: -500
+    performanceThreshold: -750
     min_samples: 4
     epsilon: 1200
     ParameterRanges:
@@ -36,7 +36,7 @@ Experiment :
           intermittent_fault_mean: 0.5
           intermittent_fault_std: 0.2
         Wind:
-          enabled: True
+          enabled: False
           min_magnitude : 0
           magnitude : 3
           max_magnitude : 3
@@ -46,7 +46,7 @@ Experiment :
           endtime: 31000
           direction : 1
         PositionNoise:
-          enabled: True
+          enabled: False
           min_magnitude: 0
           magnitude: 0.3
           max_magnitude : 0.3
@@ -54,7 +54,7 @@ Experiment :
           starttime: 300
           endtime: 31000
         AttitudeNoise:
-          enabled: True
+          enabled: False
           min_magnitude : 0
           magnitude : 0.1
           max_magnitude : 0.1
