@@ -19,6 +19,10 @@ please consider citing :
 ```
 
 ## Setup and Dependencies
+
+
+[//]: # (NOTE ADD EXTRA MPC PATH INSTALL) 
+
 ### Windows
 1) Install Python 3.x from the official Python website: https://www.python.org/downloads/windows/
 2) Open Command Prompt or PowerShell as an administrator.
@@ -62,7 +66,6 @@ Note that you may need to use python3 / pip3 instead of python / pip on some Lin
 
 
 
-[//]: # ()
 [//]: # (+ Python/numpy/[PyTorch]&#40;https://pytorch.org&#41;)
 
 [//]: # (+ [locuslab/mpc.pytorch]&#40;https://github.com/locuslab/mpc.pytorch&#41;)
