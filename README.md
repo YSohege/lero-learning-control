@@ -66,15 +66,14 @@ Note that you may need to use python3 / pip3 instead of python / pip on some Lin
 
 
 ## List of Implemented Controllers and Environments
-###2 Dimensional Quadcopter Environment
-- [CBF](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/cbf)
-- [LQR](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/lqr)
-- [mpc](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/mpc)
-- [mpsc](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/mpsc)
-- [pid](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/pid)
-- [ppo](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/ppo)
-- [rarl](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rarl)
-- [rbcmpc](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rbcmpc)
-- [rbcpid](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rbcpid)
-- [sac](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/sac)
-- [safeexplorer](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/safeexplorer)
+### 2 Dimensional Quadcopter Environment
+- [Constraint Barrier Functions - CBF](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/cbf)
+- [Linear Quadratic Regulator - LQR](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/lqr)
+- [Model Predictive Controller - MPC](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/mpc)
+- [Proportional Integral Derivative - PID](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/pid)
+- [Proximal Policy Optimization - PPO](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/ppo)
+- [Robust Adversarial Reinforcement Learning - RARL ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rarl)
+- [Soft Actor Critic - SAC](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/sac)
+- [SafeExplorer](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/safeexplorer)
+- [Randomized Blended MPC Control - RBCMPC](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rbcmpc)
+- [Randomized Blended PID COntrol - RBCPID](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rbcpid)
