@@ -1,0 +1,73 @@
+quadcopter3D:
+    Env:
+      RotorFault:
+        enabled: False
+        min_magnitude: 0
+        magnitude: 0.3
+        max_magnitude: 0.30
+        randomTime: True
+        starttime: 300
+        endtime: 31000
+        randomRotor: True
+        faultRotorID: 1
+        intermittent_fault: True
+        intermittent_fault_mean: 0.5
+        intermittent_fault_std: 0.2
+      Wind:
+        enabled: False
+        min_magnitude: 0
+        magnitude: 3
+        max_magnitude: 3
+        randomDirection: True
+        randomTime: True
+        starttime: 300
+        endtime: 31000
+        direction: 1
+      PositionNoise:
+        enabled: False
+        min_magnitude: 0
+        magnitude: 0.3
+        max_magnitude: 0.3
+        randomTime: True
+        starttime: 300
+        endtime: 31000
+      AttitudeNoise:
+        enabled: False
+        min_magnitude: 0
+        magnitude: 0.1
+        max_magnitude: 0.1
+        randomTime: True
+        starttime: 300
+        endtime: 31000
+    Quad:
+      position: [ 0, 0, 0 ]
+      orientation: [ 0, 0, 0 ]
+      L: 0.3
+      r: 0.1
+      prop_size: [ 10, 4.5 ]
+      weight: 1.2
+      control_freq: 200
+    Path:
+      randomPath: True
+      randomSeed: 1234
+      number_waypoints: 3
+      randomLimit: 10
+      waypoints:
+        x: [ 0, 0, 5, 0, -5, 0  , 5, 0 ]
+        y: [ 0, 0, 0, 5,  0, -5 , 0, 0 ]
+        z: [ 0, 5, 5, 5,  5, 5  , 5, 5 ]
+      safetyRadius: 1
+      maxStepsPerRun: 3000
+      stablilizationAtGoal: 50
+      numberRounds: 1
+    render: False
+
+mpc:
+  NUM_STATES: 12
+  NUM_ACTIONS: 4
+  ACTION_LOWS: [0.0, 0.0, 0.0, 0.0]
+  ACTION_HIGHS: [1.0, 1.0, 1.0, 1.0]
+  TIMESTEPS: 20
+  LQR_ITER: 10
+  N_BATCH: 1
+  RENDER: false
