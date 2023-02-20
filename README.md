@@ -41,12 +41,32 @@ please consider citing :
 - [Uniform Randomized Blended Control](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/uniform_rbcpid)
 - [Reinforcement Learning Randomized Blended PID Control - RLRBCPID ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/rl_rbcpid)
 
+## List of Tasks
+Tasks require a Controller / Environment pair and return an performance metric after completion. 
+#### 1) [Blended Control Task (3D Quadcopter / RBCPID Controller) - Set blending weigth at each step - used for reinforcement learning ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Blended_Control_Task)
+#### 2) [Fixed Distribution Blended Control Task (3D Quadcopter / Fixed Distribution RBCPID Controller) - Evaluate the tracking performance of RBCPID using a fixed distribution](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Fixed_Distribution_RBC)
+#### 3) [Optimal Switching Control Task (3D Quadcopter / Switched PID Controller) - Evaluate the tracking performance of Switching Control with no fault identification delay (optimal baseline) ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Optimal_Switching)
+#### 4) [RL Distribuition for Blended Control (3D Quadcopter / RLRBCPID Controller) - Learn optimal randomized blended control distribution ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_RL_Distribution_RBC)
+#### 5) [Simple MMAC Quadcopter tracking (3D Quadcopter / MMACPID Controller) - Simple tractory tracking task ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Trajectory_Tracking)
+#### 6) [Uniform RBCPID Quadcopter tracking (3D Quadcopter / Uni RBCPID Controller) - Evaluate the tracking performance of uniformly sampled blending weights.  ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Uniform_RBC)
+
+
+## List of Tuning Algorithms
+Tuning algorithms execute Tasks repeadedly to maximize the achieved performance through controller parameter optimization. 
+
+#### 1) [Clustered Particle Filtering (3D Quadcopter / PID Controller) - CPF ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tuning/ClusteredParticleFiltering)
+#### 2) [Reinforcement Learning Blended Control (3D Quadcopter / RLRBCPID Controller) - RL Blending](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tuning/LearningBlendedControl)
+#### 3) [Particle Swarm Optimization(3D Quadcopter / PID Controller) - PSO ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tuning/ParticleSwarmOptimization)
+
+
 
 ## List of Example Experiments
+Experiments run the Tuning algorithms or Tasks in a systematic way based on their configurations. The experiments are repeatable and all random seeds are fixed in the config files.
+
 #### 1) [2D Quadcopter - RBCMPC versus RBCPID trajectory tracking performance](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment1_2DQuadcopter_Randomized_PID_versus_Randomized_MPC)
 #### 2) [3D Quadcopter - Switched Control](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment2_3DQuadcopter_MMAC_PID)
 #### 3) [3D Quadcopter - Data Generation under various fault and disturbances](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment3_3DQuadcopter_DataGeneration)
-#### 4) [3D Quadcopter - Test](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment4_QuadSim_MPC_Test)
+#### 4) [3D Quadcopter - MPC Test](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment4_QuadSim_MPC_Test)
 #### 5) [3D Quadcopter - Controller Tuning using Clustered Particle Filtering (CPF)](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment5-CPF-3DQuadcopter)
 #### 6) [Execution speed test - numpy versus torch / CPU versus GPU ](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment6_Speedtest)
 #### 7) [3D Quadcopter - Simple MPC control for trajectory tracking](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment7_MPC)
