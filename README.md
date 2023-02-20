@@ -66,7 +66,7 @@ Note that you may need to use python3 / pip3 instead of python / pip on some Lin
 
 
 ## List of Implemented Controllers and Environments
-### 2 Dimensional Quadcopter Environment
+### 2 Dimensional Quadcopter Environment - based on [Safe Control Gym](https://github.com/utiasDSL/safe-control-gym)
 - [Constraint Barrier Functions - CBF](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/cbf)
 - [Linear Quadratic Regulator - LQR](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/lqr)
 - [Model Predictive Controller - MPC](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/mpc)
