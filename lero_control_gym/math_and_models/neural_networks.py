@@ -141,7 +141,8 @@ class RNN(nn.Module):
             # Forward a sequence, x, masks: (T, N, *), hxs: (N, *).
             T, N = x.shape[:2]
             # Let's figure out which steps in the sequence have a zero for any agent.
-            # We will always assume t=0 has a zero in it as that makes the logic cleaner.
+            # We will always assume t=0 has a zero in it as that makes the
+            # logic cleaner.
             has_zeros = (masks.squeeze(-1)[1:] == 0.0).any(dim=-1).nonzero()
             has_zeros = has_zeros.squeeze().cpu()
             # +1 to correct the masks[1:]
@@ -156,7 +157,8 @@ class RNN(nn.Module):
             hxs = hxs.unsqueeze(0)
             outputs = []
             for i in range(len(has_zeros) - 1):
-                # We can now process steps that don't have any zeros in masks together!
+                # We can now process steps that don't have any zeros in masks
+                # together!
                 start_idx = has_zeros[i]
                 end_idx = has_zeros[i + 1]
                 rnn_scores, hxs = self.gru(

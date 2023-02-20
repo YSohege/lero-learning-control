@@ -26,7 +26,8 @@ class SubprocVecEnv(VecEnv):
         self.n_workers = n_workers
         assert nenvs % n_workers == 0, "Number of envs must be divisible by number of workers to run in series"
         env_fns = np.array_split(env_fns, self.n_workers)
-        # Context is necessary for multiprocessing with CUDA, see pytorch.org/docs/stable/notes/multiprocessing.html
+        # Context is necessary for multiprocessing with CUDA, see
+        # pytorch.org/docs/stable/notes/multiprocessing.html
         ctx = mp.get_context(context)
         self.remotes, self.work_remotes = zip(
             *[ctx.Pipe() for _ in range(self.n_workers)])
@@ -37,7 +38,8 @@ class SubprocVecEnv(VecEnv):
                  env_fn) in zip(self.work_remotes, self.remotes, env_fns)
         ]
         for p in self.ps:
-            p.daemon = True  # If the main process crashes, we should not cause things to hang.
+            # If the main process crashes, we should not cause things to hang.
+            p.daemon = True
             with clear_mpi_env_vars():
                 p.start()
         for remote in self.work_remotes:
@@ -145,7 +147,8 @@ class SubprocVecEnv(VecEnv):
         """Call instance methods of vectorized environments.
 
         """
-        target_remotes, remote_env_indices, splits = self._get_target_envs(indices)
+        target_remotes, remote_env_indices, splits = self._get_target_envs(
+            indices)
         method_arg_splits, method_kwarg_splits = [], []
         for i in range(len(splits) - 1):
             start, end = splits[i], splits[i + 1]
@@ -184,7 +187,8 @@ class SubprocVecEnv(VecEnv):
         indices = self._get_indices(indices)
         remote_indices = [idx // self.n_workers for idx in indices]
         remote_env_indices = [idx % self.n_workers for idx in indices]
-        remote_indices, splits = np.unique(np.array(remote_indices), return_index=True)
+        remote_indices, splits = np.unique(
+            np.array(remote_indices), return_index=True)
         target_remotes = [self.remotes[idx] for idx in remote_indices]
         remote_env_indices = np.split(np.array(remote_env_indices), splits[1:])
         remote_env_indices = remote_env_indices.tolist()

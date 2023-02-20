@@ -1,4 +1,4 @@
-"""Probability distributions for PyTorch. 
+"""Probability distributions for PyTorch.
 
 Based on https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail/blob/master/a2c_ppo_acktr/distributions.py
 
@@ -63,7 +63,8 @@ class Categorical(torch.distributions.Categorical):
             (torch.FloatTensor): shape (batch, 1).
 
         """
-        return (super().log_prob(actions.squeeze(-1)).view(actions.size(0), -1).sum(-1).unsqueeze(-1))
+        return (super().log_prob(actions.squeeze(-1)
+                                 ).view(actions.size(0), -1).sum(-1).unsqueeze(-1))
 
     def mode(self):
         """Mode (max probability point) of current distribution.

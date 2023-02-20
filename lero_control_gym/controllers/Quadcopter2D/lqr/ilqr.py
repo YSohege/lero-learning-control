@@ -6,11 +6,11 @@
 Example:
 
     run ilqr on cartpole balance:
-    
+
         python3 experiments/main.py --func test --tag ilqr_pendulum --algo ilqr --task cartpole
-        
+
     run ilqr on quadrotor stabilization:
-    
+
         python3 experiments/main.py --func test --tag ilqr_quad --algo ilqr --task quadrotor --q_lqr 0.1
 
 """
@@ -189,7 +189,12 @@ class iLQR(BaseController):
                 goal_stack = current_goal
 
                 # Print initial state.
-                print(colored("initial state: " + get_arr_str(self.env.state), "green"))
+                print(
+                    colored(
+                        "initial state: " +
+                        get_arr_str(
+                            self.env.state),
+                        "green"))
 
                 if self.ite_counter == 0:
                     self.init_state = self.env.state
@@ -208,7 +213,10 @@ class iLQR(BaseController):
 
             # Print out.
             if self.verbose and self.k % 100 == 0:
-                print(colored("episode: %d step: %d" % (self.ite_counter, self.k), "green"))
+                print(
+                    colored(
+                        "episode: %d step: %d" %
+                        (self.ite_counter, self.k), "green"))
                 print("state: " + get_arr_str(self.env.state))
                 print("action: " + get_arr_str(self.env.state) + "\n")
 
@@ -233,8 +241,15 @@ class iLQR(BaseController):
                 ite_data["ite%d_input" % self.ite_counter] = input_stack
 
                 # Print iteration reward.
-                print(colored("final state: " + get_arr_str(self.env.state), "green"))
-                print(colored("iteration %d reward %.4f" %
+                print(
+                    colored(
+                        "final state: " +
+                        get_arr_str(
+                            self.env.state),
+                        "green"))
+                print(
+                    colored(
+                        "iteration %d reward %.4f" %
                         (self.ite_counter, info["episode"]["r"]), "green"))
                 print(colored("--------------------------", "green"))
 
@@ -242,13 +257,17 @@ class iLQR(BaseController):
                 if self.task == Task.STABILIZATION:
                     if self.ite_counter == 0 and not info["goal_reached"]:
                         print(colored("The initial policy might be unstable. "
-                                + "Break from iLQR updates.", "red"))
+                                      + "Break from iLQR updates.", "red"))
                         break
 
                 # Maximum episode length.
                 self.num_steps = np.shape(input_stack)[0]
                 self.episode_len_sec = self.num_steps * self.stepsize
-                print(colored("Maximum episode length: %d steps!" % (self.num_steps), "blue"))
+                print(
+                    colored(
+                        "Maximum episode length: %d steps!" %
+                        (self.num_steps),
+                        "blue"))
                 print(np.shape(input_stack), np.shape(self.gains_fb))
                 # import ipdb; ipdb.set_trace()
 
@@ -257,7 +276,9 @@ class iLQR(BaseController):
                 if self.ite_counter == 0:
 
                     # Save best iteration.
-                    print("Save iteration gains. Best iteration %d" % self.ite_counter)
+                    print(
+                        "Save iteration gains. Best iteration %d" %
+                        self.ite_counter)
                     self.best_iteration = self.ite_counter
                     self.input_ff_best = np.copy(self.input_ff)
                     self.gains_fb_best = np.copy(self.gains_fb)
@@ -278,7 +299,9 @@ class iLQR(BaseController):
                           + "Set feedforward term and controller gain to that "
                           "from the previous iteration. "
                           "Increased lambda to %.2f." % self.lamb)
-                    print("Current policy is from iteration %d." % self.best_iteration)
+                    print(
+                        "Current policy is from iteration %d." %
+                        self.best_iteration)
                     self.input_ff = np.copy(self.input_ff_best)
                     self.gains_fb = np.copy(self.gains_fb_best)
 
@@ -298,8 +321,11 @@ class iLQR(BaseController):
                     # Smoother convergence if not scaling down lambda.
                     # self.lamb /= self.lamb_factor
 
-                    # Save feedforward term and gain and state and input stacks.
-                    print("Save iteration gains. Best iteration %d" % self.ite_counter)
+                    # Save feedforward term and gain and state and input
+                    # stacks.
+                    print(
+                        "Save iteration gains. Best iteration %d" %
+                        self.ite_counter)
                     self.best_iteration = self.ite_counter
                     self.input_ff_best = np.copy(self.input_ff)
                     self.gains_fb_best = np.copy(self.gains_fb)
@@ -308,7 +334,7 @@ class iLQR(BaseController):
                     if delta_reward < self.epsilon and self.prev_ite_improved:
                         # Cost converged.
                         print(colored("iLQR cost converged with a tolerance "
-                                + "of %.2f." % self.epsilon, "yellow"))
+                                      + "of %.2f." % self.epsilon, "yellow"))
                         break
 
                     # Set improved flag to True.
@@ -342,8 +368,8 @@ class iLQR(BaseController):
             msg = "****** Evaluation ******\n"
             msg += "eval_ep_length {:.2f} +/- {:.2f} | " + \
                    "eval_ep_return {:.3f} +/- {:.3f}\n".format(
-                ite_lengths.mean(), ite_lengths.std(), ite_returns.mean(),
-                ite_returns.std())
+                       ite_lengths.mean(), ite_lengths.std(), ite_returns.mean(),
+                       ite_returns.std())
             self.logger.info(msg + "\n")
 
         ilqr_eval_results = {
@@ -391,7 +417,13 @@ class iLQR(BaseController):
 
         # Backward pass.
         for k in reversed(range(self.num_steps)):
-            print(k, self.num_steps, np.shape(state_stack), np.shape(input_stack), np.shape(self.gains_fb))
+            print(
+                k,
+                self.num_steps,
+                np.shape(state_stack),
+                np.shape(input_stack),
+                np.shape(
+                    self.gains_fb))
             # Get current operating point.
             state_k = state_stack[k]
             input_k = input_stack[k]
@@ -446,16 +478,19 @@ class iLQR(BaseController):
 
                 # Update s variables for time step k.
                 Sm = Qm + Ad_k.transpose().dot(Sm.dot(Ad_k)) + \
-                     K.transpose().dot(H.dot(K)) + \
-                     K.transpose().dot(G) + G.transpose().dot(K)
+                    K.transpose().dot(H.dot(K)) + \
+                    K.transpose().dot(G) + G.transpose().dot(K)
                 Sv = Qv + Ad_k.transpose().dot(Sv) + \
-                     K.transpose().dot(H.dot(duff)) + K.transpose().dot(g) + \
-                     G.transpose().dot(duff)
+                    K.transpose().dot(H.dot(duff)) + K.transpose().dot(g) + \
+                    G.transpose().dot(duff)
                 s = q + s + 0.5 * duff.transpose().dot(H.dot(duff)) + \
                     duff.transpose().dot(g)
             else:
                 self.update_unstable = True
-                print(colored("Policy update unstable. Terminate update.", "red"))
+                print(
+                    colored(
+                        "Policy update unstable. Terminate update.",
+                        "red"))
 
     def select_action(self, x, k):
         """Control input u = -K x.
@@ -489,11 +524,16 @@ class iLQR(BaseController):
 
             # Save gains and feedforward term
             if self.k == 0:
-                self.gains_fb = gains_fb.reshape(1, self.model.nu, self.model.nx)
+                self.gains_fb = gains_fb.reshape(
+                    1, self.model.nu, self.model.nx)
                 self.input_ff = input_ff.reshape(self.model.nu, 1)
             else:
-                self.gains_fb = np.append(self.gains_fb, gains_fb.reshape(1, self.model.nu, self.model.nx), axis=0)
-                self.input_ff = np.append(self.input_ff, input_ff.reshape(self.model.nu, 1), axis=1)
+                self.gains_fb = np.append(
+                    self.gains_fb, gains_fb.reshape(
+                        1, self.model.nu, self.model.nx), axis=0)
+                self.input_ff = np.append(
+                    self.input_ff, input_ff.reshape(
+                        self.model.nu, 1), axis=1)
         else:
             print(k, self.gains_fb[k])
             action = self.gains_fb[k].dot(x) + self.input_ff[:, k]
@@ -502,14 +542,14 @@ class iLQR(BaseController):
 
     def init_env(self):
         self.env = self.env_func(randomized_init=self.random_init,
-                            cost=Cost.QUADRATIC,
-                            randomized_inertial_prop=False,
-                            episode_len_sec=self.episode_len_sec,
-                            task=self.task,
-                            task_info=self.task_info,
-                            ctrl_freq=self.ctrl_freq,
-                            pyb_freq=self.pyb_freq
-                            )
+                                 cost=Cost.QUADRATIC,
+                                 randomized_inertial_prop=False,
+                                 episode_len_sec=self.episode_len_sec,
+                                 task=self.task,
+                                 task_info=self.task_info,
+                                 ctrl_freq=self.ctrl_freq,
+                                 pyb_freq=self.pyb_freq
+                                 )
         self.env = RecordEpisodeStatistics(self.env, self.deque_size)
 
         # Controller params.
@@ -523,8 +563,13 @@ class iLQR(BaseController):
         self.x_0, self.u_0 = self.env.X_GOAL, self.env.U_GOAL
 
         if self.task == Task.STABILIZATION:
-            self.gain = compute_lqr_gain(self.model, self.x_0, self.u_0,
-                                         self.Q, self.R, self.discrete_dynamics)
+            self.gain = compute_lqr_gain(
+                self.model,
+                self.x_0,
+                self.u_0,
+                self.Q,
+                self.R,
+                self.discrete_dynamics)
 
         # Control stepsize.
         self.stepsize = self.model.dt
@@ -532,7 +577,11 @@ class iLQR(BaseController):
     def reset_env(self):
         '''Reset environment between iLQR iterations.'''
 
-        print(colored("Set maximum episode length to %.3f" % self.episode_len_sec, "blue"))
+        print(
+            colored(
+                "Set maximum episode length to %.3f" %
+                self.episode_len_sec,
+                "blue"))
         self.env = self.env_func(init_state=self.init_state,
                                  randomized_init=False,
                                  cost=Cost.QUADRATIC,
@@ -555,7 +604,13 @@ class iLQR(BaseController):
         # Linearize at operating point (equilibrium for stabilization).
         self.x_0, self.u_0 = self.env.X_GOAL, self.env.U_GOAL
 
-    def run(self, n_episodes=1, render=False, logging=False, verbose=False, use_adv=False):
+    def run(
+            self,
+            n_episodes=1,
+            render=False,
+            logging=False,
+            verbose=False,
+            use_adv=False):
         """Runs evaluation with current policy.
 
         Args:
@@ -588,12 +643,14 @@ class iLQR(BaseController):
                 frames.append(ilqr_eval_results["frames"][-1])
 
             # Print episode reward.
-            print(colored("Test Run %d reward %.4f" % (self.ep_counter, ep_returns[-1]), "yellow"))
+            print(colored("Test Run %d reward %.4f" %
+                          (self.ep_counter, ep_returns[-1]), "yellow"))
             print(colored("==========================\n", "yellow"))
 
             # Save reward
             if self.save_data:
-                np.savetxt(self.data_dir + "test%d_rewards.csv" % self.ep_counter, np.array([ep_returns[-1]]), delimiter=',', fmt='%.8f')
+                np.savetxt(self.data_dir + "test%d_rewards.csv" % self.ep_counter,
+                           np.array([ep_returns[-1]]), delimiter=',', fmt='%.8f')
 
         # Collect evaluation results.
         ep_lengths = np.asarray(ep_lengths)
@@ -604,8 +661,8 @@ class iLQR(BaseController):
             msg = "****** Evaluation ******\n"
             msg += "eval_ep_length {:.2f} +/- {:.2f} | " + \
                    "eval_ep_return {:.3f} +/- {:.3f}\n".format(
-                ep_lengths.mean(), ep_lengths.std(), ep_returns.mean(),
-                ep_returns.std())
+                       ep_lengths.mean(), ep_lengths.std(), ep_returns.mean(),
+                       ep_returns.std())
             self.logger.info(msg + "\n")
 
         # Save evaluation results.

@@ -71,21 +71,34 @@ class CBF_QP(BaseController):
 
         # Control barrier function
         # TODO: Extend to other systems
-        self.cbf = cbf_cartpole(self.X, self.x_pos_max, self.x_vel_max, self.theta_max, self.theta_dot_max)
+        self.cbf = cbf_cartpole(
+            self.X,
+            self.x_pos_max,
+            self.x_vel_max,
+            self.theta_max,
+            self.theta_dot_max)
         # Lie derivative with respect to the dynamics
         self.lie_derivative = self.get_lie_derivative()
 
         self.linear_func = linear_function(self.slope)
-        # TODO: define two different linear functions to be steeper inside the safe set and flatter outside safe set
+        # TODO: define two different linear functions to be steeper inside the
+        # safe set and flatter outside safe set
 
         # Neural network to learn the residual in the lie derivative
-        self.mlp = MLP(self.model.nx, self.model.nu + 1, hidden_dims=self.hidden_dims, activation="relu")
+        self.mlp = MLP(
+            self.model.nx,
+            self.model.nu + 1,
+            hidden_dims=self.hidden_dims,
+            activation="relu")
         # optimizer
         self.opt = torch.optim.Adam(self.mlp.parameters(), self.learning_rate)
 
         max_buffer_size = int(self.max_buffer_size)
-        self.buffer = CBFBuffer(self.env.observation_space, self.env.action_space, max_buffer_size,
-                                self.train_batch_size)
+        self.buffer = CBFBuffer(
+            self.env.observation_space,
+            self.env.action_space,
+            max_buffer_size,
+            self.train_batch_size)
 
         # Logging.
         self.logger = ExperimentLogger(output_dir)
@@ -102,7 +115,10 @@ class CBF_QP(BaseController):
         """
         dVdx = cs.gradient(self.cbf(X=self.X)['cbf'], self.X)
         LfV = cs.dot(dVdx, self.model.x_dot)
-        LfV_func = cs.Function('LfV', [self.X, self.u], [LfV], ['X', 'u'], ['LfV'])
+        LfV_func = cs.Function(
+            'LfV', [
+                self.X, self.u], [LfV], [
+                'X', 'u'], ['LfV'])
         return LfV_func
 
     def is_control_affine(self):
@@ -128,8 +144,10 @@ class CBF_QP(BaseController):
         valid_cbf = False
 
         # Select the states to check the CBF condition
-        max_bounds = np.array([self.x_pos_max, self.x_vel_max, self.theta_max, self.theta_dot_max])
-        # Add some tolerance to the bounds to also check the condition outside of the superlevel set
+        max_bounds = np.array(
+            [self.x_pos_max, self.x_vel_max, self.theta_max, self.theta_dot_max])
+        # Add some tolerance to the bounds to also check the condition outside
+        # of the superlevel set
         max_bounds += tolerance
         min_bounds = - max_bounds
 
@@ -141,7 +159,11 @@ class CBF_QP(BaseController):
         num_points_per_dim = num_points // nx
 
         # Create the lists of states to check
-        states_to_sample = [np.linspace(min_bounds[i], max_bounds[i], num_points_per_dim) for i in range(nx)]
+        states_to_sample = [
+            np.linspace(
+                min_bounds[i],
+                max_bounds[i],
+                num_points_per_dim) for i in range(nx)]
         states_to_check = cartesian_product(*states_to_sample)
 
         # Set dummy control input
@@ -150,10 +172,12 @@ class CBF_QP(BaseController):
         num_infeasible = 0
         infeasible_states = []
 
-        # Check if the optimization problem is feasible for every considered state
+        # Check if the optimization problem is feasible for every considered
+        # state
         for state in states_to_check:
             # Certify action without using any learned model
-            safe_control_input, success = self.certify_action(state, control_input, use_learned_model=False)
+            safe_control_input, success = self.certify_action(
+                state, control_input, use_learned_model=False)
             if not success:
                 infeasible_states.append(state)
                 num_infeasible += 1
@@ -161,18 +185,23 @@ class CBF_QP(BaseController):
         num_infeasible_states_inside_set = 0
 
         # Check if the infeasible point is inside or outside the superlevel set. Note that the sampled region makes up a
-        # box, but the superlevel set is not. The superlevel set only needs to be contained inside the box.
+        # box, but the superlevel set is not. The superlevel set only needs to
+        # be contained inside the box.
         for infeasible_state in infeasible_states:
             barrier_at_x = self.cbf(X=infeasible_state)['cbf']
             if barrier_at_x < 0:
                 # print("Outside superlevel set:", infeasible_state)
                 pass
             else:
-                print("Infeasible state inside superlevel set:", infeasible_state)
+                print(
+                    "Infeasible state inside superlevel set:",
+                    infeasible_state)
                 num_infeasible_states_inside_set += 1
 
         print("Number of infeasible states:", num_infeasible)
-        print("Number of infeasible states inside superlevel set:", num_infeasible_states_inside_set)
+        print(
+            "Number of infeasible states inside superlevel set:",
+            num_infeasible_states_inside_set)
 
         if num_infeasible_states_inside_set > 0:
             valid_cbf = False
@@ -190,7 +219,11 @@ class CBF_QP(BaseController):
 
         return valid_cbf, infeasible_states
 
-    def certify_action(self, current_state, unsafe_action, use_learned_model=True):
+    def certify_action(
+            self,
+            current_state,
+            unsafe_action,
+            use_learned_model=True):
         """Calculates certified control input.
 
         Args:
@@ -212,7 +245,8 @@ class CBF_QP(BaseController):
         u_var = opti.variable(nu, 1)
 
         # evaluate at Lie derivative and CBF at the current state
-        lie_derivative_at_x = self.lie_derivative(X=current_state, u=u_var)['LfV']
+        lie_derivative_at_x = self.lie_derivative(
+            X=current_state, u=u_var)['LfV']
         barrier_at_x = self.cbf(X=current_state)['cbf']
 
         learned_residual = 0.0
@@ -233,7 +267,8 @@ class CBF_QP(BaseController):
             slack_var = opti.variable(1, 1)
 
             # quadratic objective
-            cost = 0.5 * cs.norm_2(unsafe_action - u_var) ** 2 + self.slack_weight * slack_var**2
+            cost = 0.5 * cs.norm_2(unsafe_action - u_var) ** 2 + \
+                self.slack_weight * slack_var**2
 
             # soften CBF constraint
             right_hand_side = slack_var
@@ -245,7 +280,8 @@ class CBF_QP(BaseController):
             cost = 0.5 * cs.norm_2(unsafe_action - u_var) ** 2
 
         # CBF constraint
-        opti.subject_to(-self.linear_func(x=barrier_at_x)["y"] - lie_derivative_at_x - learned_residual <= right_hand_side)
+        opti.subject_to(-self.linear_func(x=barrier_at_x)
+                        ["y"] - lie_derivative_at_x - learned_residual <= right_hand_side)
 
         # input constraints
         for input_constraint in self.input_constraints_sym:
@@ -254,7 +290,7 @@ class CBF_QP(BaseController):
         opti.minimize(cost)
 
         # set verbosity option of optimizer
-        
+
         # opts = {'printLevel': 'none'}
         # opts = {}
         # select QP solver
@@ -311,20 +347,22 @@ class CBF_QP(BaseController):
             unsafe_input = self.unsafe_controller.select_action(current_state)
         else:
             # create random control input
-            unsafe_input = 2.0 * (2.0 * np.random.random(size=self.model.nu) - 1.0)
+            unsafe_input = 2.0 * \
+                (2.0 * np.random.random(size=self.model.nu) - 1.0)
 
             # create sinusoidal control input
             # unsafe_input = 0.5 * np.sin(2 * np.pi / 50 * (self.env.pyb_step_counter // self.step_size) - np.pi) + 0.0
 
         # certify control input
-        safe_input, success = self.certify_action(current_state, unsafe_input, use_learned_model)
+        safe_input, success = self.certify_action(
+            current_state, unsafe_input, use_learned_model)
 
         return safe_input, unsafe_input, success
 
     def compute_loss(self, batch):
         """Compute training loss of the neural network that represents the Lie derivative error"""
-        state, act, barrier_dot, barrier_dot_approx = batch["state"], batch["act"], batch["barrier_dot"], \
-                                                      batch["barrier_dot_approx"]
+        state, act, barrier_dot, barrier_dot_approx = batch["state"], batch[
+            "act"], batch["barrier_dot"], batch["barrier_dot_approx"]
 
         # predict a and b vectors
         a_b = self.mlp(state)
@@ -381,7 +419,8 @@ class CBF_QP(BaseController):
         """Learn the error in the Lie derivative from multiple experiments.
 
         """
-        input_blending_weight = np.arange(self.num_episodes) / (self.num_episodes - 1)
+        input_blending_weight = np.arange(
+            self.num_episodes) / (self.num_episodes - 1)
 
         # Run experiments in loop
         for i in range(self.num_episodes):
@@ -408,7 +447,8 @@ class CBF_QP(BaseController):
                 safe_action, unsafe_action, success = self.select_action(obs)
 
                 # blend the safe and unsafe action
-                blended_input = (1 - input_blending_weight[i]) * unsafe_action + input_blending_weight[i] * safe_action
+                blended_input = (
+                    1 - input_blending_weight[i]) * unsafe_action + input_blending_weight[i] * safe_action
 
                 # Step the system
                 obs, reward, done, info = self.env.step(blended_input)
@@ -433,7 +473,8 @@ class CBF_QP(BaseController):
                 states[counter, :] = obs
                 inputs[counter, :] = blended_input
                 barrier_values[counter, :] = self.cbf(X=obs)['cbf']
-                lie_derivative_values[counter, :] = self.lie_derivative(X=obs, u=blended_input)['LfV']
+                lie_derivative_values[counter, :] = self.lie_derivative(
+                    X=obs, u=blended_input)['LfV']
 
                 # Determine the estimated Lie derivative
                 torch_state = torch.from_numpy(obs)
@@ -443,7 +484,10 @@ class CBF_QP(BaseController):
                 a_b = a_b.detach().numpy()
                 a = a_b[0, :self.model.nu]
                 b = a_b[0, -1]
-                lie_derivative_est[counter, :] = lie_derivative_values[counter, :] + np.dot(a.T, blended_input) + b
+                lie_derivative_est[counter,
+                                   :] = lie_derivative_values[counter,
+                                                              :] + np.dot(a.T,
+                                                                          blended_input) + b
 
                 counter += 1
 
@@ -451,7 +495,8 @@ class CBF_QP(BaseController):
             print("Certified control input weight:", input_blending_weight[i])
 
             # numerical time differentiation (symmetric) of barrier function :
-            barrier_dot_approx = (barrier_values[2:] - barrier_values[:-2]) / (2 * 1 / self.env.CTRL_FREQ)
+            barrier_dot_approx = (
+                barrier_values[2:] - barrier_values[:-2]) / (2 * 1 / self.env.CTRL_FREQ)
 
             # compare actual and numerical time derivatives
             # import matplotlib.pyplot as plt
@@ -481,7 +526,7 @@ class CBF_QP(BaseController):
             print("Saving current model parameters at:", self.checkpoint_path)
             self.save(self.checkpoint_path)
 
-    def run(self,  render=False, logging=False):
+    def run(self, render=False, logging=False):
         """Runs evaluation with current policy.
 
         Args:
@@ -507,11 +552,13 @@ class CBF_QP(BaseController):
             counter,
             prefix="state")
 
-        # while len(ep_returns) < self.eval_batch_size and counter < self.max_num_steps:
+        # while len(ep_returns) < self.eval_batch_size and counter <
+        # self.max_num_steps:
         while counter < self.max_num_steps:
             print("Step: ", self.env.pyb_step_counter // self.step_size)
 
-            safe_action, unsafe_action, success = self.select_action(obs, self.use_learned_model)
+            safe_action, unsafe_action, success = self.select_action(
+                obs, self.use_learned_model)
 
             # Check the system's performance without certification
             if self.use_safe_input:

@@ -2,7 +2,7 @@
 
 Based on:
     * https://people.eecs.berkeley.edu/~pabbeel/cs287-fa12/slides/LQR.pdf
-    * https://pythonrobotics.readthedocs.io/en/latest/modules/path_tracking.html#mpc-modeling 
+    * https://pythonrobotics.readthedocs.io/en/latest/modules/path_tracking.html#mpc-modeling
     * https://github.com/AtsushiSakai/PythonRobotics/blob/master/PathTracking/model_predictive_speed_and_steer_control/model_predictive_speed_and_steer_control.py
 
 """
@@ -18,7 +18,7 @@ from lero_control_gym.envs.benchmark_env import Task
 
 class LinearMPC(MPC):
     """ Simple linear MPC.
-    
+
     """
 
     def __init__(
@@ -60,8 +60,8 @@ class LinearMPC(MPC):
             additional_constraints=additional_constraints,
             **kwargs
         )
-        self.X_LIN = np.atleast_2d(self.env.X_GOAL)[0,:].T
-        self.U_LIN = np.atleast_2d(self.env.U_GOAL)[0,:]
+        self.X_LIN = np.atleast_2d(self.env.X_GOAL)[0, :].T
+        self.U_LIN = np.atleast_2d(self.env.U_GOAL)[0, :]
 
     def set_dynamics_func(self):
         """Updates symbolic dynamics with actual control frequency.
@@ -71,8 +71,8 @@ class LinearMPC(MPC):
         dfdxdfdu = self.model.df_func(x=self.X_LIN, u=self.U_LIN)
         dfdx = dfdxdfdu['dfdx'].toarray()
         dfdu = dfdxdfdu['dfdu'].toarray()
-        delta_x = cs.MX.sym('delta_x', self.model.nx,1)
-        delta_u = cs.MX.sym('delta_u', self.model.nu,1)
+        delta_x = cs.MX.sym('delta_x', self.model.nx, 1)
+        delta_u = cs.MX.sym('delta_u', self.model.nu, 1)
         x_dot_lin_vec = dfdx @ delta_x + dfdu @ delta_u
         self.linear_dynamics_func = cs.integrator(
             'linear_discrete_dynamics', self.model.integration_algo,
@@ -101,21 +101,22 @@ class LinearMPC(MPC):
         u_var = opti.variable(nu, T)
         # Initial state.
         x_init = opti.parameter(nx, 1)
-        # Reference (equilibrium point or trajectory, last step for terminal cost).
+        # Reference (equilibrium point or trajectory, last step for terminal
+        # cost).
         x_ref = opti.parameter(nx, T + 1)
         # Cost (cumulative).
         cost = 0
         cost_func = self.model.loss
         for i in range(T):
-            cost += cost_func(x=x_var[:, i]+self.X_LIN[:, None],
-                              u=u_var[:, i]+self.U_LIN[:, None],
+            cost += cost_func(x=x_var[:, i] + self.X_LIN[:, None],
+                              u=u_var[:, i] + self.U_LIN[:, None],
                               Xr=x_ref[:, i],
                               Ur=np.zeros((nu, 1)),
                               Q=self.Q,
                               R=self.R)["l"]
         # Terminal cost.
-        cost += cost_func(x=x_var[:, -1]+self.X_LIN[:,None],
-                          u=np.zeros((nu, 1))+self.U_LIN[:, None],
+        cost += cost_func(x=x_var[:, -1] + self.X_LIN[:, None],
+                          u=np.zeros((nu, 1)) + self.U_LIN[:, None],
                           Xr=x_ref[:, -1],
                           Ur=np.zeros((nu, 1)),
                           Q=self.Q,
@@ -123,16 +124,19 @@ class LinearMPC(MPC):
         opti.minimize(cost)
         for i in range(self.T):
             # Dynamics constraints.
-            next_state = self.linear_dynamics_func(x0=x_var[:, i], p=u_var[:,i])['xf']
+            next_state = self.linear_dynamics_func(
+                x0=x_var[:, i], p=u_var[:, i])['xf']
             opti.subject_to(x_var[:, i + 1] == next_state)
             # State and input constraints.
             for state_constraint in self.state_constraints_sym:
-                opti.subject_to(state_constraint(x_var[:,i] + self.X_LIN.T) < 0)
+                opti.subject_to(state_constraint(
+                    x_var[:, i] + self.X_LIN.T) < 0)
             for input_constraint in self.input_constraints_sym:
-                opti.subject_to(input_constraint(u_var[:,i] + self.U_LIN.T) < 0)
+                opti.subject_to(input_constraint(
+                    u_var[:, i] + self.U_LIN.T) < 0)
         # Final state constraints.
         for state_constraint in self.state_constraints_sym:
-            opti.subject_to(state_constraint(x_var[:,-1] + self.X_LIN.T)  < 0)
+            opti.subject_to(state_constraint(x_var[:, -1] + self.X_LIN.T) < 0)
         # Initial condition constraints.
         opti.subject_to(x_var[:, 0] == x_init)
         # Create solver (IPOPT solver in this version).
@@ -158,10 +162,10 @@ class LinearMPC(MPC):
                       obs
                       ):
         """Solve nonlinear mpc problem to get next action.
-        
+
         Args:
-            obs (np.array): current state/observation. 
-        
+            obs (np.array): current state/observation.
+
         Returns:
             action (np.array): input/action to the task/env.
 
@@ -176,7 +180,7 @@ class LinearMPC(MPC):
         x_ref = opti_dict["x_ref"]
         cost = opti_dict["cost"]
         # Assign the initial state.
-        opti.set_value(x_init, obs-self.X_LIN)
+        opti.set_value(x_init, obs - self.X_LIN)
         # Assign reference trajectory within horizon.
         goal_states = self.get_references()
         opti.set_value(x_ref, goal_states)
@@ -191,8 +195,10 @@ class LinearMPC(MPC):
             x_val, u_val = sol.value(x_var), sol.value(u_var)
             self.x_prev = x_val
             self.u_prev = u_val
-            self.results_dict['horizon_states'].append(deepcopy(self.x_prev) + self.X_LIN[:, None])
-            self.results_dict['horizon_inputs'].append(deepcopy(self.u_prev) + self.U_LIN[:, None])
+            self.results_dict['horizon_states'].append(
+                deepcopy(self.x_prev) + self.X_LIN[:, None])
+            self.results_dict['horizon_inputs'].append(
+                deepcopy(self.u_prev) + self.U_LIN[:, None])
         except RuntimeError as e:
             print(e)
             return_status = opti.return_status()

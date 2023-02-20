@@ -9,7 +9,7 @@ from lero_control_gym.envs.env_wrappers.vectorized_env.vec_env import VecEnvWrap
 
 
 class RecordEpisodeStatistics(gym.Wrapper):
-    """ Keep track of episode length and returns per instantiated env 
+    """ Keep track of episode length and returns per instantiated env
 
         Based on OpenAI's Gym wrapper record_episode_statistics.py
 
@@ -38,7 +38,7 @@ class RecordEpisodeStatistics(gym.Wrapper):
                     mode="accumulate"
                     ):
         """Adds a specific stat to be tracked (accumulate|queue).
-        
+
         Modes to track stats
             * accumulate: rolling sum, e.g. total # of constraint violations during training.
             * queue: finite, individual storage, e.g. returns, lengths, constraint costs.
@@ -73,7 +73,13 @@ class RecordEpisodeStatistics(gym.Wrapper):
             if key in info:
                 self.episode_stats[key] += info[key]
         if done:
-            info['episode'] = {'r': self.episode_return, 'l': self.episode_length, 't': round(time.time() - self.t0, 6)}
+            info['episode'] = {
+                'r': self.episode_return,
+                'l': self.episode_length,
+                't': round(
+                    time.time() -
+                    self.t0,
+                    6)}
             self.return_queue.append(self.episode_return)
             self.length_queue.append(self.episode_length)
             self.episode_return = 0.0
@@ -82,9 +88,11 @@ class RecordEpisodeStatistics(gym.Wrapper):
             for key in self.episode_stats:
                 info['episode'][key] = deepcopy(self.episode_stats[key])
                 if key in self.accumulated_stats:
-                    self.accumulated_stats[key] += deepcopy(self.episode_stats[key])
+                    self.accumulated_stats[key] += deepcopy(
+                        self.episode_stats[key])
                 if key in self.queued_stats:
-                    self.queued_stats[key].append(deepcopy(self.episode_stats[key]))
+                    self.queued_stats[key].append(
+                        deepcopy(self.episode_stats[key]))
                 self.episode_stats[key] *= 0
         return observation, reward, done, info
 
@@ -153,17 +161,22 @@ class VecRecordEpisodeStatistics(VecEnvWrapper):
                 if key in inf:
                     self.episode_stats[key][i] += inf[key]
             if d:
-                info["n"][i]['episode'] = {'r': self.episode_return[i], 'l': self.episode_length[i]}
+                info["n"][i]['episode'] = {
+                    'r': self.episode_return[i],
+                    'l': self.episode_length[i]}
                 self.return_queue.append(deepcopy(self.episode_return[i]))
                 self.length_queue.append(deepcopy(self.episode_length[i]))
                 self.episode_return[i] = 0
                 self.episode_length[i] = 0
                 # Other tracked stats.
                 for key in self.episode_stats:
-                    info["n"][i]['episode'][key] = deepcopy(self.episode_stats[key][i])
+                    info["n"][i]['episode'][key] = deepcopy(
+                        self.episode_stats[key][i])
                     if key in self.accumulated_stats:
-                        self.accumulated_stats[key] += deepcopy(self.episode_stats[key][i])
+                        self.accumulated_stats[key] += deepcopy(
+                            self.episode_stats[key][i])
                     if key in self.queued_stats:
-                        self.queued_stats[key].append(deepcopy(self.episode_stats[key][i]))
+                        self.queued_stats[key].append(
+                            deepcopy(self.episode_stats[key][i]))
                     self.episode_stats[key][i] *= 0
         return obs, reward, done, info

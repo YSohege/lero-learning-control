@@ -37,19 +37,19 @@ def compute_lqr_gain(model, x_0, u_0, Q, R, discrete_dynamics=True):
 
 
 def discretize_linear_system(A, B, dt, exact=False):
-    """ discretization of a linear system 
-    
-    dx/dt = A x + B u 
+    """ discretization of a linear system
+
+    dx/dt = A x + B u
     --> xd[k+1] = Ad xd[k] + Bd ud[k] where xd[k] = x(k*dt)
 
     Args:
-        A: np.array, system transition matrix  
-        B: np.array, input matrix 
-        dt: scalar, step time interval 
-        exact: bool, if to use exact discretization 
+        A: np.array, system transition matrix
+        B: np.array, input matrix
+        dt: scalar, step time interval
+        exact: bool, if to use exact discretization
 
     Returns:
-        discretized matrices Ad, Bd 
+        discretized matrices Ad, Bd
 
     """
     state_dim, input_dim = A.shape[1], B.shape[1]
@@ -82,6 +82,7 @@ def get_cost_weight_matrix(weights, dim):
         raise Exception("Wrong dimension for cost weights.")
     return W
 
+
 def post_analysis(goal_stack, state_stack, input_stack, env,
                   ite_counter, ep_counter, plot_traj, save_plot, save_data,
                   plot_dir, data_dir):
@@ -98,14 +99,26 @@ def post_analysis(goal_stack, state_stack, input_stack, env,
     if model.nx == 1:
         axs = [axs]
     for k in range(model.nx):
-        axs[k].plot(times, state_stack.transpose()[k, 0:plot_length], label='actual')
-        axs[k].plot(times, goal_stack.transpose()[k, 0:plot_length], color='r', label='desired')
+        axs[k].plot(
+            times,
+            state_stack.transpose()[
+                k,
+                0:plot_length],
+            label='actual')
+        axs[k].plot(
+            times,
+            goal_stack.transpose()[
+                k,
+                0:plot_length],
+            color='r',
+            label='desired')
         axs[k].set(ylabel=env.STATE_LABELS[k] + '\n[%s]' % env.STATE_UNITS[k])
         axs[k].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
         if not (k == model.nx - 1):
             axs[k].set_xticks([])
     axs[0].set_title('State Trajectories')
-    axs[-1].legend(ncol=3, bbox_transform=fig.transFigure, bbox_to_anchor=(1, 0), loc="lower right")
+    axs[-1].legend(ncol=3, bbox_transform=fig.transFigure,
+                   bbox_to_anchor=(1, 0), loc="lower right")
     axs[-1].set(xlabel='time (sec)')
     if save_plot:
         plt.savefig(plot_dir + "state_ite%d" % ite_counter)
@@ -117,17 +130,22 @@ def post_analysis(goal_stack, state_stack, input_stack, env,
     for k in range(model.nu):
         axs[k].plot(times, input_stack.transpose()[k, 0:plot_length])
         axs[k].set(ylabel='input %d' % k)
-        axs[k].set(ylabel=env.ACTION_LABELS[k] + '\n[%s]' % env.ACTION_UNITS[k])
+        axs[k].set(
+            ylabel=env.ACTION_LABELS[k] +
+            '\n[%s]' %
+            env.ACTION_UNITS[k])
         axs[k].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     axs[0].set_title('Input Trajectories')
     axs[-1].set(xlabel='time (sec)')
 
     # Compute RMSE for each state
     state_error = state_stack.transpose()[:, 0:plot_length].transpose() -\
-                  goal_stack.transpose()[:, 0:plot_length].transpose()
+        goal_stack.transpose()[:, 0:plot_length].transpose()
 
     # Check if state is an angle and wrap angle error to [-pi, pi]
-    angle_state_index = [i for i, x in enumerate(env.STATE_UNITS) if x == "rad"]
+    angle_state_index = [
+        i for i, x in enumerate(
+            env.STATE_UNITS) if x == "rad"]
     for k in angle_state_index:
         state_error[:, k] = wrap2pi_vec(state_error[:, k])
 
@@ -141,12 +159,55 @@ def post_analysis(goal_stack, state_stack, input_stack, env,
         plt.close()
 
     if save_data:
-        np.savetxt(data_dir + "test%d_times.csv" % ep_counter, times.transpose(), delimiter=',', fmt='%.8f')
-        np.savetxt(data_dir + "test%d_states.csv" % ep_counter, state_stack.transpose()[:, 0:plot_length].transpose(), delimiter=',', fmt='%.8f')
-        np.savetxt(data_dir + "test%d_states_des.csv" % ep_counter, goal_stack.transpose()[:, 0:plot_length].transpose(), delimiter=',', fmt='%.8f')
-        np.savetxt(data_dir + "test%d_inputs.csv" % ep_counter, input_stack.transpose()[:, 0:plot_length].transpose(), delimiter=',', fmt='%.8f')
-        np.savetxt(data_dir + "test%d_state_rmse.csv" % ep_counter, state_rmse, delimiter=',', fmt='%.8f')
-        np.savetxt(data_dir + "test%d_state_rmse_scalar.csv" % ep_counter, np.array([state_rmse_scalar]), delimiter=',', fmt='%.8f')
+        np.savetxt(
+            data_dir +
+            "test%d_times.csv" %
+            ep_counter,
+            times.transpose(),
+            delimiter=',',
+            fmt='%.8f')
+        np.savetxt(
+            data_dir +
+            "test%d_states.csv" %
+            ep_counter,
+            state_stack.transpose()[
+                :,
+                0:plot_length].transpose(),
+            delimiter=',',
+            fmt='%.8f')
+        np.savetxt(
+            data_dir +
+            "test%d_states_des.csv" %
+            ep_counter,
+            goal_stack.transpose()[
+                :,
+                0:plot_length].transpose(),
+            delimiter=',',
+            fmt='%.8f')
+        np.savetxt(
+            data_dir +
+            "test%d_inputs.csv" %
+            ep_counter,
+            input_stack.transpose()[
+                :,
+                0:plot_length].transpose(),
+            delimiter=',',
+            fmt='%.8f')
+        np.savetxt(
+            data_dir +
+            "test%d_state_rmse.csv" %
+            ep_counter,
+            state_rmse,
+            delimiter=',',
+            fmt='%.8f')
+        np.savetxt(
+            data_dir +
+            "test%d_state_rmse_scalar.csv" %
+            ep_counter,
+            np.array(
+                [state_rmse_scalar]),
+            delimiter=',',
+            fmt='%.8f')
 
     # Return analysis data
     analysis_data = {}
@@ -179,4 +240,3 @@ def compute_state_rmse(state_error):
     print(colored("rmse by state: " + get_arr_str(state_rmse), "blue"))
     print(colored("scalarized rmse: %.2f" % state_rmse_scalar, "blue"))
     return state_rmse, state_rmse_scalar
-

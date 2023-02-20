@@ -6,7 +6,7 @@ check_mpc_hsl_solver_in_path()
 
 
 class Nonlinear_MPC(BaseController):
-    def __init__(self, env,  t_end, n_horizon, c_step, s_step):
+    def __init__(self, env, t_end, n_horizon, c_step, s_step):
         # Model Paremeters
         Ixx = env.Ixx
         Iyy = env.Iyy
@@ -38,12 +38,16 @@ class Nonlinear_MPC(BaseController):
 
         # Right-hand-side equation
         model.set_rhs('phi', phidot)
-        model.set_rhs('phidot', ((Iyy-Izz)*thetadot*psidot)/Ixx + tau_phi/Ixx)
+        model.set_rhs(
+            'phidot',
+            ((Iyy - Izz) * thetadot * psidot) / Ixx + tau_phi / Ixx)
         model.set_rhs('theta', thetadot)
-        model.set_rhs('thetadot', ((Izz-Ixx)*phidot*psidot)/Iyy
-                      + tau_theta/Iyy)
+        model.set_rhs('thetadot', ((Izz - Ixx) * phidot * psidot) / Iyy
+                      + tau_theta / Iyy)
         model.set_rhs('psi', psidot)
-        model.set_rhs('psidot', ((Ixx-Iyy)*phidot*thetadot)/Izz + tau_psi/Izz)
+        model.set_rhs(
+            'psidot',
+            ((Ixx - Iyy) * phidot * thetadot) / Izz + tau_psi / Izz)
 
         # Model Setup
         model.setup()
@@ -76,22 +80,22 @@ class Nonlinear_MPC(BaseController):
         thetadot_max = env.high[3]
         psidot_max = env.high[5]
 
-        mterm = (env.Q[0, 0]*(phi**2) +
-                 env.Q[1, 1]*(theta**2) +
-                 env.Q[2, 2]*(psi**2) +
-                 env.Q[3, 3]*(phidot**2) +
-                 env.Q[4, 4]*(theta**2) +
-                 env.Q[5, 5]*(psidot**2))
+        mterm = (env.Q[0, 0] * (phi**2) +
+                 env.Q[1, 1] * (theta**2) +
+                 env.Q[2, 2] * (psi**2) +
+                 env.Q[3, 3] * (phidot**2) +
+                 env.Q[4, 4] * (theta**2) +
+                 env.Q[5, 5] * (psidot**2))
 
-        lterm = (env.Q[0, 0]*(phi**2) +
-                 env.Q[1, 1]*(theta**2) +
-                 env.Q[2, 2]*(psi**2) +
-                 env.Q[3, 3]*(phidot**2) +
-                 env.Q[4, 4]*(theta**2) +
-                 env.Q[5, 5]*(psidot**2) +
-                 env.R[0, 0]*(tau_phi**2) +
-                 env.R[1, 1]*(tau_theta**2) +
-                 env.R[2, 2]*(tau_psi**2)
+        lterm = (env.Q[0, 0] * (phi**2) +
+                 env.Q[1, 1] * (theta**2) +
+                 env.Q[2, 2] * (psi**2) +
+                 env.Q[3, 3] * (phidot**2) +
+                 env.Q[4, 4] * (theta**2) +
+                 env.Q[5, 5] * (psidot**2) +
+                 env.R[0, 0] * (tau_phi**2) +
+                 env.R[1, 1] * (tau_theta**2) +
+                 env.R[2, 2] * (tau_psi**2)
                  )
 
         self.mpc.set_objective(mterm=mterm, lterm=lterm)
@@ -104,19 +108,19 @@ class Nonlinear_MPC(BaseController):
         )
 
         # Lower bounds on states:
-        self.mpc.bounds['lower', '_x', 'phi'] = -2*phi_max
+        self.mpc.bounds['lower', '_x', 'phi'] = -2 * phi_max
         self.mpc.bounds['lower', '_x', 'phidot'] = -phidot_max
-        self.mpc.bounds['lower', '_x', 'theta'] = -2*theta_max
+        self.mpc.bounds['lower', '_x', 'theta'] = -2 * theta_max
         self.mpc.bounds['lower', '_x', 'thetadot'] = -thetadot_max
-        self.mpc.bounds['lower', '_x', 'psi'] = -2*psi_max
+        self.mpc.bounds['lower', '_x', 'psi'] = -2 * psi_max
         self.mpc.bounds['lower', '_x', 'psidot'] = -psidot_max
 
         # Upper bounds on states
-        self.mpc.bounds['upper', '_x', 'phi'] = 2*phi_max
+        self.mpc.bounds['upper', '_x', 'phi'] = 2 * phi_max
         self.mpc.bounds['upper', '_x', 'phidot'] = phidot_max
-        self.mpc.bounds['upper', '_x', 'theta'] = 2*theta_max
+        self.mpc.bounds['upper', '_x', 'theta'] = 2 * theta_max
         self.mpc.bounds['upper', '_x', 'thetadot'] = thetadot_max
-        self.mpc.bounds['upper', '_x', 'psi'] = 2*psi_max
+        self.mpc.bounds['upper', '_x', 'psi'] = 2 * psi_max
         self.mpc.bounds['upper', '_x', 'psidot'] = psidot_max
 
         # Lower bounds on inputs:
@@ -158,6 +162,7 @@ class Nonlinear_MPC(BaseController):
         self.simulator.x0 = self.x0
         self.mpc.reset_history()
         self.env = env
+
     def predict(self, error, deterministic=True):
 
         u0 = -self.mpc.make_step(error)
@@ -169,6 +174,6 @@ class Nonlinear_MPC(BaseController):
         done = False
         while not done:
             action = self.predict(obs, deterministic=True)
-            if type(action) is tuple:
+            if isinstance(action, tuple):
                 action = action[0]
             obs, reward, done, _ = self.env.step(action)

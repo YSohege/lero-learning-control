@@ -60,7 +60,7 @@ LINE_STYLES2 = [('loosely dotted', (0, (1, 10))), ('dotted', (0, (1, 1))),
                 ('dashdotdotted', (0, (3, 5, 1, 5, 1, 5))),
                 ('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),
                 ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1)))
-]
+                ]
 
 
 def rolling_window(a, window):
@@ -197,7 +197,7 @@ def load_from_logs(log_dir):
 
 def plot_from_logs(src_dir, out_dir, window=None, keys=None):
     """Generate a plot for each stat in an experiment `logs` folder.
-    
+
     Args:
         src_dir (str): folder to read logs.
         out_dir (str): folder to save figures.
@@ -237,7 +237,7 @@ def plot_from_tensorboard_log(src_dir,
                               keys=None,
                               xlabel="step"):
     """Generates a plot for each stat from tfb log file in source folder.
-    
+
     """
     event_acc = EventAccumulator(src_dir)
     event_acc.Reload()
@@ -273,15 +273,15 @@ def plot_from_experiments(legend_dir_specs,
                           use_tb_log=True
                           ):
     """Generates plot among algos, each with several seed runs.
-    
-    Example: 
-        make a plot on average reward for gnn and mlp:: 
-        
+
+    Example:
+        make a plot on average reward for gnn and mlp::
+
         > plot_from_experiments(
             {
                 "gnn": [
-                    "results/algo1/seed0", 
-                    "results/algo1/seed1", 
+                    "results/algo1/seed0",
+                    "results/algo1/seed1",
                     "results/algo1/seed2"
                 ],
                 "mlp": [
@@ -366,9 +366,9 @@ def get_log_dirs(all_logdirs,
     All 3 arguments can be exposed as list args from command line.
 
     For every entry in all_logdirs,
-        1) check if the entry is a real directory and if it is, 
-           pull data from it; 
-        2) if not, check to see if the entry is a prefix for a 
+        1) check if the entry is a real directory and if it is,
+           pull data from it;
+        2) if not, check to see if the entry is a prefix for a
            real directory, and pull data from that.
 
     """
@@ -378,12 +378,13 @@ def get_log_dirs(all_logdirs,
             logdirs += [logdir]
         else:
             basedir = osp.dirname(logdir)
-            fulldir = lambda x: osp.join(basedir, x)
+            def fulldir(x): return osp.join(basedir, x)
             prefix = logdir.split(os.sep)[-1]
             listdir = os.listdir(basedir)
             logdirs += sorted([fulldir(x) for x in listdir if prefix in x])
     # Enforce selection rules, which check logdirs for certain substrings. Makes it easier to look
-    # at graphs from particular ablations, if you launch many jobs at once with similar names.
+    # at graphs from particular ablations, if you launch many jobs at once
+    # with similar names.
     if select is not None:
         logdirs = [log for log in logdirs if all(x in log for x in select)]
     if exclude is not None:

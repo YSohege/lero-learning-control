@@ -16,7 +16,7 @@ from functools import partial
 from lero_control_gym.utils.registration import make
 
 
-def createDataPoint( results , env_config, con_config, savePath):
+def createDataPoint(results, env_config, con_config, savePath):
     datapoint = {
         "obs": [],
         "info": [],
@@ -49,8 +49,8 @@ def get_result(results):
     # Plot the experiment.
     for i in range(len(results['info'])):
         # Step the environment and print all returned information.
-        obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], results['info'][
-            i], results['action'][i]
+        obs, reward, done, info, action = results['obs'][i], results['reward'][
+            i], results['done'][i], results['info'][i], results['action'][i]
         err = float(info[0]['outside_safezone'])
         total_trajectory_loss += err
 
@@ -60,7 +60,7 @@ def get_result(results):
 
 class Task():
 
-    def __init__(self, quadcopter3D , optimal_mmac_pid ):
+    def __init__(self, quadcopter3D, optimal_mmac_pid):
         self.quadcopter = quadcopter3D
         self.controller = optimal_mmac_pid
 
@@ -80,7 +80,6 @@ class Task():
                            **self.quadcopter
                            )
 
-
         ctrl = make("quad3d_optimal_mmacpid",
                     env_func,
                     **self.controller
@@ -98,7 +97,6 @@ class Task():
         # print(str(END - START) + " seconds run time")
 
         return total_trajectory_loss
-
 
 
 # if __name__ == "__main__":

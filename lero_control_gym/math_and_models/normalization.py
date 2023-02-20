@@ -16,7 +16,7 @@ def normalize_angle(x):
 
 class RunningMeanStd():
     """Calulates the running mean and std of a data stream.
-    
+
     Attributes:
         mean (np.array): mean of data stream.
         var (np.array): variance of data stream.
@@ -25,8 +25,8 @@ class RunningMeanStd():
     """
 
     def __init__(self, epsilon=1e-4, shape=()):
-        """Initializes containers for data mean and variance. 
-        
+        """Initializes containers for data mean and variance.
+
         Args:
             epsilon (float): helps with arithmetic issues.
             shape (tuple): the shape of the data stream's output.
@@ -57,7 +57,8 @@ class RunningMeanStd():
         new_mean = self.mean + delta * batch_count / tot_count
         m_a = self.var * self.count
         m_b = batch_var * batch_count
-        m_2 = m_a + m_b + np.square(delta) * self.count * batch_count / (self.count + batch_count)
+        m_2 = m_a + m_b + np.square(delta) * self.count * \
+            batch_count / (self.count + batch_count)
         new_var = m_2 / (self.count + batch_count)
         new_count = batch_count + self.count
         self.mean = new_mean
@@ -107,12 +108,12 @@ class MeanStdNormalizer(BaseNormalizer):
     """
 
     def __init__(self, shape=(), read_only=False, clip=10.0, epsilon=1e-8):
-        """Initializes the data stream tracker. 
+        """Initializes the data stream tracker.
 
         Args:
             shape (tuple): shape of data being tracked.
             read_only (bool): if to freeze the tracker.
-            clip (float): bounds on the data. 
+            clip (float): bounds on the data.
             epsilon (float): offset to provide divide-by-zero.
 
         """
@@ -142,11 +143,11 @@ class MeanStdNormalizer(BaseNormalizer):
 
 
 class RewardStdNormalizer(MeanStdNormalizer):
-    """Reward normalization by running average of returns.  
-    
+    """Reward normalization by running average of returns.
+
     Papers:
-        * arxiv.org/pdf/1808.04355.pdf 
-        * arxiv.org/pdf/1810.12894.pdf 
+        * arxiv.org/pdf/1808.04355.pdf
+        * arxiv.org/pdf/1810.12894.pdf
 
     Also see:
         * github.com/openai/baselines/issues/538
@@ -154,12 +155,12 @@ class RewardStdNormalizer(MeanStdNormalizer):
     """
 
     def __init__(self, gamma=0.99, read_only=False, clip=10.0, epsilon=1e-8):
-        """Initializes the data stream tracker. 
-        
+        """Initializes the data stream tracker.
+
         Args:
             gamma (float): discount factor for rewards.
             read_only (bool): if to freeze the tracker.
-            clip (float): bounds on the data. 
+            clip (float): bounds on the data.
             epsilon (float): offset to provide divide-by-zero.
 
         """
@@ -181,7 +182,10 @@ class RewardStdNormalizer(MeanStdNormalizer):
             self.rms.update(self.ret)
             # Prevent information leak from previous episodes.
             self.ret[dones.astype(np.long)] = 0
-        return np.clip(x / np.sqrt(self.rms.var + self.epsilon), -self.clip, self.clip)
+        return np.clip(x /
+                       np.sqrt(self.rms.var +
+                               self.epsilon), -
+                       self.clip, self.clip)
 
 
 class RescaleNormalizer(BaseNormalizer):
@@ -227,7 +231,8 @@ class ActionUnnormalizer(BaseNormalizer):
 
         """
         super().__init__()
-        assert isinstance(action_space, Box), "action space must be gym.spaces.Box"
+        assert isinstance(
+            action_space, Box), "action space must be gym.spaces.Box"
         low, high = action_space.low, action_space.high
         self.mean = (low + high) / 2.0
         self.std = (high - low) / 2.0

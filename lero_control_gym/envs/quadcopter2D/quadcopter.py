@@ -42,12 +42,12 @@ class Quadcopter(BaseAviary):
     }
 
     INERTIAL_PROP_RAND_INFO = {
-        "M": { # Nominal: 0.027
+        "M": {  # Nominal: 0.027
             'distrib': "uniform",
             'low': 0.022,
             'high': 0.032
         },
-        "Iyy": { # Nominal: 1.4e-5
+        "Iyy": {  # Nominal: 1.4e-5
             'distrib': "uniform",
             'low': 1.3e-5,
             'high': 1.5e-5
@@ -126,32 +126,40 @@ class Quadcopter(BaseAviary):
             info_mse_metric_state_weight (list/ndarray): quadratic weights for state in mse calculation for info dict.
 
         """
-        # Select the 1D (moving along z) or 2D (moving in the xz plane) quadrotor.
+        # Select the 1D (moving along z) or 2D (moving in the xz plane)
+        # quadrotor.
         self.QUAD_TYPE = QuadType(quad_type)
         self.norm_act_scale = norm_act_scale
         self.obs_goal_horizon = obs_goal_horizon
-        self.rew_state_weight = np.array(rew_state_weight, ndmin=1, dtype=float)
+        self.rew_state_weight = np.array(
+            rew_state_weight, ndmin=1, dtype=float)
         self.rew_act_weight = np.array(rew_act_weight, ndmin=1, dtype=float)
         self.rew_exponential = rew_exponential
         self.done_on_out_of_bound = done_on_out_of_bound
 
         if info_mse_metric_state_weight is None:
             if self.QUAD_TYPE == QuadType.ONE_D:
-                self.info_mse_metric_state_weight = np.array([1,0], ndmin=1, dtype=float)
+                self.info_mse_metric_state_weight = np.array(
+                    [1, 0], ndmin=1, dtype=float)
             elif self.QUAD_TYPE == QuadType.TWO_D:
-                self.info_mse_metric_state_weight = np.array([1,0,1,0,0,0], ndmin=1, dtype=float)
+                self.info_mse_metric_state_weight = np.array(
+                    [1, 0, 1, 0, 0, 0], ndmin=1, dtype=float)
             else:
-                raise ValueError("[ERROR] in Quadrotor.__init__(), not implemented quad type.")
+                raise ValueError(
+                    "[ERROR] in Quadrotor.__init__(), not implemented quad type.")
         else:
-            if (self.QUAD_TYPE == QuadType.ONE_D and len(info_mse_metric_state_weight)==2) or \
-                    (self.QUAD_TYPE == QuadType.TWO_D and len(info_mse_metric_state_weight)==6):
-                self.info_mse_metric_state_weight = np.array(info_mse_metric_state_weight, ndmin=1, dtype=float)
+            if (self.QUAD_TYPE == QuadType.ONE_D and len(info_mse_metric_state_weight) == 2) or (
+                    self.QUAD_TYPE == QuadType.TWO_D and len(info_mse_metric_state_weight) == 6):
+                self.info_mse_metric_state_weight = np.array(
+                    info_mse_metric_state_weight, ndmin=1, dtype=float)
             else:
-                raise ValueError("[ERROR] in Quadrotor.__init__(), wrong info_mse_metric_state_weight argument size.")
-        # BaseAviary constructor, called after defining the custom args, 
-        # since some BenchmarkEnv init setup can be task(custom args)-dependent. 
+                raise ValueError(
+                    "[ERROR] in Quadrotor.__init__(), wrong info_mse_metric_state_weight argument size.")
+        # BaseAviary constructor, called after defining the custom args,
+        # since some BenchmarkEnv init setup can be task(custom
+        # args)-dependent.
         super().__init__(init_state=init_state, inertial_prop=inertial_prop, **kwargs)
-        
+
         # Custom disturbance info.
         # 1D quad disturbances have lower dimensions
         if self.QUAD_TYPE == QuadType.ONE_D:
@@ -161,16 +169,19 @@ class Quadcopter(BaseAviary):
 
         # Store initial state info.
         if init_state is None:
-            self.INIT_X, self.INIT_X_DOT, self.INIT_Z, self.INIT_Z_DOT, self.INIT_THETA, self.INIT_THETA_DOT = np.zeros(6)
+            self.INIT_X, self.INIT_X_DOT, self.INIT_Z, self.INIT_Z_DOT, self.INIT_THETA, self.INIT_THETA_DOT = np.zeros(
+                6)
         elif self.QUAD_TYPE == QuadType.ONE_D:
-            self.INIT_X, self.INIT_X_DOT, self.INIT_THETA, self.INIT_THETA_DOT = np.zeros(4)
+            self.INIT_X, self.INIT_X_DOT, self.INIT_THETA, self.INIT_THETA_DOT = np.zeros(
+                4)
             if isinstance(init_state, np.ndarray):
                 self.INIT_Z, self.INIT_Z_DOT = init_state
             elif isinstance(init_state, dict):
                 self.INIT_Z = init_state.get("init_z", 0)
                 self.INIT_Z_DOT = init_state.get("init_z_dot", 0)
             else:
-                raise ValueError("[ERROR] in Quadrotor.__init__(), init_state incorrect format.")
+                raise ValueError(
+                    "[ERROR] in Quadrotor.__init__(), init_state incorrect format.")
         elif self.QUAD_TYPE == QuadType.TWO_D:
             if isinstance(init_state, np.ndarray):
                 self.INIT_X, self.INIT_X_DOT, self.INIT_Z, self.INIT_Z_DOT, self.INIT_THETA, self.INIT_THETA_DOT = init_state
@@ -182,16 +193,21 @@ class Quadcopter(BaseAviary):
                 self.INIT_THETA = init_state.get("init_theta", 0)
                 self.INIT_THETA_DOT = init_state.get("init_theta_dot", 0)
             else:
-                raise ValueError("[ERROR] in Quadrotor.__init__(), init_state incorrect format.")
+                raise ValueError(
+                    "[ERROR] in Quadrotor.__init__(), init_state incorrect format.")
         # Decide whether to randomize the initial state and how (see info dictionary).
-        #self.RANDOMIZED_INIT = randomized_init
-        #if init_state_randomization_info is not None:
+        # self.RANDOMIZED_INIT = randomized_init
+        # if init_state_randomization_info is not None:
         #    self.INIT_STATE_RAND_INFO = init_state_randomization_info
         # Do NOT randomize x, x_dot, theta, theta_dot for the 1D quadrotor.
         if self.QUAD_TYPE == QuadType.ONE_D:
-            for init_name in ["init_x", "init_x_dot", "init_theta", "init_theta_dot"]:
+            for init_name in [
+                "init_x",
+                "init_x_dot",
+                "init_theta",
+                    "init_theta_dot"]:
                 self.INIT_STATE_RAND_INFO.pop(init_name, None)
-                
+
         # Decide whether to randomize the inertial properties and how (see info dictionary).
         # self.RANDOMIZED_INERTIAL_PROP = randomized_inertial_prop
         # if inertial_prop_randomization_info is not None:
@@ -199,22 +215,24 @@ class Quadcopter(BaseAviary):
         # Do NOT randomize J for the 1D quadrotor.
         if self.QUAD_TYPE == QuadType.ONE_D:
             self.INERTIAL_PROP_RAND_INFO.pop("Iyy", None)
-                
+
         # Override inertial properties of passed as arguments.
         if inertial_prop is None:
             pass
         elif np.array(inertial_prop).shape == (2,):
             self.MASS, self.J[1, 1] = inertial_prop
-        elif  isinstance(inertial_prop, dict):
+        elif isinstance(inertial_prop, dict):
             self.MASS = inertial_prop.get("mass", 0)
             self.J[1, 1] = inertial_prop.get("iyy", 0)
         else:
-            raise ValueError("[ERROR] in Quadrotor.__init__(), inertial_prop is not of shape (2,).")
+            raise ValueError(
+                "[ERROR] in Quadrotor.__init__(), inertial_prop is not of shape (2,).")
         # Set prior/symbolic info.
         self._setup_symbolic()
-            
+
         # Create X_GOAL and U_GOAL references for the assigned task.
-        self.U_GOAL = np.ones(self.action_dim) * self.MASS * self.GRAVITY_ACC / self.action_dim
+        self.U_GOAL = np.ones(self.action_dim) * self.MASS * \
+            self.GRAVITY_ACC / self.action_dim
         if self.TASK == Task.STABILIZATION:
             if self.QUAD_TYPE == QuadType.ONE_D:
                 self.X_GOAL = np.hstack(
@@ -227,15 +245,15 @@ class Quadcopter(BaseAviary):
                 ])  # x = {x, x_dot, z, z_dot, theta, theta_dot}.
         elif self.TASK == Task.TRAJ_TRACKING:
             POS_REF, \
-            VEL_REF, \
-            SPEED = self._generate_trajectory(traj_type=self.TASK_INFO["trajectory_type"],
-                                              traj_length=self.EPISODE_LEN_SEC,
-                                              num_cycles=self.TASK_INFO["num_cycles"],
-                                              traj_plane=self.TASK_INFO["trajectory_plane"],
-                                              position_offset=self.TASK_INFO["trajectory_position_offset"],
-                                              scaling=self.TASK_INFO["trajectory_scale"],
-                                              sample_time=self.CTRL_TIMESTEP
-                                              )
+                VEL_REF, \
+                SPEED = self._generate_trajectory(traj_type=self.TASK_INFO["trajectory_type"],
+                                                  traj_length=self.EPISODE_LEN_SEC,
+                                                  num_cycles=self.TASK_INFO["num_cycles"],
+                                                  traj_plane=self.TASK_INFO["trajectory_plane"],
+                                                  position_offset=self.TASK_INFO["trajectory_position_offset"],
+                                                  scaling=self.TASK_INFO["trajectory_scale"],
+                                                  sample_time=self.CTRL_TIMESTEP
+                                                  )
             if self.QUAD_TYPE == QuadType.ONE_D:
                 self.X_GOAL = np.vstack([
                     POS_REF[:, 2],
@@ -251,7 +269,8 @@ class Quadcopter(BaseAviary):
                     np.zeros(VEL_REF.shape[0])
                 ]).transpose()
         # constraints = [{"constraint_form" : "default_constraint"}]
-        # self.constraints = create_constraint_list([]], GENERAL_CONSTRAINTS, self )
+        # self.constraints = create_constraint_list([]], GENERAL_CONSTRAINTS,
+        # self )
         self.constraints = None
 
     def reset(self):
@@ -265,7 +284,7 @@ class Quadcopter(BaseAviary):
 
         """
         super().before_reset()
-        # PyBullet simulation reset.  
+        # PyBullet simulation reset.
         super()._reset_simulation()
         # Choose randomized or deterministic inertial properties.
         prop_values = {
@@ -276,9 +295,11 @@ class Quadcopter(BaseAviary):
             prop_values = self._randomize_values_by_info(
                 prop_values, self.INERTIAL_PROP_RAND_INFO)
             if any(phy_quantity < 0 for phy_quantity in prop_values.values()):
-                raise ValueError("[ERROR] in CartPole.reset(), negative randomized inertial properties.")
+                raise ValueError(
+                    "[ERROR] in CartPole.reset(), negative randomized inertial properties.")
         self.OVERRIDDEN_QUAD_MASS = prop_values["M"]
-        self.OVERRIDDEN_QUAD_INERTIA = [self.J[0, 0], prop_values["Iyy"], self.J[2, 2]]
+        self.OVERRIDDEN_QUAD_INERTIA = [
+            self.J[0, 0], prop_values["Iyy"], self.J[2, 2]]
         # Override inertial properties.
         p.changeDynamics(
             self.DRONE_IDS[0],
@@ -296,21 +317,25 @@ class Quadcopter(BaseAviary):
             "init_theta_dot": self.INIT_THETA_DOT,
         }
         if self.RANDOMIZED_INIT:
-            init_values = self._randomize_values_by_info(init_values, self.INIT_STATE_RAND_INFO)
+            init_values = self._randomize_values_by_info(
+                init_values, self.INIT_STATE_RAND_INFO)
         OVERRIDDEN_INIT_X = init_values["init_x"]
         OVERRIDDEN_INIT_X_DOT = init_values["init_x_dot"]
         OVERRIDDEN_INIT_Z = init_values["init_z"]
         OVERRIDDEN_INIT_Z_DOT = init_values["init_z_dot"]
         OVERRIDDEN_INIT_THETA = init_values["init_theta"]
         OVERRIDDEN_INIT_THETA_DOT = init_values["init_theta_dot"]
-        p.resetBasePositionAndOrientation(self.DRONE_IDS[0], [OVERRIDDEN_INIT_X, 0, OVERRIDDEN_INIT_Z],
-                                          p.getQuaternionFromEuler([0, OVERRIDDEN_INIT_THETA, 0]),
-                                          physicsClientId=self.PYB_CLIENT)
+        p.resetBasePositionAndOrientation(
+            self.DRONE_IDS[0], [
+                OVERRIDDEN_INIT_X, 0, OVERRIDDEN_INIT_Z], p.getQuaternionFromEuler(
+                [
+                    0, OVERRIDDEN_INIT_THETA, 0]), physicsClientId=self.PYB_CLIENT)
         p.resetBaseVelocity(self.DRONE_IDS[0],
                             [OVERRIDDEN_INIT_X_DOT, 0, OVERRIDDEN_INIT_Z_DOT],
                             [0, OVERRIDDEN_INIT_THETA_DOT, 0],
                             physicsClientId=self.PYB_CLIENT)
-        # Update BaseAviary internal variables before calling self._get_observation().
+        # Update BaseAviary internal variables before calling
+        # self._get_observation().
         self._update_and_store_kinematic_information()
         obs, info = self._get_observation(), self._get_reset_info()
         obs, info = super().after_reset(obs, info)
@@ -319,11 +344,10 @@ class Quadcopter(BaseAviary):
             return obs, info
         else:
             return obs
-        
 
     def step(self, action):
         """Advances the environment by one control step.
-        
+
         Pass the commanded RPMs and the adversarial force to the superclass .step().
         The PyBullet simulation is stepped PYB_FREQ/CTRL_FREQ times in BaseAviary.
 
@@ -367,7 +391,7 @@ class Quadcopter(BaseAviary):
                 raise NotImplementedError(
                     "[ERROR] in Quadrotor._advance_simulation(), disturb force for quad 3D is not available."
                 )
-        # Advance the simulation.        
+        # Advance the simulation.
         super()._advance_simulation(rpm, disturb_force)
         # Standard Gym return.
         obs = self._get_observation()
@@ -376,7 +400,7 @@ class Quadcopter(BaseAviary):
         info = self._get_info()
         obs, rew, done, info = super().after_step(obs, rew, done, info)
         return obs, rew, done, info
-    
+
     def render(self, mode='human'):
         """Retrieves a frame from PyBullet rendering.
 
@@ -387,14 +411,18 @@ class Quadcopter(BaseAviary):
             ndarray: A multidimensional array with the RGB frame captured by PyBullet's camera.
 
         """
-        [w, h, rgb, dep, seg] = p.getCameraImage(width=self.RENDER_WIDTH,
-                                                 height=self.RENDER_HEIGHT,
-                                                 shadow=1,
-                                                 viewMatrix=self.CAM_VIEW,
-                                                 projectionMatrix=self.CAM_PRO,
-                                                 renderer=p.ER_TINY_RENDERER,
-                                                 flags=p.ER_SEGMENTATION_MASK_OBJECT_AND_LINKINDEX,
-                                                 physicsClientId=self.PYB_CLIENT)
+        [w,
+         h,
+         rgb,
+         dep,
+         seg] = p.getCameraImage(width=self.RENDER_WIDTH,
+                                 height=self.RENDER_HEIGHT,
+                                 shadow=1,
+                                 viewMatrix=self.CAM_VIEW,
+                                 projectionMatrix=self.CAM_PRO,
+                                 renderer=p.ER_TINY_RENDERER,
+                                 flags=p.ER_SEGMENTATION_MASK_OBJECT_AND_LINKINDEX,
+                                 physicsClientId=self.PYB_CLIENT)
         # Image.fromarray(np.reshape(rgb, (h, w, 4)), 'RGBA').show()
         return np.reshape(rgb, (h, w, 4))
 
@@ -446,7 +474,8 @@ class Quadcopter(BaseAviary):
         R = cs.MX.sym('R', nu, nu)
         Xr = cs.MX.sym('Xr', nx, 1)
         Ur = cs.MX.sym('Ur', nu, 1)
-        cost_func = 0.5 * (X - Xr).T @ Q @ (X - Xr) + 0.5 * (U - Ur).T @ R @ (U - Ur)
+        cost_func = 0.5 * (X - Xr).T @ Q @ (X - Xr) + \
+            0.5 * (U - Ur).T @ R @ (U - Ur)
         # Define dynamics and cost dictionaries.
         dynamics = {"dyn_eqn": X_dot, "obs_eqn": Y, "vars": {"X": X, "U": U}}
         cost = {
@@ -472,13 +501,16 @@ class Quadcopter(BaseAviary):
         """
         # Define action/input dimension, labels, and units.
         if self.QUAD_TYPE == QuadType.ONE_D:
-            action_dim = 1 
+            action_dim = 1
             self.ACTION_LABELS = ['T']
-            self.ACTION_UNITS = ['N'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-']
+            self.ACTION_UNITS = [
+                'N'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-']
         elif self.QUAD_TYPE == QuadType.TWO_D:
-            action_dim = 2 
+            action_dim = 2
             self.ACTION_LABELS = ['T1', 'T2']
-            self.ACTION_UNITS = ['N', 'N'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-', '-']
+            self.ACTION_UNITS = [
+                'N', 'N'] if not self.NORMALIZED_RL_ACTION_SPACE else [
+                '-', '-']
         else:
             raise NotImplementedError(
                 "[ERROR] in Quadrotor._set_action_space(), quad_type not supported."
@@ -486,14 +518,16 @@ class Quadcopter(BaseAviary):
         if self.NORMALIZED_RL_ACTION_SPACE:
             # normalized thrust (around hover thrust)
             self.hover_thrust = self.GRAVITY_ACC * self.MASS / action_dim
-            self.action_space = spaces.Box(low=-np.ones(action_dim), 
-                                           high=np.ones(action_dim), 
+            self.action_space = spaces.Box(low=-np.ones(action_dim),
+                                           high=np.ones(action_dim),
                                            dtype=np.float32)
         else:
-            # direct thrust control 
-            self.action_space = spaces.Box(low=np.zeros(action_dim), 
-                                           high=self.MAX_THRUST * np.ones(action_dim), 
-                                           dtype=np.float32)
+            # direct thrust control
+            self.action_space = spaces.Box(
+                low=np.zeros(action_dim),
+                high=self.MAX_THRUST *
+                np.ones(action_dim),
+                dtype=np.float32)
 
     def _set_observation_space(self):
         """Returns the observation space of the environment.
@@ -508,7 +542,8 @@ class Quadcopter(BaseAviary):
         # Define obs/state bounds, labels and units.
         if self.QUAD_TYPE == QuadType.ONE_D:
             # obs/state = {z, z_dot}.
-            low = np.array([self.GROUND_PLANE_Z * 2, -np.finfo(np.float32).max])
+            low = np.array(
+                [self.GROUND_PLANE_Z * 2, -np.finfo(np.float32).max])
             high = np.array([self.z_threshold * 2, np.finfo(np.float32).max])
             self.STATE_LABELS = ['z', 'z_dot']
             self.STATE_UNITS = ['m', 'm/s']
@@ -520,18 +555,19 @@ class Quadcopter(BaseAviary):
                 -self.theta_threshold_radians * 2, -np.finfo(np.float32).max
             ])
             high = np.array([
-                self.x_threshold * 2, np.finfo(np.float32).max, 
-                self.z_threshold * 2, np.finfo(np.float32).max, 
+                self.x_threshold * 2, np.finfo(np.float32).max,
+                self.z_threshold * 2, np.finfo(np.float32).max,
                 self.theta_threshold_radians * 2, np.finfo(np.float32).max
             ])
-            self.STATE_LABELS = ['x', 'x_dot', 'z', 'z_dot', 'theta', 'theta_dot']
+            self.STATE_LABELS = [
+                'x', 'x_dot', 'z', 'z_dot', 'theta', 'theta_dot']
             self.STATE_UNITS = ['m', 'm/s', 'm', 'm/s', 'rad', 'rad/s']
         # Define underlying state space in dynamics transition
         self.state_space = spaces.Box(low=low, high=high, dtype=np.float32)
-            
-        # Concatenate goal info for RL 
+
+        # Concatenate goal info for RL
         if self.COST == Cost.RL_REWARD and self.TASK == Task.TRAJ_TRACKING:
-            # include future goal state(s) 
+            # include future goal state(s)
             # e.g. horizon=1, obs = {state, state_target}
             mul = 1 + self.obs_goal_horizon
             low = np.concatenate([low] * mul)
@@ -539,9 +575,11 @@ class Quadcopter(BaseAviary):
         elif self.COST == Cost.RL_REWARD and self.TASK == Task.STABILIZATION:
             low = np.concatenate([low] * 2)
             high = np.concatenate([high] * 2)
-        # Define obs space exposed to the controller 
-        # Note obs space is often different to state space for RL (with additional task info)
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        # Define obs space exposed to the controller
+        # Note obs space is often different to state space for RL (with
+        # additional task info)
+        self.observation_space = spaces.Box(
+            low=low, high=high, dtype=np.float32)
 
     def _preprocess_control(self, action):
         """Converts the action passed to .step() into motors' RPMs (ndarray of shape (4,)).
@@ -555,10 +593,16 @@ class Quadcopter(BaseAviary):
         """
         if self.NORMALIZED_RL_ACTION_SPACE:
             # rescale action to around hover thrust
-            action = np.clip(action, self.action_space.low, self.action_space.high)
+            action = np.clip(
+                action,
+                self.action_space.low,
+                self.action_space.high)
             thrust = (1 + self.norm_act_scale * action) * self.hover_thrust
         else:
-            thrust = np.clip(action, self.action_space.low, self.action_space.high)
+            thrust = np.clip(
+                action,
+                self.action_space.low,
+                self.action_space.high)
         if not np.array_equal(thrust, np.array(action)) and self.VERBOSE:
             print("[WARNING]: action was clipped in Quadrotor._preprocess_control().")
         self.current_preprocessed_action = thrust
@@ -568,7 +612,13 @@ class Quadcopter(BaseAviary):
         if self.adversary_disturbance == "action":
             thrust = thrust + self.adv_action
         # convert to quad motor rpm commands
-        pwm = cmd2pwm(thrust, self.PWM2RPM_SCALE, self.PWM2RPM_CONST, self.KF, self.MIN_PWM, self.MAX_PWM)
+        pwm = cmd2pwm(
+            thrust,
+            self.PWM2RPM_SCALE,
+            self.PWM2RPM_CONST,
+            self.KF,
+            self.MIN_PWM,
+            self.MAX_PWM)
         rpm = pwm2rpm(pwm, self.PWM2RPM_SCALE, self.PWM2RPM_CONST)
         return rpm
 
@@ -598,14 +648,14 @@ class Quadcopter(BaseAviary):
         # Apply observation disturbance.
         obs = deepcopy(self.state)
         if "observation" in self.disturbances:
-            obs = self.disturbances["observation"].apply(obs, self) 
-        # Concatenate goal info (goal state(s)) for RL 
-        if self.COST == Cost.RL_REWARD and self.TASK == Task.TRAJ_TRACKING:            
+            obs = self.disturbances["observation"].apply(obs, self)
+        # Concatenate goal info (goal state(s)) for RL
+        if self.COST == Cost.RL_REWARD and self.TASK == Task.TRAJ_TRACKING:
             # increment by 1 since counter is post-updated after _get_observation(),
             # obs should contain goal state desired for the next state
-            next_step = self.ctrl_step_counter + 1 
+            next_step = self.ctrl_step_counter + 1
             wp_idx = [
-                min(next_step + i, self.X_GOAL.shape[0]-1) 
+                min(next_step + i, self.X_GOAL.shape[0] - 1)
                 for i in range(self.obs_goal_horizon)
             ]
             goal_state = self.X_GOAL[wp_idx].flatten()
@@ -628,21 +678,28 @@ class Quadcopter(BaseAviary):
             act = np.asarray(self.current_preprocessed_action)
             # quadratic costs w.r.t state and action
             # TODO: consider using action error with goal action the hover thrust
-            # TODO: consider using multiple future goal states for cost in tracking
+            # TODO: consider using multiple future goal states for cost in
+            # tracking
             if self.TASK == Task.STABILIZATION:
                 state_error = state - self.X_GOAL
-                dist = np.sum(self.rew_state_weight * state_error * state_error)
+                dist = np.sum(
+                    self.rew_state_weight *
+                    state_error *
+                    state_error)
                 dist += np.sum(self.rew_act_weight * act * act)
             if self.TASK == Task.TRAJ_TRACKING:
-                wp_idx = min(self.ctrl_step_counter, self.X_GOAL.shape[0]-1)
+                wp_idx = min(self.ctrl_step_counter, self.X_GOAL.shape[0] - 1)
                 state_error = state - self.X_GOAL[wp_idx]
-                dist = np.sum(self.rew_state_weight * state_error * state_error)
+                dist = np.sum(
+                    self.rew_state_weight *
+                    state_error *
+                    state_error)
                 dist += np.sum(self.rew_act_weight * act * act)
             rew = -dist
             # convert rew to be positive and bounded [0,1]
             if self.rew_exponential:
                 rew = np.exp(rew)
-            return rew 
+            return rew
         # Control cost.
         if self.COST == Cost.QUADRATIC:
             if self.TASK == Task.STABILIZATION:
@@ -654,7 +711,7 @@ class Quadcopter(BaseAviary):
                                                      R=self.R)["l"])
             if self.TASK == Task.TRAJ_TRACKING:
                 return float(-1 * self.symbolic.loss(x=self.state,
-                                                     Xr=self.X_GOAL[self.ctrl_step_counter,:],
+                                                     Xr=self.X_GOAL[self.ctrl_step_counter, :],
                                                      u=self.current_preprocessed_action,
                                                      Ur=self.U_GOAL,
                                                      Q=self.Q,
@@ -669,7 +726,10 @@ class Quadcopter(BaseAviary):
         """
         # Done if goal reached for stabilization task with quadratic cost.
         if self.TASK == Task.STABILIZATION and self.COST == Cost.QUADRATIC:
-            self.goal_reached = bool(np.linalg.norm(self.state - self.X_GOAL) < self.TASK_INFO["stabilization_goal_tolerance"])
+            self.goal_reached = bool(
+                np.linalg.norm(
+                    self.state -
+                    self.X_GOAL) < self.TASK_INFO["stabilization_goal_tolerance"])
             if self.goal_reached:
                 return True
         # # Done if the episode length is exceeded.
@@ -683,21 +743,21 @@ class Quadcopter(BaseAviary):
         if self.done_on_out_of_bound:
             if self.QUAD_TYPE == QuadType.ONE_D:
                 z, _ = self.state
-                out_of_bound = bool(z < -self.z_threshold 
+                out_of_bound = bool(z < -self.z_threshold
                                     or z > self.z_threshold)
             if self.QUAD_TYPE == QuadType.TWO_D:
                 x, _, z, _, theta, _ = self.state
-                out_of_bound = bool(x < -self.x_threshold 
-                                    or x > self.x_threshold 
-                                    or z < -self.z_threshold 
-                                    or z > self.z_threshold 
-                                    or theta < -self.theta_threshold_radians 
+                out_of_bound = bool(x < -self.x_threshold
+                                    or x > self.x_threshold
+                                    or z < -self.z_threshold
+                                    or z > self.z_threshold
+                                    or theta < -self.theta_threshold_radians
                                     or theta > self.theta_threshold_radians)
-            # early terminate if needed, but does not return False right away, 
+            # early terminate if needed, but does not return False right away,
             # allowing other done conditions to be chained afterwards
             if out_of_bound:
-                return True 
-        return False 
+                return True
+        return False
 
     def _get_info(self):
         """Generates the info dictionary returned by every call to .step().
@@ -708,17 +768,18 @@ class Quadcopter(BaseAviary):
         """
         info = {}
         if self.TASK == Task.STABILIZATION and self.COST == Cost.QUADRATIC:
-            info["goal_reached"] = self.goal_reached  # Add boolean flag for the goal being reached.
+            # Add boolean flag for the goal being reached.
+            info["goal_reached"] = self.goal_reached
         # Add MSE.
-        state = deepcopy(self.state) 
+        state = deepcopy(self.state)
         if self.TASK == Task.STABILIZATION:
             state_error = state - self.X_GOAL
         elif self.TASK == Task.TRAJ_TRACKING:
-            # TODO: should use angle wrapping  
+            # TODO: should use angle wrapping
             # state[4] = normalize_angle(state[4])
-            wp_idx = min(self.ctrl_step_counter, self.X_GOAL.shape[0]-1)
+            wp_idx = min(self.ctrl_step_counter, self.X_GOAL.shape[0] - 1)
             state_error = state - self.X_GOAL[wp_idx]
-        # filter only relevant dimensions 
+        # filter only relevant dimensions
         state_error = state_error * self.info_mse_metric_state_weight
         info["mse"] = np.sum(state_error ** 2)
         # if self.constraints is not None:

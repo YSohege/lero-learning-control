@@ -5,18 +5,21 @@ import numpy as np
 from lero_control_gym.utils.configuration import ConfigFactory
 from lero_control_gym.tuning.ParticleSwarmOptimization.PSO import ParticleSwarmOptimization as PSO
 
+
 class Experiment():
-    def __init__(self, experiment_config ):
+    def __init__(self, experiment_config):
 
         self.generalConfig = experiment_config
         random.seed(self.generalConfig.Experiment.random_seed)
-        self.generalConfig.Experiment.PSO.random_seed = random.randint(0,10000)
+        self.generalConfig.Experiment.PSO.random_seed = random.randint(
+            0, 10000)
         return
 
     def run(self):
         results = []
         for i in range(self.generalConfig.Experiment.numberIterations):
-            self.generalConfig.Experiment.PSO.random_seed = random.randint(0, 10000)
+            self.generalConfig.Experiment.PSO.random_seed = random.randint(
+                0, 10000)
             algo = PSO(**self.generalConfig.Experiment.PSO)
             result = algo.run()
             results.append(result)
@@ -37,6 +40,7 @@ class Experiment():
 
         return [p_average, d_average]
 
+
 def main():
     # Create an environment
     CONFIG_FACTORY = ConfigFactory()
@@ -53,9 +57,6 @@ def main():
     print("PSO Result - Rotor Loss of Effectiveness Conditions")
     print(result)
     print("===============================")
-
-
-
 
 
 if __name__ == "__main__":

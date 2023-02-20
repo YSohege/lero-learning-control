@@ -15,64 +15,69 @@ from functools import partial
 from lero_control_gym.utils.registration import make
 import gym
 from gym import spaces
+
+
 class Blended_Control_Task(gym.Env):
 
-    def __init__(self, quadcopter3D , rbc_pid ):
+    def __init__(self, quadcopter3D, rbc_pid):
         self.quadcopter = quadcopter3D
         self.controller = rbc_pid
-        self.faultChance = 5 # 80 percent chance
+        self.faultChance = 5  # 80 percent chance
         # Create controller.
         self.env_func = partial(make,
-                           'quadcopter3D',
-                           **self.quadcopter
-                           )
+                                'quadcopter3D',
+                                **self.quadcopter
+                                )
 
         self.ctrl = make("quad3d_rbcpid",
-                    self.env_func,
-                    **self.controller
-                    )
+                         self.env_func,
+                         **self.controller
+                         )
         self.maxConcentration = 5
-        actionS = np.array([self.maxConcentration] *len(self.controller.RBC_DISTRIBUTION_PARAMETERS))
+        actionS = np.array([self.maxConcentration] *
+                           len(self.controller.RBC_DISTRIBUTION_PARAMETERS))
         self.action_space = spaces.MultiDiscrete(actionS)
 
-        self.obsLen =15
-        #state and target of quadcopter
-        self.observation_space = spaces.Box(low=0, high=1, shape=( 1, self.obsLen))
+        self.obsLen = 15
+        # state and target of quadcopter
+        self.observation_space = spaces.Box(
+            low=0, high=1, shape=(1, self.obsLen))
         obs, info = self.ctrl.reset()
-
 
         self.episode_cum_rew = 0
         self.actions = []
         self.ep_counter = 0
         return
 
-
-
-
     def reset(self):
 
         a1 = 0
         a2 = 0
-        self.ep_counter+=1
+        self.ep_counter += 1
         for action in self.actions:
-            a1+=action[0]
-            a2+=action[1]
+            a1 += action[0]
+            a2 += action[1]
 
-        if len(self.actions)> 0:
-            averageA1 = a1/len(self.actions)
-            averageA2 = a2/len(self.actions)
+        if len(self.actions) > 0:
+            averageA1 = a1 / len(self.actions)
+            averageA2 = a2 / len(self.actions)
 
         else:
             averageA1 = 0
-            averageA2 =0
+            averageA2 = 0
 
-        print("Ep Done "+ str(self.ep_counter)+": average action = " + str([averageA1, averageA2]) + " , cumulative_ep_reward = " + str(self.episode_cum_rew))
+        print("Ep Done " +
+              str(self.ep_counter) +
+              ": average action = " +
+              str([averageA1, averageA2]) +
+              " , cumulative_ep_reward = " +
+              str(self.episode_cum_rew))
         self.actions = []
         self.episode_cum_rew = 0
-        self.quadcopter.Path.randomSeed = random.randint(1,100000)
-        #gives a small chance of nominal conditions and large chance of fault
-        self.quadcopter.Env.RotorFault.enabled = False if random.randint(1,self.faultChance) == 1 else True
-
+        self.quadcopter.Path.randomSeed = random.randint(1, 100000)
+        # gives a small chance of nominal conditions and large chance of fault
+        self.quadcopter.Env.RotorFault.enabled = False if random.randint(
+            1, self.faultChance) == 1 else True
 
         self.env_func = partial(make,
                                 'quadcopter3D',
@@ -84,7 +89,7 @@ class Blended_Control_Task(gym.Env):
                          **self.controller
                          )
 
-        #initial step with default parameters
+        # initial step with default parameters
         obs, info = self.ctrl.reset()
         # info['condensedObs'] = [0] * self.obsLen
         # obs = info['condensedObs']
@@ -92,19 +97,16 @@ class Blended_Control_Task(gym.Env):
         return np.array(obs)
 
     def step(self, action):
-        #offset the action by one - min action is 1
-        action = [a+1 for a in action]
-        obs, rew, done , info = self.ctrl.step(action)
+        # offset the action by one - min action is 1
+        action = [a + 1 for a in action]
+        obs, rew, done, info = self.ctrl.step(action)
         # print(str(action) + " " + str(rew) )
 
         # obs = info['condensedObs']
         self.actions.append(action)
         self.episode_cum_rew += rew
 
-        return  np.array(obs) , rew, done , info
-
-
-
+        return np.array(obs), rew, done, info
 
     # def executeTask(self):
     #     """The main function creating, running, and closing an environment.
@@ -145,7 +147,6 @@ class Blended_Control_Task(gym.Env):
     #     END = time.time()
     #     ctrl.close()
     #     return total_trajectory_loss
-
 
 
 # if __name__ == "__main__":

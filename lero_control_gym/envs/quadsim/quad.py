@@ -9,13 +9,13 @@ Iyy = 0.02217
 Izz = 0.0282
 m = 1.587
 g = 9.81
-mg = m*g
+mg = m * g
 d = 0.243
-b = 4.0687e-7/((2*np.pi/60)**2)
-k = 8.4367e-9/((2*np.pi/60)**2)
+b = 4.0687e-7 / ((2 * np.pi / 60)**2)
+k = 8.4367e-9 / ((2 * np.pi / 60)**2)
 
-db = d*b
-w_max = 4720 * (2*np.pi/60)
+db = d * b
+w_max = 4720 * (2 * np.pi / 60)
 
 A = np.array([[0, 1, 0, 0, 0, 0],
               [0, 0, 0, 0, 0, 0],
@@ -24,12 +24,12 @@ A = np.array([[0, 1, 0, 0, 0, 0],
               [0, 0, 0, 0, 0, 1],
               [0, 0, 0, 0, 0, 0]])
 
-B = np.array([[0,       0,          0],
-              [1.0/Ixx, 0,          0],
-              [0,       0,          0],
-              [0,       1.0/Iyy,    0],
-              [0,       0,          0],
-              [0,       0,          1.0/Izz]])
+B = np.array([[0, 0, 0],
+              [1.0 / Ixx, 0, 0],
+              [0, 0, 0],
+              [0, 1.0 / Iyy, 0],
+              [0, 0, 0],
+              [0, 0, 1.0 / Izz]])
 
 C = np.array([[1, 0, 0, 0, 0, 0],
               [0, 1, 0, 0, 0, 0],
@@ -78,7 +78,7 @@ def linear_quad_dynamics(t, x, u1=0, u2=0, u3=0, wk=None):
     u = [u1, u2, u3]
     if x.ndim == 2:
         x_shape = x.shape[1]
-        U = np.array([u, ]*x_shape).transpose()
+        U = np.array([u, ] * x_shape).transpose()
     else:
         U = np.array(u)
     dxdt = np.dot(A, x) + np.dot(B, U)
@@ -100,19 +100,19 @@ def nonlinear_quad_dynamics(t, x, u1=0, u2=0, u3=0, wk=None):
     u = [u1, u2, u3]
     if x.ndim == 2:
         x_shape = x.shape[1]
-        U = np.array([u, ]*x_shape).transpose()
+        U = np.array([u, ] * x_shape).transpose()
     else:
         U = np.array(u)
 
     phidot = x[1, :]
     thetadot = x[3, :]
     psidot = x[5, :]
-    phidotdot = (np.dot((Iyy-Izz),
-                        np.multiply(thetadot, psidot)) + U[0, :])/Ixx
-    thetadotdot = (np.dot((Izz-Ixx),
-                          np.multiply(phidot, psidot)) + U[1, :])/Iyy
-    psidotdot = (np.dot((Ixx-Iyy),
-                        np.multiply(phidot, thetadot)) + U[2, :])/Izz
+    phidotdot = (np.dot((Iyy - Izz),
+                        np.multiply(thetadot, psidot)) + U[0, :]) / Ixx
+    thetadotdot = (np.dot((Izz - Ixx),
+                          np.multiply(phidot, psidot)) + U[1, :]) / Iyy
+    psidotdot = (np.dot((Ixx - Iyy),
+                        np.multiply(phidot, thetadot)) + U[2, :]) / Izz
 
     dxdt = np.array([x[1, :], phidotdot, x[3, :],
                     thetadotdot, x[5, :], psidotdot])
@@ -177,20 +177,20 @@ class DeterministicQuad(gym.Env):
         # the minimum speed value will be calculated from
         # the given mass, g and b value.
         self.w_max = w_max
-        self.w_min = np.rint(np.sqrt((m * g)/(4*b)))
+        self.w_min = np.rint(np.sqrt((m * g) / (4 * b)))
 
-        u1_max = u2_max = d*b*((self.w_max**2)-(self.w_min**2))
-        u3_max = k*2*((self.w_max**2)-(self.w_min**2))
+        u1_max = u2_max = d * b * ((self.w_max**2) - (self.w_min**2))
+        u3_max = k * 2 * ((self.w_max**2) - (self.w_min**2))
         self.u_max = np.float32(np.array([u1_max, u2_max, u3_max]))
 
-        self.phi_max = (u1_max/Ixx)*(((t_end-t_start)**2)/2)
-        self.phidot_max = (u1_max/Ixx)*(t_end-t_start)
+        self.phi_max = (u1_max / Ixx) * (((t_end - t_start)**2) / 2)
+        self.phidot_max = (u1_max / Ixx) * (t_end - t_start)
 
-        self.theta_max = (u2_max/Iyy)*(((t_end-t_start)**2)/2)
-        self.thetadot_max = (u2_max/Iyy)*(t_end-t_start)
+        self.theta_max = (u2_max / Iyy) * (((t_end - t_start)**2) / 2)
+        self.thetadot_max = (u2_max / Iyy) * (t_end - t_start)
 
-        self.psi_max = (u3_max/Izz)*(((t_end-t_start)**2)/2)
-        self.psidot_max = (u3_max/Izz)*(t_end-t_start)
+        self.psi_max = (u3_max / Izz) * (((t_end - t_start)**2) / 2)
+        self.psidot_max = (u3_max / Izz) * (t_end - t_start)
 
         self.high = np.float32(np.array([np.pi,
                                         self.phidot_max,
@@ -233,9 +233,9 @@ class DeterministicQuad(gym.Env):
         self.t_start = t_start
         self.t_end = t_end
         self.simulation_freq = simulation_freq
-        self.simulation_timestep = 1/simulation_freq
+        self.simulation_timestep = 1 / simulation_freq
         self.control_freq = control_freq
-        self.control_timestep = 1/control_freq
+        self.control_timestep = 1 / control_freq
 
         self.current_timestep = 0
         self.episode_timestep = 0
@@ -286,29 +286,29 @@ class DeterministicQuad(gym.Env):
         next_time = sol.t[-1]
 
         # Mapping the state dynamics to -pi, pi
-        next_state[[0, 2, 4]] = (((next_state[[0, 2, 4]] + np.pi) % (2*np.pi))
-                                 - np.pi)
+        next_state[[0, 2, 4]] = (
+            ((next_state[[0, 2, 4]] + np.pi) % (2 * np.pi)) - np.pi)
         current_reference_diff = self.reference_state - next_state
 
         if current_reference_diff[0] > np.pi:
-            current_reference_diff[0] -= 2*np.pi
+            current_reference_diff[0] -= 2 * np.pi
         if current_reference_diff[0] < -np.pi:
-            current_reference_diff[0] += 2*np.pi
+            current_reference_diff[0] += 2 * np.pi
 
         if current_reference_diff[2] > np.pi:
-            current_reference_diff[2] -= 2*np.pi
+            current_reference_diff[2] -= 2 * np.pi
         if current_reference_diff[2] < -np.pi:
-            current_reference_diff[2] += 2*np.pi
+            current_reference_diff[2] += 2 * np.pi
 
         if current_reference_diff[4] > np.pi:
-            current_reference_diff[4] -= 2*np.pi
+            current_reference_diff[4] -= 2 * np.pi
         if current_reference_diff[4] < -np.pi:
-            current_reference_diff[4] += 2*np.pi
+            current_reference_diff[4] += 2 * np.pi
 
         reward = -(
             ((current_reference_diff.T @ self.Q @ current_reference_diff)) +
             (((action_clipped.T @ self.R @ action_clipped)))
-            ).item() / (self.Q_coefficients.sum() + self.R_coefficients.sum())
+        ).item() / (self.Q_coefficients.sum() + self.R_coefficients.sum())
 
         if self.keep_history:
             self.history.sol_x = (np.column_stack((self.history.sol_x,
@@ -336,32 +336,32 @@ class DeterministicQuad(gym.Env):
 
         if (np.abs(self.dynamics_state[1]) +
             (self.control_timestep *
-             (self.u_max[0]/self.Ixx))) > self.high[1]:
+             (self.u_max[0] / self.Ixx))) > self.high[1]:
             self.env_reset_flag = True
         if (np.abs(self.dynamics_state[3]) +
             (self.control_timestep *
-             (self.u_max[1]/self.Iyy))) > self.high[3]:
+             (self.u_max[1] / self.Iyy))) > self.high[3]:
             self.env_reset_flag = True
         if (np.abs(self.dynamics_state[5]) +
             (self.control_timestep *
-             (self.u_max[2]/self.Izz))) > self.high[5]:
+             (self.u_max[2] / self.Izz))) > self.high[5]:
             self.env_reset_flag = True
 
         self.state = self.reference_state - self.dynamics_state
         if self.state[0] > np.pi:
-            self.state[0] -= 2*np.pi
+            self.state[0] -= 2 * np.pi
         if self.state[0] < -np.pi:
-            self.state[0] += 2*np.pi
+            self.state[0] += 2 * np.pi
 
         if self.state[2] > np.pi:
-            self.state[2] -= 2*np.pi
+            self.state[2] -= 2 * np.pi
         if self.state[2] < -np.pi:
-            self.state[2] += 2*np.pi
+            self.state[2] += 2 * np.pi
 
         if self.state[4] > np.pi:
-            self.state[4] -= 2*np.pi
+            self.state[4] -= 2 * np.pi
         if self.state[4] < -np.pi:
-            self.state[4] += 2*np.pi
+            self.state[4] += 2 * np.pi
 
         self.current_timestep += 1
         self.episode_timestep += 1
@@ -372,7 +372,7 @@ class DeterministicQuad(gym.Env):
             self.env_reset_flag = True
             done = True
 
-        if (self.episode_timestep >= self.t_end*self.control_freq):
+        if (self.episode_timestep >= self.t_end * self.control_freq):
             done = True
             self.env_reset_flag = True
             if self.keep_history:
@@ -401,19 +401,19 @@ class DeterministicQuad(gym.Env):
 
         self.state = self.reference_state - self.dynamics_state
         if self.state[0] > np.pi:
-            self.state[0] -= 2*np.pi
+            self.state[0] -= 2 * np.pi
         if self.state[0] < -np.pi:
-            self.state[0] += 2*np.pi
+            self.state[0] += 2 * np.pi
 
         if self.state[2] > np.pi:
-            self.state[2] -= 2*np.pi
+            self.state[2] -= 2 * np.pi
         if self.state[2] < -np.pi:
-            self.state[2] += 2*np.pi
+            self.state[2] += 2 * np.pi
 
         if self.state[4] > np.pi:
-            self.state[4] -= 2*np.pi
+            self.state[4] -= 2 * np.pi
         if self.state[4] < -np.pi:
-            self.state[4] += 2*np.pi
+            self.state[4] += 2 * np.pi
 
         return self.state
 
@@ -433,10 +433,14 @@ class DeterministicQuad(gym.Env):
         return False
 
     def motor_mixing(self, u1, u2, u3, target_thrust=mg):
-        w1_square = (target_thrust/(4*b)) + (u3 / (4*k)) + (u2 / (2*db))
-        w2_square = (target_thrust/(4*b)) - (u3 / (4*k)) - (u1 / (2*db))
-        w3_square = (target_thrust/(4*b)) + (u3 / (4*k)) - (u2 / (2*db))
-        w4_square = (target_thrust/(4*b)) - (u3 / (4*k)) + (u1 / (2*db))
+        w1_square = (target_thrust / (4 * b)) + \
+            (u3 / (4 * k)) + (u2 / (2 * db))
+        w2_square = (target_thrust / (4 * b)) - \
+            (u3 / (4 * k)) - (u1 / (2 * db))
+        w3_square = (target_thrust / (4 * b)) + \
+            (u3 / (4 * k)) - (u2 / (2 * db))
+        w4_square = (target_thrust / (4 * b)) - \
+            (u3 / (4 * k)) + (u1 / (2 * db))
         W = np.array([w1_square, w2_square, w3_square, w4_square])
         return W
 
@@ -528,8 +532,8 @@ class StochasticQuad(DeterministicQuad):
 
         next_state = sol.y[:, -1]
         # Mapping the state dynamics to -pi, pi
-        next_state[[0, 2, 4]] = (((next_state[[0, 2, 4]] + np.pi) % (2*np.pi))
-                                 - np.pi)
+        next_state[[0, 2, 4]] = (
+            ((next_state[[0, 2, 4]] + np.pi) % (2 * np.pi)) - np.pi)
 
         # Adding the measurement noise to the observation
         # Flatten is used to convert 6,1 matrix to 6, vector.
@@ -537,30 +541,30 @@ class StochasticQuad(DeterministicQuad):
         # TODO add H
 
         # Mapping the observation values to -pi, pi
-        next_obs[[0, 2, 4]] = (((next_obs[[0, 2, 4]] + np.pi) % (2*np.pi))
+        next_obs[[0, 2, 4]] = (((next_obs[[0, 2, 4]] + np.pi) % (2 * np.pi))
                                - np.pi)
         next_time = sol.t[-1]
 
         current_reference_diff = self.reference_state - next_state
         if current_reference_diff[0] > np.pi:
-            current_reference_diff[0] -= 2*np.pi
+            current_reference_diff[0] -= 2 * np.pi
         if current_reference_diff[0] < -np.pi:
-            current_reference_diff[0] += 2*np.pi
+            current_reference_diff[0] += 2 * np.pi
 
         if current_reference_diff[2] > np.pi:
-            current_reference_diff[2] -= 2*np.pi
+            current_reference_diff[2] -= 2 * np.pi
         if current_reference_diff[2] < -np.pi:
-            current_reference_diff[2] += 2*np.pi
+            current_reference_diff[2] += 2 * np.pi
 
         if current_reference_diff[4] > np.pi:
-            current_reference_diff[4] -= 2*np.pi
+            current_reference_diff[4] -= 2 * np.pi
         if current_reference_diff[4] < -np.pi:
-            current_reference_diff[4] += 2*np.pi
+            current_reference_diff[4] += 2 * np.pi
 
         reward = -(
             ((current_reference_diff.T @ self.Q @ current_reference_diff)) +
             (((action_clipped.T @ self.R @ action_clipped)))
-            ).item() / (self.Q_coefficients.sum() + self.R_coefficients.sum())
+        ).item() / (self.Q_coefficients.sum() + self.R_coefficients.sum())
 
         if self.keep_history:
             self.history.sol_x_wo_noise = (np.column_stack(
@@ -590,29 +594,29 @@ class StochasticQuad(DeterministicQuad):
             self.t = np.reshape(self.history.sol_t, -1)
         self.dynamics_state = next_state
 
-        if np.abs(self.dynamics_state[1]) > (self.high[1]/2):
+        if np.abs(self.dynamics_state[1]) > (self.high[1] / 2):
             self.env_reset_flag = True
-        if np.abs(self.dynamics_state[3]) > (self.high[3]/2):
+        if np.abs(self.dynamics_state[3]) > (self.high[3] / 2):
             self.env_reset_flag = True
-        if np.abs(self.dynamics_state[5]) > (self.high[5]/2):
+        if np.abs(self.dynamics_state[5]) > (self.high[5] / 2):
             self.env_reset_flag = True
 
         self.state = self.reference_state - self.dynamics_state
 
         if self.state[0] > np.pi:
-            self.state[0] -= 2*np.pi
+            self.state[0] -= 2 * np.pi
         if self.state[0] < -np.pi:
-            self.state[0] += 2*np.pi
+            self.state[0] += 2 * np.pi
 
         if self.state[2] > np.pi:
-            self.state[2] -= 2*np.pi
+            self.state[2] -= 2 * np.pi
         if self.state[2] < -np.pi:
-            self.state[2] += 2*np.pi
+            self.state[2] += 2 * np.pi
 
         if self.state[4] > np.pi:
-            self.state[4] -= 2*np.pi
+            self.state[4] -= 2 * np.pi
         if self.state[4] < -np.pi:
-            self.state[4] += 2*np.pi
+            self.state[4] += 2 * np.pi
 
         self.current_timestep += 1
         self.episode_timestep += 1
@@ -623,7 +627,7 @@ class StochasticQuad(DeterministicQuad):
             self.env_reset_flag = True
             done = True
 
-        if (self.episode_timestep >= self.t_end*self.control_freq):
+        if (self.episode_timestep >= self.t_end * self.control_freq):
             done = True
             self.env_reset_flag = True
             if self.keep_history:

@@ -38,12 +38,22 @@ class ConfigFactory:
 
         """
         self.add_argument("--tag", type=str, help='id of the experiment')
-        self.add_argument("--seed", type=int, help="random seed, default is no seed/None")
+        self.add_argument(
+            "--seed",
+            type=int,
+            help="random seed, default is no seed/None")
         # self.add_argument("--device", type=str, help="cpu or cuda(gpu)")
-        self.add_argument("--use_gpu", action='store_true', help="added to use gpu (if available)")
-        self.add_argument("--output_dir", type=str, help="output saving folder")
+        self.add_argument(
+            "--use_gpu",
+            action='store_true',
+            help="added to use gpu (if available)")
+        self.add_argument(
+            "--output_dir",
+            type=str,
+            help="output saving folder")
         self.add_argument("--restore", type=str, help='folder to reload from')
-        # Need to explicitly provide from command line (if training for the 1st time).
+        # Need to explicitly provide from command line (if training for the 1st
+        # time).
         self.add_argument("--algo", type=str, help='algorithm/controller')
         self.add_argument("--task", type=str, help='task/environment')
         self.add_argument("--overrides",
@@ -81,14 +91,16 @@ class ConfigFactory:
             kv_dict = {}
             for kv in args.kv_overrides:
                 k, v = kv.split("=")
-                try:   
+                try:
                     v = eval(v)  # String as a python expression.
-                except:
+                except BaseException:
                     pass  # Normal python string.
                 deep_set(kv_dict, k.strip(), v)
             merge_dict(config_dict, kv_dict)
         # Command line overrides (e.g. retains `restore` field).
-        cmdline_dict = {k: v for k, v in args.__dict__.items() if v is not None}
+        cmdline_dict = {
+            k: v for k,
+            v in args.__dict__.items() if v is not None}
         config_dict.update(cmdline_dict)
         # Allow attribute-style access.
         return munch.munchify(config_dict)

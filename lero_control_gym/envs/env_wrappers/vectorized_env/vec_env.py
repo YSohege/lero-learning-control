@@ -1,4 +1,4 @@
-"""Adapted from OpenAI Baselines. 
+"""Adapted from OpenAI Baselines.
 
 See also:
     * https://github.com/openai/baselines/blob/master/baselines/common/vec_env/vec_env.py
@@ -15,7 +15,7 @@ from lero_control_gym.envs.env_wrappers.vectorized_env.vec_env_utils import tile
 
 class VecEnv(ABC):
     """An abstract asynchronous, vectorized environment.
-    
+
     Used to batch data from multiple copies of an environment, so that each observation becomes a
     batch of observations, and expected action is a batch of actions to be applied per-environment.
 

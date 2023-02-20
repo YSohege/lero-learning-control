@@ -49,7 +49,8 @@ class SafePPOAgent(ppo_utils.PPOAgent):
                                  action_modifier=action_modifier)
         # Optimizers.
         self.actor_opt = torch.optim.Adam(self.ac.actor.parameters(), actor_lr)
-        self.critic_opt = torch.optim.Adam(self.ac.critic.parameters(), critic_lr)
+        self.critic_opt = torch.optim.Adam(
+            self.ac.critic.parameters(), critic_lr)
 
     def compute_policy_loss(self, batch):
         """Returns policy loss(es) given batch of data.
@@ -59,7 +60,10 @@ class SafePPOAgent(ppo_utils.PPOAgent):
         dist, logp = self.ac.actor(obs, act, c=c)
         # Policy.
         ratio = torch.exp(logp - logp_old)
-        clip_adv = torch.clamp(ratio, 1 - self.clip_param, 1 + self.clip_param) * adv
+        clip_adv = torch.clamp(
+            ratio,
+            1 - self.clip_param,
+            1 + self.clip_param) * adv
         policy_loss = -torch.min(ratio * adv, clip_adv).mean()
         # Entropy.
         entropy_loss = -dist.entropy().mean()
@@ -128,8 +132,8 @@ class MLPActorCritic(ppo_utils.MLPActorCritic):
     """Model for the actor-critic agent.
 
     Attributes:
-        actor (MLPActor): policy network. 
-        critic (MLPCritic): value network.  
+        actor (MLPActor): policy network.
+        critic (MLPCritic): value network.
 
     """
 
@@ -152,7 +156,13 @@ class MLPActorCritic(ppo_utils.MLPActorCritic):
             act_dim = act_space.n
             discrete = True
         # Policy.
-        self.actor = MLPActor(obs_dim, act_dim, hidden_dims, activation, discrete, action_modifier)
+        self.actor = MLPActor(
+            obs_dim,
+            act_dim,
+            hidden_dims,
+            activation,
+            discrete,
+            action_modifier)
         # Value function.
         self.critic = ppo_utils.MLPCritic(obs_dim, hidden_dims, activation)
 
@@ -183,7 +193,7 @@ class MLPActorCritic(ppo_utils.MLPActorCritic):
 
 class SafePPOBuffer(ppo_utils.PPOBuffer):
     """Storage for a batch of episodes during training.
-    
+
     Attributes:
         max_length (int): maximum length of episode.
         batch_size (int): number of episodes per batch.

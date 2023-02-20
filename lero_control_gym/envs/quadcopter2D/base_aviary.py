@@ -42,7 +42,8 @@ class Physics(str, Enum):
     PYB_GND = "pyb_gnd"  # PyBullet physics update with ground effect.
     PYB_DRAG = "pyb_drag"  # PyBullet physics update with drag.
     PYB_DW = "pyb_dw"  # PyBullet physics update with downwash.
-    PYB_GND_DRAG_DW = "pyb_gnd_drag_dw"  # PyBullet physics update with ground effect, drag, and downwash.
+    # PyBullet physics update with ground effect, drag, and downwash.
+    PYB_GND_DRAG_DW = "pyb_gnd_drag_dw"
 
 
 class ImageType(int, Enum):
@@ -61,7 +62,10 @@ class BaseAviary(BenchmarkEnv):
 
     """
     NAME = "base_aviary"
-    URDF_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+    URDF_DIR = os.path.join(
+        os.path.dirname(
+            os.path.abspath(__file__)),
+        "assets")
 
     def __init__(self,
                  drone_model: DroneModel = DroneModel.CF2X,
@@ -91,32 +95,33 @@ class BaseAviary(BenchmarkEnv):
         self.DEG2RAD = np.pi / 180
         # Parameters.
         self.DRONE_MODEL = DroneModel(drone_model)
-        self.URDF_PATH = os.path.join(self.URDF_DIR, self.DRONE_MODEL.value + ".urdf")
+        self.URDF_PATH = os.path.join(
+            self.URDF_DIR, self.DRONE_MODEL.value + ".urdf")
         self.NUM_DRONES = num_drones
         self.PHYSICS = Physics(physics)
         self.RECORD = record
         # Load the drone properties from the .urdf file.
         self.MASS, \
-        self.L, \
-        self.THRUST2WEIGHT_RATIO, \
-        self.J, \
-        self.J_INV, \
-        self.KF, \
-        self.KM, \
-        self.COLLISION_H,\
-        self.COLLISION_R, \
-        self.COLLISION_Z_OFFSET, \
-        self.MAX_SPEED_KMH, \
-        self.GND_EFF_COEFF, \
-        self.PROP_RADIUS, \
-        self.DRAG_COEFF, \
-        self.DW_COEFF_1, \
-        self.DW_COEFF_2, \
-        self.DW_COEFF_3, \
-        self.PWM2RPM_SCALE, \
-        self.PWM2RPM_CONST, \
-        self.MIN_PWM, \
-        self.MAX_PWM = self._parse_urdf_parameters(self.URDF_PATH)
+            self.L, \
+            self.THRUST2WEIGHT_RATIO, \
+            self.J, \
+            self.J_INV, \
+            self.KF, \
+            self.KM, \
+            self.COLLISION_H,\
+            self.COLLISION_R, \
+            self.COLLISION_Z_OFFSET, \
+            self.MAX_SPEED_KMH, \
+            self.GND_EFF_COEFF, \
+            self.PROP_RADIUS, \
+            self.DRAG_COEFF, \
+            self.DW_COEFF_1, \
+            self.DW_COEFF_2, \
+            self.DW_COEFF_3, \
+            self.PWM2RPM_SCALE, \
+            self.PWM2RPM_CONST, \
+            self.MIN_PWM, \
+            self.MAX_PWM = self._parse_urdf_parameters(self.URDF_PATH)
         self.GROUND_PLANE_Z = -0.05
         if verbose:
             print(
@@ -150,7 +155,8 @@ class BaseAviary(BenchmarkEnv):
         self.PYB_CLIENT = -1
         if gui:
             # With debug GUI.
-            self.PYB_CLIENT = p.connect(p.GUI)  # p.connect(p.GUI, options="--opengl2")
+            # p.connect(p.GUI, options="--opengl2")
+            self.PYB_CLIENT = p.connect(p.GUI)
             p.resetDebugVisualizerCamera(cameraDistance=3,
                                          cameraYaw=-30,
                                          cameraPitch=-30,
@@ -188,9 +194,9 @@ class BaseAviary(BenchmarkEnv):
                                                     farVal=1000.0)
         # Set default initial poses when loading drone's urdf model.
         # can be overriden later for specific tasks (as sub-classes) in reset()
-        self.INIT_XYZS = np.vstack([np.array([x*4*self.L for x in range(self.NUM_DRONES)]), \
-                                    np.array([y*4*self.L for y in range(self.NUM_DRONES)]), \
-                                    np.ones(self.NUM_DRONES) * (self.COLLISION_H/2-self.COLLISION_Z_OFFSET)
+        self.INIT_XYZS = np.vstack([np.array([x * 4 * self.L for x in range(self.NUM_DRONES)]),
+                                    np.array([y * 4 * self.L for y in range(self.NUM_DRONES)]),
+                                    np.ones(self.NUM_DRONES) * (self.COLLISION_H / 2 - self.COLLISION_Z_OFFSET)
                                     ]).transpose().reshape(self.NUM_DRONES, 3)
         self.INIT_RPYS = np.zeros((self.NUM_DRONES, 3))
 
@@ -203,7 +209,7 @@ class BaseAviary(BenchmarkEnv):
         if self.PYB_CLIENT >= 0:
             p.disconnect(physicsClientId=self.PYB_CLIENT)
         self.PYB_CLIENT = -1
-        
+
     def _reset_simulation(self):
         """Housekeeping function.
 
@@ -256,7 +262,7 @@ class BaseAviary(BenchmarkEnv):
         # for i in range(self.NUM_DRONES):
         # if gui:
         #     self._show_drone_local_axes(i)
-        
+
     def _advance_simulation(self, clipped_action, disturbance_force=None):
         """Advances the environment by one simulation step.
 
@@ -302,7 +308,8 @@ class BaseAviary(BenchmarkEnv):
                     pos = self._get_drone_state_vector(i)[:3]
                     p.applyExternalForce(
                         self.DRONE_IDS[i],
-                        linkIndex=4,  # Link attached to the quadrotor's center of mass.
+                        linkIndex=4,
+                        # Link attached to the quadrotor's center of mass.
                         forceObj=disturbance_force,
                         posObj=pos,
                         flags=p.WORLD_FRAME,
@@ -377,11 +384,16 @@ class BaseAviary(BenchmarkEnv):
         if self.RECORD and self.GUI:
             self.VIDEO_ID = p.startStateLogging(
                 loggingType=p.STATE_LOGGING_VIDEO_MP4,
-                fileName=os.path.join(self.output_dir, "videos/video-{}.mp4".format(datetime.now().strftime("%m.%d.%Y_%H.%M.%S"))),
+                fileName=os.path.join(
+                    self.output_dir,
+                    "videos/video-{}.mp4".format(
+                        datetime.now().strftime("%m.%d.%Y_%H.%M.%S"))),
                 physicsClientId=self.PYB_CLIENT)
         if self.RECORD and not self.GUI:
             self.FRAME_NUM = 0
-            self.IMG_PATH = os.path.join(self.output_dir, "quadrotor_videos/video-{}/".format(datetime.now().strftime("%m.%d.%Y_%H.%M.%S")))
+            self.IMG_PATH = os.path.join(
+                self.output_dir, "quadrotor_videos/video-{}/".format(
+                    datetime.now().strftime("%m.%d.%Y_%H.%M.%S")))
             os.makedirs(os.path.dirname(self.IMG_PATH), exist_ok=True)
 
     def _get_drone_state_vector(self, nth_drone):
@@ -451,7 +463,7 @@ class BaseAviary(BenchmarkEnv):
         ])
         prop_heights = np.clip(prop_heights, self.GND_EFF_H_CLIP, np.inf)
         gnd_effects = np.array(rpm**2) * self.KF * self.GND_EFF_COEFF \
-                      * (self.PROP_RADIUS / (4 * prop_heights))**2
+            * (self.PROP_RADIUS / (4 * prop_heights))**2
         if np.abs(self.rpy[nth_drone, 0]) < np.pi / 2 and np.abs(
                 self.rpy[nth_drone, 1]) < np.pi / 2:
             for i in range(4):
@@ -480,7 +492,8 @@ class BaseAviary(BenchmarkEnv):
         # Simple draft model applied to the base/center of mass #
         drag_factors = -1 * self.DRAG_COEFF * np.sum(
             np.array(2 * np.pi * rpm / 60))
-        drag = np.dot(base_rot, drag_factors * np.array(self.vel[nth_drone, :]))
+        drag = np.dot(base_rot, drag_factors *
+                      np.array(self.vel[nth_drone, :]))
         p.applyExternalForce(self.DRONE_IDS[nth_drone],
                              4,
                              forceObj=drag,
@@ -639,5 +652,5 @@ class BaseAviary(BenchmarkEnv):
         MIN_PWM = float(URDF_TREE[0].attrib['pwm_min'])
         MAX_PWM = float(URDF_TREE[0].attrib['pwm_max'])
         return M, L, THRUST2WEIGHT_RATIO, J, J_INV, KF, KM, COLLISION_H, COLLISION_R, COLLISION_Z_OFFSET, MAX_SPEED_KMH, \
-               GND_EFF_COEFF, PROP_RADIUS, DRAG_COEFF, DW_COEFF_1, DW_COEFF_2, DW_COEFF_3, \
-               PWM2RPM_SCALE, PWM2RPM_CONST, MIN_PWM, MAX_PWM
+            GND_EFF_COEFF, PROP_RADIUS, DRAG_COEFF, DW_COEFF_1, DW_COEFF_2, DW_COEFF_3, \
+            PWM2RPM_SCALE, PWM2RPM_CONST, MIN_PWM, MAX_PWM

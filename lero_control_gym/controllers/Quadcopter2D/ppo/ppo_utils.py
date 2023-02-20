@@ -48,7 +48,8 @@ class PPOAgent:
                                  activation="tanh")
         # Optimizers.
         self.actor_opt = torch.optim.Adam(self.ac.actor.parameters(), actor_lr)
-        self.critic_opt = torch.optim.Adam(self.ac.critic.parameters(), critic_lr)
+        self.critic_opt = torch.optim.Adam(
+            self.ac.critic.parameters(), critic_lr)
 
     def to(self,
            device
@@ -100,7 +101,10 @@ class PPOAgent:
         dist, logp = self.ac.actor(obs, act)
         # Policy.
         ratio = torch.exp(logp - logp_old)
-        clip_adv = torch.clamp(ratio, 1 - self.clip_param, 1 + self.clip_param) * adv
+        clip_adv = torch.clamp(
+            ratio,
+            1 - self.clip_param,
+            1 + self.clip_param) * adv
         policy_loss = -torch.min(ratio * adv, clip_adv).mean()
         # Entropy.
         entropy_loss = -dist.entropy().mean()
@@ -117,7 +121,8 @@ class PPOAgent:
         obs, ret, v_old = batch["obs"], batch["ret"], batch["v"]
         v_cur = self.ac.critic(obs)
         if self.use_clipped_value:
-            v_old_clipped = v_old + (v_cur - v_old).clamp(-self.clip_param, self.clip_param)
+            v_old_clipped = v_old + \
+                (v_cur - v_old).clamp(-self.clip_param, self.clip_param)
             v_loss = (v_cur - ret).pow(2)
             v_loss_clipped = (v_old_clipped - ret).pow(2)
             value_loss = 0.5 * torch.max(v_loss, v_loss_clipped).mean()
@@ -133,14 +138,17 @@ class PPOAgent:
 
         """
         results = defaultdict(list)
-        num_mini_batch = rollouts.max_length * rollouts.batch_size // self.mini_batch_size
+        num_mini_batch = rollouts.max_length * \
+            rollouts.batch_size // self.mini_batch_size
         for i in range(self.opt_epochs):
             p_loss_epoch, v_loss_epoch, e_loss_epoch, kl_epoch = 0, 0, 0, 0
             for batch in rollouts.sampler(self.mini_batch_size, device):
                 # Actor update.
-                policy_loss, entropy_loss, approx_kl = self.compute_policy_loss(batch)
+                policy_loss, entropy_loss, approx_kl = self.compute_policy_loss(
+                    batch)
                 # Update only when no KL constraint or constraint is satisfied.
-                if (not self.target_kl > 0) or (self.target_kl > 0 and approx_kl <= 1.5 * self.target_kl):
+                if (not self.target_kl > 0) or (self.target_kl >
+                                                0 and approx_kl <= 1.5 * self.target_kl):
                     self.actor_opt.zero_grad()
                     (policy_loss + self.entropy_coef * entropy_loss).backward()
                     self.actor_opt.step()
@@ -252,7 +260,12 @@ class MLPActorCritic(nn.Module):
             act_dim = act_space.n
             discrete = True
         # Policy.
-        self.actor = MLPActor(obs_dim, act_dim, hidden_dims, activation, discrete)
+        self.actor = MLPActor(
+            obs_dim,
+            act_dim,
+            hidden_dims,
+            activation,
+            discrete)
         # Value function.
         self.critic = MLPCritic(obs_dim, hidden_dims, activation)
 
@@ -281,7 +294,7 @@ class MLPActorCritic(nn.Module):
 
 class PPOBuffer(object):
     """Storage for a batch of episodes during training.
-    
+
     Attributes:
         max_length (int): maximum length of episode.
         batch_size (int): number of episodes per batch.
@@ -343,7 +356,8 @@ class PPOBuffer(object):
 
         """
         for k, info in self.scheme.items():
-            assert "vshape" in info, "Scheme must define vshape for {}".format(k)
+            assert "vshape" in info, "Scheme must define vshape for {}".format(
+                k)
             vshape = info["vshape"]
             dtype = info.get("dtype", np.float32)
             init = info.get("init", np.zeros)
@@ -398,7 +412,10 @@ class PPOBuffer(object):
 
         """
         total_steps = self.max_length * self.batch_size
-        sampler = random_sample(np.arange(total_steps), mini_batch_size, drop_last)
+        sampler = random_sample(
+            np.arange(total_steps),
+            mini_batch_size,
+            drop_last)
         for indices in sampler:
             batch = self.sample(indices)
             batch = {

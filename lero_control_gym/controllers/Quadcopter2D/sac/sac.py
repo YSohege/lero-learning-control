@@ -12,7 +12,7 @@ References papers & code:
     * [curl - curl_sac](https://github.com/MishaLaskin/curl/blob/master/curl_sac.py)
 
 Todo:
-    * 
+    *
 
 """
 import os
@@ -35,23 +35,36 @@ from lero_control_gym.controllers.Quadcopter2D.sac.sac_utils import SACAgent, SA
 class SAC(BaseController):
     """soft actor critic."""
 
-    def __init__(self, 
-                 env_func, 
-                 training=True, 
-                 checkpoint_path="model_latest.pt", 
-                 output_dir="temp", 
-                 use_gpu=False, 
-                 seed=0, 
+    def __init__(self,
+                 env_func,
+                 training=True,
+                 checkpoint_path="model_latest.pt",
+                 output_dir="temp",
+                 use_gpu=False,
+                 seed=0,
                  **kwargs):
-        super().__init__(env_func, training, checkpoint_path, output_dir, use_gpu, seed, **kwargs)
+        super().__init__(
+            env_func,
+            training,
+            checkpoint_path,
+            output_dir,
+            use_gpu,
+            seed,
+            **kwargs)
 
         # task
         if self.training:
             # training (+ evaluation)
-            self.env = make_vec_envs(env_func, None, self.rollout_batch_size, self.num_workers, seed)
+            self.env = make_vec_envs(
+                env_func,
+                None,
+                self.rollout_batch_size,
+                self.num_workers,
+                seed)
             self.env = VecRecordEpisodeStatistics(self.env, self.deque_size)
             self.eval_env = env_func(seed=seed * 111)
-            self.eval_env = RecordEpisodeStatistics(self.eval_env, self.deque_size)
+            self.eval_env = RecordEpisodeStatistics(
+                self.eval_env, self.deque_size)
         else:
             # testing only
             self.env = env_func()
@@ -74,11 +87,13 @@ class SAC(BaseController):
         # pre-/post-processing
         self.obs_normalizer = BaseNormalizer()
         if self.norm_obs:
-            self.obs_normalizer = MeanStdNormalizer(shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
+            self.obs_normalizer = MeanStdNormalizer(
+                shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
 
         self.reward_normalizer = BaseNormalizer()
         if self.norm_reward:
-            self.reward_normalizer = RewardStdNormalizer(gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
+            self.reward_normalizer = RewardStdNormalizer(
+                gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
 
         # logging
         if self.training:
@@ -88,7 +103,10 @@ class SAC(BaseController):
             # disable logging to texts and tfboard for testing
             log_file_out = False
             use_tensorboard = False
-        self.logger = ExperimentLogger(output_dir, log_file_out=log_file_out, use_tensorboard=use_tensorboard)
+        self.logger = ExperimentLogger(
+            output_dir,
+            log_file_out=log_file_out,
+            use_tensorboard=use_tensorboard)
 
     def reset(self):
         """Prepares for training or testing."""
@@ -102,7 +120,11 @@ class SAC(BaseController):
             self.total_steps = 0
             obs, _ = self.env.reset()
             self.obs = self.obs_normalizer(obs)
-            self.buffer = SACBuffer(self.env.observation_space, self.env.action_space, self.max_buffer_size, self.train_batch_size)
+            self.buffer = SACBuffer(
+                self.env.observation_space,
+                self.env.action_space,
+                self.max_buffer_size,
+                self.train_batch_size)
         else:
             # set up stats tracking
             self.env.add_tracker("constraint_violation", 0, mode="queue")
@@ -134,7 +156,8 @@ class SAC(BaseController):
                 "env_random_state": self.env.get_env_random_state()
             }
             # latest checkpoint shoud enable save_buffer (for experiment restore),
-            # but intermediate checkpoint shoud not, to save storage (buffer is large)
+            # but intermediate checkpoint shoud not, to save storage (buffer is
+            # large)
             if save_buffer:
                 exp_state["buffer"] = self.buffer.state_dict()
             state_dict.update(exp_state)
@@ -165,23 +188,35 @@ class SAC(BaseController):
             results = self.train_step()
 
             # checkpoint
-            if self.total_steps >= self.max_env_steps or (self.save_interval and self.total_steps % self.save_interval == 0):
+            if self.total_steps >= self.max_env_steps or (
+                    self.save_interval and self.total_steps %
+                    self.save_interval == 0):
                 # latest/final checkpoint
                 self.save(self.checkpoint_path)
-                self.logger.info("Checkpoint | {}".format(self.checkpoint_path))
-            if self.num_checkpoints and self.total_steps % (self.max_env_steps // self.num_checkpoints) == 0:
+                self.logger.info(
+                    "Checkpoint | {}".format(
+                        self.checkpoint_path))
+            if self.num_checkpoints and self.total_steps % (
+                    self.max_env_steps // self.num_checkpoints) == 0:
                 # intermediate checkpoint
-                path = os.path.join(self.output_dir, "checkpoints", "model_{}.pt".format(self.total_steps))
+                path = os.path.join(
+                    self.output_dir,
+                    "checkpoints",
+                    "model_{}.pt".format(
+                        self.total_steps))
                 self.save(path, save_buffer=False)
 
             # eval
             if self.eval_interval and self.total_steps % self.eval_interval == 0:
-                eval_results = self.run(env=self.eval_env, n_episodes=self.eval_batch_size)
+                eval_results = self.run(
+                    env=self.eval_env, n_episodes=self.eval_batch_size)
                 results["eval"] = eval_results
-                self.logger.info("Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(eval_results["ep_lengths"].mean(),
-                                                                                                            eval_results["ep_lengths"].std(),
-                                                                                                            eval_results["ep_returns"].mean(),
-                                                                                                            eval_results["ep_returns"].std()))
+                self.logger.info(
+                    "Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(
+                        eval_results["ep_lengths"].mean(),
+                        eval_results["ep_lengths"].std(),
+                        eval_results["ep_returns"].mean(),
+                        eval_results["ep_returns"].std()))
                 # save best model
                 eval_score = eval_results["ep_returns"].mean()
                 eval_best_score = getattr(self, "eval_best_score", -np.infty)
@@ -193,7 +228,13 @@ class SAC(BaseController):
             if self.log_interval and self.total_steps % self.log_interval == 0:
                 self.log_step(results)
 
-    def run(self, env=None, render=False, n_episodes=10, verbose=False, **kwargs):
+    def run(
+            self,
+            env=None,
+            render=False,
+            n_episodes=10,
+            verbose=False,
+            **kwargs):
         """Runs evaluation with current policy."""
         self.agent.eval()
         self.obs_normalizer.set_read_only()
@@ -239,7 +280,8 @@ class SAC(BaseController):
             eval_results["frames"] = frames
         # Other episodic stats from evaluation env.
         if len(env.queued_stats) > 0:
-            queued_stats = {k: np.asarray(v) for k, v in env.queued_stats.items()}
+            queued_stats = {k: np.asarray(v)
+                            for k, v in env.queued_stats.items()}
             eval_results.update(queued_stats)
         return eval_results
 
@@ -251,10 +293,13 @@ class SAC(BaseController):
         start = time.time()
 
         if self.total_steps < self.warm_up_steps:
-            act = np.stack([self.env.action_space.sample() for _ in range(self.rollout_batch_size)])
+            act = np.stack([self.env.action_space.sample()
+                           for _ in range(self.rollout_batch_size)])
         else:
             with torch.no_grad():
-                act = self.agent.ac.act(torch.FloatTensor(obs).to(self.device), deterministic=False)
+                act = self.agent.ac.act(
+                    torch.FloatTensor(obs).to(
+                        self.device), deterministic=False)
         next_obs, rew, done, info = self.env.step(act)
 
         next_obs = self.obs_normalizer(next_obs)
@@ -271,9 +316,12 @@ class SAC(BaseController):
                 terminal_idx.append(idx)
                 terminal_obs.append(inf["terminal_observation"])
         if len(terminal_obs) > 0:
-            terminal_obs = _unflatten_obs(self.obs_normalizer(_flatten_obs(terminal_obs)))
+            terminal_obs = _unflatten_obs(
+                self.obs_normalizer(
+                    _flatten_obs(terminal_obs)))
 
-        # collect the true next states and masks (accounting for time truncation)
+        # collect the true next states and masks (accounting for time
+        # truncation)
         true_next_obs = _unflatten_obs(next_obs)
         true_mask = mask.copy()
         for idx, term_ob in zip(terminal_idx, terminal_obs):
@@ -308,7 +356,8 @@ class SAC(BaseController):
                     results[k].append(v)
 
         results = {k: sum(v) / len(v) for k, v in results.items()}
-        results.update({"step": self.total_steps, "elapsed_time": time.time() - start})
+        results.update({"step": self.total_steps,
+                        "elapsed_time": time.time() - start})
         return results
 
     def log_step(self, results):
@@ -330,16 +379,17 @@ class SAC(BaseController):
         if "policy_loss" in results:
             self.logger.add_scalars(
                 {
-                    k: results[k] 
+                    k: results[k]
                     for k in ["policy_loss", "critic_loss", "entropy_loss"]
-                }, 
-                step, 
+                },
+                step,
                 prefix="loss")
 
         # performance stats
         ep_lengths = np.asarray(self.env.length_queue)
         ep_returns = np.asarray(self.env.return_queue)
-        ep_constraint_violation = np.asarray(self.env.queued_stats["constraint_violation"])
+        ep_constraint_violation = np.asarray(
+            self.env.queued_stats["constraint_violation"])
         self.logger.add_scalars(
             {
                 "ep_length": ep_lengths.mean(),
@@ -352,7 +402,8 @@ class SAC(BaseController):
 
         # total constraint violation during learning
         total_violations = self.env.accumulated_stats["constraint_violation"]
-        self.logger.add_scalars({"constraint_violation": total_violations}, step, prefix="stat")
+        self.logger.add_scalars(
+            {"constraint_violation": total_violations}, step, prefix="stat")
 
         if "eval" in results:
             eval_ep_lengths = results["eval"]["ep_lengths"]

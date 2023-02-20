@@ -17,7 +17,7 @@ class ParticleSwarmOptimization():
     DefaultRanges = []
 
     def __init__(self,
-                 random_seed = 123,
+                 random_seed=123,
                  NumberParticles=50,
                  c1=3,
                  c2=2,
@@ -26,8 +26,8 @@ class ParticleSwarmOptimization():
                  w=1,
                  maxVelocity=1000,
                  ParameterRanges=DefaultRanges,
-                 Env = DefaultEnv,
-                 Controller = DefaultController,
+                 Env=DefaultEnv,
+                 Controller=DefaultController,
                  render=True):
 
         random.seed(random_seed)
@@ -45,11 +45,12 @@ class ParticleSwarmOptimization():
         self.env = Env
         self.databaseConfig = {
             "NewFile": True,
-            "folder" : "./results/"
+            "folder": "./results/"
         }
         if bool(self.databaseConfig['NewFile']):
-            dt = str(datetime.datetime.now())[:16].replace(":","-")
-            FileName = self.databaseConfig['folder']+"PSO_Results-"+dt+".json"
+            dt = str(datetime.datetime.now())[:16].replace(":", "-")
+            FileName = self.databaseConfig['folder'] + \
+                "PSO_Results-" + dt + ".json"
             # print(FileName)
             if not os.path.exists(FileName):
                 with open(FileName, 'w') as db:
@@ -59,8 +60,8 @@ class ParticleSwarmOptimization():
         self.database = []
 
         self.Params = []
-        #internal swarm representation
-        self.particles =  [0] * self.NumberParticles
+        # internal swarm representation
+        self.particles = [0] * self.NumberParticles
         self.velocities = [0] * self.NumberParticles
         self.localBests = [0] * self.NumberParticles
         self.globalBest = None
@@ -69,23 +70,36 @@ class ParticleSwarmOptimization():
         self.numberDims = 0
         if self.render:
 
-            self.numberDims +=1 if ( self.ParameterRanges.P.max - self.ParameterRanges.P.min )> 0 else 0
-            self.numberDims +=1 if ( self.ParameterRanges.I.max - self.ParameterRanges.I.min )> 0 else 0
-            self.numberDims +=1 if ( self.ParameterRanges.D.max - self.ParameterRanges.D.min )> 0 else 0
-            if self.numberDims >2:
+            self.numberDims += 1 if (self.ParameterRanges.P.max -
+                                     self.ParameterRanges.P.min) > 0 else 0
+            self.numberDims += 1 if (self.ParameterRanges.I.max -
+                                     self.ParameterRanges.I.min) > 0 else 0
+            self.numberDims += 1 if (self.ParameterRanges.D.max -
+                                     self.ParameterRanges.D.min) > 0 else 0
+            if self.numberDims > 2:
                 self.fig = plt.figure()
                 self.ax = self.fig.add_subplot(111, projection='3d')
-                self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
-                self.ax.set_ylim(self.ParameterRanges.I.min, self.ParameterRanges.I.max)
-                self.ax.set_zlim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+                self.ax.set_xlim(
+                    self.ParameterRanges.P.min,
+                    self.ParameterRanges.P.max)
+                self.ax.set_ylim(
+                    self.ParameterRanges.I.min,
+                    self.ParameterRanges.I.max)
+                self.ax.set_zlim(
+                    self.ParameterRanges.D.min,
+                    self.ParameterRanges.D.max)
                 self.ax.set_xlabel("P")
                 self.ax.set_ylabel("I")
                 self.ax.set_zlabel("D")
             else:
                 self.fig = plt.figure()
                 self.ax = self.fig.add_subplot(111)
-                self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
-                self.ax.set_ylim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+                self.ax.set_xlim(
+                    self.ParameterRanges.P.min,
+                    self.ParameterRanges.P.max)
+                self.ax.set_ylim(
+                    self.ParameterRanges.D.min,
+                    self.ParameterRanges.D.max)
                 self.ax.set_xlabel("P")
                 self.ax.set_ylabel("D")
         self.initilizeParticles()
@@ -104,32 +118,34 @@ class ParticleSwarmOptimization():
                 max = self.ParameterRanges[param].max
                 min = self.ParameterRanges[param].min
                 if max - min > 0:
-                    numParameters+=1
+                    numParameters += 1
                     params.append(param)
 
             self.Params = params
-            particleParams =   [0]* numParameters
-            particleVelocity = [0]* numParameters
+            particleParams = [0] * numParameters
+            particleVelocity = [0] * numParameters
 
             paramNumber = 0
             for param in params:
                 Max = self.ParameterRanges[param].max
                 Min = self.ParameterRanges[param].min
-                vel =self.maxVelocity
+                vel = self.maxVelocity
                 if max - min > 0:
-                    particleParams[paramNumber] = np.random.uniform(Min,Max)
-                    particleVelocity[paramNumber] = np.random.uniform(-vel,vel)
-                    paramNumber+=1
-
+                    particleParams[paramNumber] = np.random.uniform(Min, Max)
+                    particleVelocity[paramNumber] = np.random.uniform(
+                        -vel, vel)
+                    paramNumber += 1
 
             self.particles[i] = particleParams
             self.particlePaths[i] = [particleParams]
             self.velocities[i] = particleVelocity
             # performance = self.evaluateParticle(particleParams)
             # performance = self.evaluateParticle(particleParams)
-            self.localBests[i] = (particleParams, -(self.env['Path']['maxStepsPerRun']+1))
+            self.localBests[i] = (
+                particleParams, -(self.env['Path']['maxStepsPerRun'] + 1))
             # if self.globalBest == None or performance > self.globalBest[1]:
-        self.globalBest = (self.particles[i],-(self.env['Path']['maxStepsPerRun']+1)) #
+        self.globalBest = (
+            self.particles[i], -(self.env['Path']['maxStepsPerRun'] + 1))
 
         if self.render:
             self.renderCount = 0
@@ -140,17 +156,17 @@ class ParticleSwarmOptimization():
     def evaluateParticle(self, controller):
 
         controlConfig = self.controllerConfig
-        #override the pid controllers
+        # override the pid controllers
         # print(controller)
-        if len(controller)>2:
+        if len(controller) > 2:
 
             controlConfig.ATTITUDE_CONTROLLER_SET = [
-                             [
-                               [controller[0] , controller[0], 1500],
-                               [controller[1],  controller[1], 1.2],
-                               [controller[2],  controller[2], 0]
-                            ]
-                         ]
+                [
+                    [controller[0], controller[0], 1500],
+                    [controller[1], controller[1], 1.2],
+                    [controller[2], controller[2], 0]
+                ]
+            ]
         else:
             controlConfig.ATTITUDE_CONTROLLER_SET = [
                 [
@@ -161,19 +177,18 @@ class ParticleSwarmOptimization():
             ]
 
         quadConfig = self.env
-        quadConfig.Path.randomSeed = random.randint(0,100000)
-        task = Task( quadConfig, controlConfig)
+        quadConfig.Path.randomSeed = random.randint(0, 100000)
+        task = Task(quadConfig, controlConfig)
 
         results = task.executeTask()
 
         # print("Total Loss PID " + str(results))
 
-
         # print(str(controller) + " " + str(particlePerformance))
         self.saveResult(controlConfig, quadConfig.Env.toDict(), results)
-        return  results
+        return results
 
-    def saveResult(self, controllerParameters, quadconf,  particlePerformance):
+    def saveResult(self, controllerParameters, quadconf, particlePerformance):
 
         datapoint = {'ControllerParameters': controllerParameters,
                      'Environment': quadconf,
@@ -189,7 +204,6 @@ class ParticleSwarmOptimization():
         data.append(datapoint)
         # print(len(self.database))
         # print(len(data))
-
 
         with open(self.databaseConfig['path'], 'w') as db:
             json.dump(data, db)
@@ -218,17 +232,18 @@ class ParticleSwarmOptimization():
                 r2 = np.random.uniform(0.0, 1.0) * self.c1
                 r3 = np.random.uniform(0.0, 1.0) * self.c2
 
-                InteriaComp =  [ min(max(r1*v,-self.maxVelocity), self.maxVelocity) for v in self.velocities[i] ] #  [r1 * self.velocities[i][0], r1 * self.velocities[i][1]]
+                # [r1 * self.velocities[i][0], r1 * self.velocities[i][1]]
+                InteriaComp = [min(max(r1 * v, -self.maxVelocity),
+                                   self.maxVelocity) for v in self.velocities[i]]
 
-                CognitiveComp = [0]*len(self.particles[i])
+                CognitiveComp = [0] * len(self.particles[i])
                 for j in range(len(self.localBests[i][0])):
                     localBest = float(self.localBests[i][0][j])
-                    particleParam = float( self.particles[i][j])
+                    particleParam = float(self.particles[i][j])
                     cognitiveVelocity = localBest - particleParam
-                    cog = min(max(r2*(cognitiveVelocity),
+                    cog = min(max(r2 * (cognitiveVelocity),
                                   -self.maxVelocity), self.maxVelocity)
                     CognitiveComp[j] = cog
-
 
                 SocialComp = [0] * len(self.particles[i])
 
@@ -240,11 +255,11 @@ class ParticleSwarmOptimization():
                                   -self.maxVelocity), self.maxVelocity)
                     SocialComp[k] = soc
 
-
                 newVel = [0] * len(self.particles[i])
                 # print(self.particles[i])
                 for param in range(len(newVel)):
-                    newVel[param] = (InteriaComp[param] + CognitiveComp[param] + SocialComp[param])* self.currentWeight
+                    newVel[param] = (
+                        InteriaComp[param] + CognitiveComp[param] + SocialComp[param]) * self.currentWeight
 
                 self.velocities[i] = newVel
 
@@ -258,8 +273,8 @@ class ParticleSwarmOptimization():
                         parameterPosition = self.particles[i][p]
                         parameterVelocity = self.velocities[i][p]
                         newPosition = parameterPosition + parameterVelocity
-                        newPos[p]= min(max(newPosition,minimum),maximum)
-                        p+=1
+                        newPos[p] = min(max(newPosition, minimum), maximum)
+                        p += 1
 
                 self.particles[i] = newPos
                 self.particlePaths[i].append(self.particles[i])
@@ -276,7 +291,7 @@ class ParticleSwarmOptimization():
         return self.globalBest
 
     def render3D(self):
-        self.renderCount+=1
+        self.renderCount += 1
         if self.render:
             self.ax.cla()
             Env = "Nominal"
@@ -284,7 +299,8 @@ class ParticleSwarmOptimization():
             if faults['RotorFault']['enabled']:
                 Env = "Rotor Fault - " + str(faults['RotorFault']['magnitude'])
 
-            self.ax.set_title("Particle Swarm Optimization -"+Env +"- iteration:"+ str(self.renderCount))
+            self.ax.set_title("Particle Swarm Optimization -" +
+                              Env + "- iteration:" + str(self.renderCount))
             xdata = []
             ydata = []
             zdata = []
@@ -301,8 +317,11 @@ class ParticleSwarmOptimization():
                     xPath = []
                     yPath = []
                     # zPath = []
-                    ind = len(self.particlePaths[0]) if len(self.particlePaths[0]) <= 5 else 5
-                    particleHistory = particleHistory[-5:] if len(particleHistory) > 5 else particleHistory
+                    ind = len(
+                        self.particlePaths[0]) if len(
+                        self.particlePaths[0]) <= 5 else 5
+                    particleHistory = particleHistory[-5:] if len(
+                        particleHistory) > 5 else particleHistory
                     for point in particleHistory:
                         xPath.append(point[0])
                         yPath.append(point[1])
@@ -319,10 +338,21 @@ class ParticleSwarmOptimization():
             # self.ax.set_ylabel("I")
             # self.ax.set_zlabel("D")
 
-            self.ax.scatter(xdata, ydata, s=sizes, alpha=0.8, c='k', edgecolor="k", linewidth=0.4)
-            self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
+            self.ax.scatter(
+                xdata,
+                ydata,
+                s=sizes,
+                alpha=0.8,
+                c='k',
+                edgecolor="k",
+                linewidth=0.4)
+            self.ax.set_xlim(
+                self.ParameterRanges.P.min,
+                self.ParameterRanges.P.max)
             # self.ax.set_lim(self.ParameterRanges.I.min, self.ParameterRanges.I.max)
-            self.ax.set_ylim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+            self.ax.set_ylim(
+                self.ParameterRanges.D.min,
+                self.ParameterRanges.D.max)
             self.ax.set_xlabel("P")
             # self.ax.set_ylabel("I")
             self.ax.set_ylabel("D")
@@ -349,7 +379,6 @@ def main():
         results.append(result)
         print(result)
 
-
     print(results)
     p_average = 0
     i_average = 0
@@ -359,20 +388,18 @@ def main():
         p = result[0][0]
         i = result[0][1]
         # d = result[0][2]
-        p_average+=p
-        i_average+=i
+        p_average += p
+        i_average += i
         # d_average+=d
 
-    p_average = p_average/len(results)
-    i_average = i_average/len(results)
+    p_average = p_average / len(results)
+    i_average = i_average / len(results)
     # d_average = d_average/len(results)
 
     print(p_average)
     print(i_average)
 
-
     return
-
 
 
 if __name__ == "__main__":

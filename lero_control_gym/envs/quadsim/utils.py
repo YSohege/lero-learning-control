@@ -14,6 +14,8 @@ class History:
         self.env_name = env_name
 
 # Note that before running, these LD Library Path needs to be configured
+
+
 def check_mpc_hsl_solver_in_path():
     # os.path.dirname(os.path.abspath(__file__)) +
     hsl_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) +
@@ -27,7 +29,7 @@ def check_mpc_hsl_solver_in_path():
         print(
             "Please run this command in terminal at " +
             "working directory root folder:"
-            )
+        )
         print(hsl_path)
         print(
             r'export LD_LIBRARY_PATH=' +
@@ -42,17 +44,17 @@ def calculateControllerMetrics(env):
     th_ind = 0
     ts_ind = 0
     tp = 0
-    vl = 0.10*resp_final
-    vh = 0.90*resp_final
-    vs_l = 0.98*resp_final
-    vs_h = 1.02*resp_final
+    vl = 0.10 * resp_final
+    vh = 0.90 * resp_final
+    vs_l = 0.98 * resp_final
+    vs_h = 1.02 * resp_final
     peak_val = 0
     for ind, val in enumerate(env.history.sol_x[0]):
-        if abs(val-vl) < tol:
+        if abs(val - vl) < tol:
             tl_ind = ind
             break
     for ind, val in enumerate(env.history.sol_x[0]):
-        if abs(val-vh) < tol:
+        if abs(val - vh) < tol:
             th_ind = ind
             break
     for ind, val in enumerate(env.history.sol_x[0]):
@@ -64,9 +66,9 @@ def calculateControllerMetrics(env):
         if val > peak_val:
             peak_val = val
             tp = ind
-    rise_time = env.history.sol_t[0][th_ind]-env.history.sol_t[0][tl_ind]
+    rise_time = env.history.sol_t[0][th_ind] - env.history.sol_t[0][tl_ind]
     settling_time = env.history.sol_t[0][ts_ind]
-    overshoot = (peak_val-resp_final)*100/resp_final
+    overshoot = (peak_val - resp_final) * 100 / resp_final
     peak = peak_val
     peak_time = env.history.sol_t[0][tp]
     ss_error = abs(env.reference_state[0] - resp_final)
@@ -91,7 +93,7 @@ def simulate_envs(controller, env1, env2, env3, env4, num_episode):
         done = False
         while not done:
             action = controller.predict(obs, deterministic=True)
-            if type(action) is tuple:
+            if isinstance(action, tuple):
                 action = action[0]
             obs, reward, done, _ = env1.step(action)
 
@@ -99,7 +101,7 @@ def simulate_envs(controller, env1, env2, env3, env4, num_episode):
         done = False
         while not done:
             action = controller.predict(obs, deterministic=True)
-            if type(action) is tuple:
+            if isinstance(action, tuple):
                 action = action[0]
             obs, reward, done, _ = env2.step(action)
 
@@ -107,7 +109,7 @@ def simulate_envs(controller, env1, env2, env3, env4, num_episode):
         done = False
         while not done:
             action = controller.predict(obs, deterministic=True)
-            if type(action) is tuple:
+            if isinstance(action, tuple):
                 action = action[0]
             obs, reward, done, _ = env3.step(action)
 
@@ -115,7 +117,7 @@ def simulate_envs(controller, env1, env2, env3, env4, num_episode):
         done = False
         while not done:
             action = controller.predict(obs, deterministic=True)
-            if type(action) is tuple:
+            if isinstance(action, tuple):
                 action = action[0]
             obs, reward, done, _ = env4.step(action)
 
@@ -126,7 +128,7 @@ def createEnvs(t_end, simulation_freq,
                custom_u_high,
                set_constant_reference,
                constant_reference,
-               dynamics_state=np.array([3.14/4, 0, 0, 0, 0, 0]),
+               dynamics_state=np.array([3.14 / 4, 0, 0, 0, 0, 0]),
                eval_env=True):
 
     # Linear deterministic quadcopter

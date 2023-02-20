@@ -40,7 +40,7 @@ def compute_RPI_set(Acl,
     constraints += [P >> small]
     for i in range(n_samples):
         w_i = w[:, i, None]
-        con_11 = Acl.T @ P @ Acl - tau*P
+        con_11 = Acl.T @ P @ Acl - tau * P
         con_12 = Acl.T @ P @ w_i
         con_21 = w_i.T @ P @ Acl
         con_22 = w_i.T @ P @ w_i + tau - 1
@@ -48,11 +48,12 @@ def compute_RPI_set(Acl,
                                  [con_21, con_22]]) << 0]
     prob = cp.Problem(cp.Minimize(-cp.log_det(P)), constraints)
     try:
-        results =  prob.solve(solver='MOSEK', verbose=True)
+        results = prob.solve(solver='MOSEK', verbose=True)
     except cp.SolverError:
         print("[ERROR] RPI computation requires the MOSEK solver.")
         exit()
     return P.value
+
 
 def ellipse_bounding_box(P):
     """Finds the bounding box of an ellipse defined by x^T P x <= 1.
@@ -67,10 +68,11 @@ def ellipse_bounding_box(P):
     c = np.eye(P.shape[0])
     extremes = []
     for i in range(P.shape[0]):
-        extremes.append((np.sqrt(c[:,i, None].T @ np.linalg.inv(P) @ c[:,i, None])[0,0],
-                        -np.sqrt(c[:,i, None].T @ np.linalg.inv(P) @ c[:,i, None])[0,0]))
+        extremes.append((np.sqrt(c[:, i, None].T @ np.linalg.inv(P) @ c[:, i, None])[0, 0],
+                        -np.sqrt(c[:, i, None].T @ np.linalg.inv(P) @ c[:, i, None])[0, 0]))
     vertices = list(product(*extremes))
     return np.vstack(vertices)
+
 
 def get_ellipse_eig_decomp(P):
     """Gets the egienvalue decomposition of an ellipse defined by P.
@@ -94,6 +96,7 @@ def get_ellipse_eig_decomp(P):
     minor_evec = evecs[:, minor_axis_ind]
     return minor_eval, major_eval, minor_evec, major_evec
 
+
 def get_ellipse_angle_rep(P,
                           rads=True
                           ):
@@ -111,12 +114,13 @@ def get_ellipse_angle_rep(P,
     """
     minor_eval, major_eval, minor_evec, major_evec = get_ellipse_eig_decomp(P)
     alpha = np.arctan2(major_evec[1], major_evec[0])
-    major_axis_length = 1/np.sqrt(major_eval)
-    minor_axis_length = 1/np.sqrt(minor_eval)
+    major_axis_length = 1 / np.sqrt(major_eval)
+    minor_axis_length = 1 / np.sqrt(minor_eval)
     if rads:
         return minor_axis_length, major_axis_length, alpha
     else:
-        return minor_axis_length, major_axis_length, alpha*180/np.pi
+        return minor_axis_length, major_axis_length, alpha * 180 / np.pi
+
 
 def add_2d_ellipse(position,
                    cov,
@@ -132,21 +136,23 @@ def add_2d_ellipse(position,
         legend (str): Optional addition of ellipse legend.
 
     """
-    minor_axis_length, major_axis_length, alpha = get_ellipse_angle_rep(cov, rads=False)
+    minor_axis_length, major_axis_length, alpha = get_ellipse_angle_rep(
+        cov, rads=False)
     if legend:
         ellipse = Ellipse(position,
-                          2*major_axis_length,
-                          2*minor_axis_length,
+                          2 * major_axis_length,
+                          2 * minor_axis_length,
                           angle=alpha,
                           alpha=0.5,
                           label=legend)
     else:
         ellipse = Ellipse(position,
-                          2*major_axis_length,
-                          2*minor_axis_length,
+                          2 * major_axis_length,
+                          2 * minor_axis_length,
                           angle=alpha,
                           alpha=0.5)
     ax.add_artist(ellipse)
+
 
 def pontryagin_difference_AABB(verts1,
                                verts2
@@ -178,11 +184,14 @@ def pontryagin_difference_AABB(verts1,
     else:
         # If 1D data. Only handles closed compact sets.
         vert2_range = np.ptp(verts2)
-        vert_min = np.min(verts1) + vert2_range/2
-        vert_max = np.max(verts1) - vert2_range/2
-        const_func = partial(BoundedConstraint, lower_bounds=vert_min, upper_bounds=vert_max)
+        vert_min = np.min(verts1) + vert2_range / 2
+        vert_max = np.max(verts1) - vert2_range / 2
+        const_func = partial(
+            BoundedConstraint,
+            lower_bounds=vert_min,
+            upper_bounds=vert_max)
         if vert_max > vert_min:
             return np.vstack((vert_min, vert_max)), const_func
         else:
             print("Warning: Tightend set is the Zero set.")
-            return np.array([[0,0]]).T, const_func
+            return np.array([[0, 0]]).T, const_func

@@ -17,17 +17,15 @@ from functools import partial
 from lero_control_gym.utils.registration import make
 import gym
 from gym import spaces
+
+
 class Task(gym.Env):
 
-    def __init__(self, quadcopter3D , rl_rbc_pid ):
+    def __init__(self, quadcopter3D, rl_rbc_pid):
         self.quadcopter = quadcopter3D
         self.controller = rl_rbc_pid
 
-
         return
-
-
-
 
     # def reset(self):
     #
@@ -93,8 +91,10 @@ class Task(gym.Env):
         for point in range(len(results.obs)):
             datapoint['obs'].append(np.array(results.obs[point]).tolist())
             datapoint['info'].append(np.array(results.info[point]).tolist())
-            datapoint['action'].append(np.array(results.action[point]).tolist())
-            datapoint['reward'].append(np.array(results.reward[point]).tolist())
+            datapoint['action'].append(
+                np.array(results.action[point]).tolist())
+            datapoint['reward'].append(
+                np.array(results.reward[point]).tolist())
 
         saveFolder = savePath
         files = [f for f in os.listdir(saveFolder)]
@@ -111,9 +111,8 @@ class Task(gym.Env):
         # Plot the experiment.
         for i in range(len(results['info'])):
             # Step the environment and print all returned information.
-            obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], \
-                                              results['info'][
-                                                  i], results['action'][i]
+            obs, reward, done, info, action = results['obs'][i], results['reward'][
+                i], results['done'][i], results['info'][i], results['action'][i]
             err = float(info[0]['outside_safezone'])
             total_trajectory_loss += err
 
@@ -127,8 +126,8 @@ class Task(gym.Env):
         # Plot the experiment.
         for i in range(len(results['info'])):
             # Step the environment and print all returned information.
-            obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], \
-                                              results['info'][i], results['action'][i]
+            obs, reward, done, info, action = results['obs'][i], results['reward'][
+                i], results['done'][i], results['info'][i], results['action'][i]
             av_action_P.append(float(action[0]))
             av_action_D.append(float(action[1]))
 
@@ -136,7 +135,6 @@ class Task(gym.Env):
         action_D = np.average(av_action_D)
 
         return [action_P, action_D]
-
 
     def executeTask(self):
         """The main function creating, running, and closing an environment.
@@ -154,7 +152,6 @@ class Task(gym.Env):
                            **self.quadcopter
                            )
 
-
         ctrl = make("quad3d_rl_rbcpid",
                     env_func,
                     **self.controller
@@ -171,8 +168,7 @@ class Task(gym.Env):
         END = time.time()
         # print(str(END - START) + " seconds run time")
 
-        return total_trajectory_loss , average_action
-
+        return total_trajectory_loss, average_action
 
 
 # if __name__ == "__main__":

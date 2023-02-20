@@ -8,18 +8,22 @@ from lero_control_gym.utils.utils import get_random_state, set_random_state
 
 class DummyVecEnv(VecEnv):
     """Single thread env (allow multiple envs sequentially).
-    
+
     """
 
     def __init__(self,
                  env_fns
                  ):
         """
-        
+
         """
         self.envs = [fn() for fn in env_fns]
         env = self.envs[0]
-        VecEnv.__init__(self, len(env_fns), env.observation_space, env.action_space)
+        VecEnv.__init__(
+            self,
+            len(env_fns),
+            env.observation_space,
+            env.action_space)
         self.actions = None
         self.closed = False
 
@@ -27,13 +31,13 @@ class DummyVecEnv(VecEnv):
                    actions
                    ):
         """
-        
+
         """
         self.actions = actions
 
     def step_wait(self):
         """
-        
+
         """
         results = []
         for i in range(self.num_envs):
@@ -50,7 +54,7 @@ class DummyVecEnv(VecEnv):
 
     def reset(self):
         """
-        
+
         """
         results = []
         for env in self.envs:
@@ -60,7 +64,7 @@ class DummyVecEnv(VecEnv):
 
     def close(self):
         """
-        
+
         """
         for env in self.envs:
             env.close()
@@ -70,7 +74,7 @@ class DummyVecEnv(VecEnv):
 
     def get_images(self):
         """
-        
+
         """
         return [env.render(mode='rgb_array') for env in self.envs]
 
@@ -78,7 +82,7 @@ class DummyVecEnv(VecEnv):
                mode='human'
                ):
         """
-        
+
         """
         if self.num_envs == 1:
             return self.envs[0].render(mode=mode)
@@ -87,7 +91,7 @@ class DummyVecEnv(VecEnv):
 
     def get_env_random_state(self):
         """
-        
+
         """
         return [get_random_state()]
 
@@ -135,12 +139,19 @@ class DummyVecEnv(VecEnv):
             method_args = [[]] * len(target_envs)
         if method_kwargs is None:
             method_kwargs = [{}] * len(target_envs)
-        assert len(target_envs) == len(method_args) and len(target_envs) == len(
-            method_kwargs)
+        assert len(target_envs) == len(method_args) and len(
+            target_envs) == len(method_kwargs)
         return [
-            getattr(env_i, method_name)(*args, **kwargs) for env_i, args, kwargs
-            in zip(target_envs, method_args, method_kwargs)
-        ]
+            getattr(
+                env_i,
+                method_name)(
+                *args,
+                **kwargs) for env_i,
+            args,
+            kwargs in zip(
+                target_envs,
+                method_args,
+                method_kwargs)]
 
     def _get_target_envs(self,
                          indices

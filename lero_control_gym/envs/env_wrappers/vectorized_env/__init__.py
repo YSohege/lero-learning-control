@@ -17,7 +17,7 @@ def make_env_fn(env_func,
         env_config (dict): env init args.
         seed (int): base seed.
         rank (int): unique seed for each parallel env.
-        
+
     Returns:
         _thunk: env-constructing func.
 
@@ -42,14 +42,14 @@ def make_vec_envs(env_func,
                   batch_size=1,
                   n_processes=1,
                   seed=None):
-    """Produce envs with parallel rollout abilities. 
+    """Produce envs with parallel rollout abilities.
 
     Args:
         env_func (function): partial function that can accept args.
-        env_config (dict): non-shareable args for each env. 
-        batch_size (int): total num of parallel envs. 
+        env_config (dict): non-shareable args for each env.
+        batch_size (int): total num of parallel envs.
         n_processes (int): num of parallel workers to run envs.
-        seed (int): base seed for the run. 
+        seed (int): base seed for the run.
 
     Returns:
         VecEnv: (wrapped) parallel envs.
@@ -57,7 +57,8 @@ def make_vec_envs(env_func,
     """
     if env_configs is None:
         env_configs = [{}] * batch_size
-    env_fns = [make_env_fn(env_func, env_configs[i], seed, i) for i in range(batch_size)]
+    env_fns = [make_env_fn(env_func, env_configs[i], seed, i)
+               for i in range(batch_size)]
     if n_processes > 1:
         return SubprocVecEnv(env_fns, n_workers=n_processes)
     else:

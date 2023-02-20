@@ -7,9 +7,9 @@ References papers & code:
     * [rllab-adv](https://github.com/lerrel/rllab-adv)
     * [Robust Reinforcement Learning via adversary pools](https://github.com/eugenevinitsky/robust_RL_multi_adversary)
 
-Example: 
+Example:
     train on cartpole with disturbance::
-    
+
         $ python mains/main.py --algo rarl --task cartpole --overrides benchmark/configs/overrides/rarl_cartpole.yaml
 
 Todo:
@@ -35,23 +35,36 @@ from lero_control_gym.controllers.Quadcopter2D.ppo.ppo_utils import PPOAgent, PP
 class RARL(BaseController):
     """robust adversarial reinforcement learning with PPO."""
 
-    def __init__(self, 
-                 env_func, 
-                 training=True, 
-                 checkpoint_path="model_latest.pt", 
-                 output_dir="temp", 
-                 use_gpu=False, 
-                 seed=0, 
+    def __init__(self,
+                 env_func,
+                 training=True,
+                 checkpoint_path="model_latest.pt",
+                 output_dir="temp",
+                 use_gpu=False,
+                 seed=0,
                  **kwargs):
-        super().__init__(env_func, training, checkpoint_path, output_dir, use_gpu, seed, **kwargs)
+        super().__init__(
+            env_func,
+            training,
+            checkpoint_path,
+            output_dir,
+            use_gpu,
+            seed,
+            **kwargs)
         self.use_gpu = use_gpu
         # task
         if self.training:
             # training (+ evaluation)
-            self.env = make_vec_envs(env_func, None, self.rollout_batch_size, self.num_workers, seed)
+            self.env = make_vec_envs(
+                env_func,
+                None,
+                self.rollout_batch_size,
+                self.num_workers,
+                seed)
             self.env = VecRecordEpisodeStatistics(self.env, self.deque_size)
             self.eval_env = env_func(seed=seed * 111)
-            self.eval_env = RecordEpisodeStatistics(self.eval_env, self.deque_size)
+            self.eval_env = RecordEpisodeStatistics(
+                self.eval_env, self.deque_size)
         else:
             # testing only
             self.env = env_func()
@@ -68,27 +81,36 @@ class RARL(BaseController):
                                  opt_epochs=self.opt_epochs,
                                  mini_batch_size=self.mini_batch_size)
 
-        self.agent = PPOAgent(self.env.observation_space, self.env.action_space, **shared_agent_args)
+        self.agent = PPOAgent(
+            self.env.observation_space,
+            self.env.action_space,
+            **shared_agent_args)
         self.agent.to(self.device)
 
-        # fetch adversary specs from env 
+        # fetch adversary specs from env
         if self.training:
-            self.adv_obs_space = self.env.get_attr("adversary_observation_space")[0]
+            self.adv_obs_space = self.env.get_attr(
+                "adversary_observation_space")[0]
             self.adv_act_space = self.env.get_attr("adversary_action_space")[0]
         else:
             self.adv_obs_space = self.env.adversary_observation_space
             self.adv_act_space = self.env.adversary_action_space
-        self.adversary = PPOAgent(self.adv_obs_space, self.adv_act_space, **shared_agent_args)
+        self.adversary = PPOAgent(
+            self.adv_obs_space,
+            self.adv_act_space,
+            **shared_agent_args)
         self.adversary.to(self.device)
 
         # pre-/post-processing
         self.obs_normalizer = BaseNormalizer()
         if self.norm_obs:
-            self.obs_normalizer = MeanStdNormalizer(shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
+            self.obs_normalizer = MeanStdNormalizer(
+                shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
 
         self.reward_normalizer = BaseNormalizer()
         if self.norm_reward:
-            self.reward_normalizer = RewardStdNormalizer(gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
+            self.reward_normalizer = RewardStdNormalizer(
+                gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
 
         # logging
         if self.training:
@@ -98,7 +120,10 @@ class RARL(BaseController):
             # disable logging to texts and tfboard for evaluation
             log_file_out = False
             use_tensorboard = False
-        self.logger = ExperimentLogger(output_dir, log_file_out=log_file_out, use_tensorboard=use_tensorboard)
+        self.logger = ExperimentLogger(
+            output_dir,
+            log_file_out=log_file_out,
+            use_tensorboard=use_tensorboard)
 
     def reset(self):
         """Do initializations for training or evaluation."""
@@ -108,7 +133,7 @@ class RARL(BaseController):
             self.env.add_tracker("constraint_violation", 0, mode="queue")
             self.eval_env.add_tracker("constraint_violation", 0, mode="queue")
             self.eval_env.add_tracker("mse", 0, mode="queue")
-            
+
             self.total_steps = 0
             obs, _ = self.env.reset()
             self.obs = self.obs_normalizer(obs)
@@ -170,23 +195,35 @@ class RARL(BaseController):
             results = self.train_step()
 
             # checkpoint
-            if self.total_steps >= self.max_env_steps or (self.save_interval and self.total_steps % self.save_interval == 0):
+            if self.total_steps >= self.max_env_steps or (
+                    self.save_interval and self.total_steps %
+                    self.save_interval == 0):
                 # latest/final checkpoint
                 self.save(self.checkpoint_path)
-                self.logger.info("Checkpoint | {}".format(self.checkpoint_path))
-            if self.num_checkpoints and self.total_steps % (self.max_env_steps // self.num_checkpoints) == 0:
+                self.logger.info(
+                    "Checkpoint | {}".format(
+                        self.checkpoint_path))
+            if self.num_checkpoints and self.total_steps % (
+                    self.max_env_steps // self.num_checkpoints) == 0:
                 # intermediate checkpoint
-                path = os.path.join(self.output_dir, "checkpoints", "model_{}.pt".format(self.total_steps))
+                path = os.path.join(
+                    self.output_dir,
+                    "checkpoints",
+                    "model_{}.pt".format(
+                        self.total_steps))
                 self.save(path)
 
             # eval
             if self.eval_interval and self.total_steps % self.eval_interval == 0:
-                eval_results = self.run(env=self.eval_env, n_episodes=self.eval_batch_size)
+                eval_results = self.run(
+                    env=self.eval_env, n_episodes=self.eval_batch_size)
                 results["eval"] = eval_results
-                self.logger.info("Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(eval_results["ep_lengths"].mean(),
-                                                                                                            eval_results["ep_lengths"].std(),
-                                                                                                            eval_results["ep_returns"].mean(),
-                                                                                                            eval_results["ep_returns"].std()))
+                self.logger.info(
+                    "Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(
+                        eval_results["ep_lengths"].mean(),
+                        eval_results["ep_lengths"].std(),
+                        eval_results["ep_returns"].mean(),
+                        eval_results["ep_returns"].std()))
                 # save best model
                 eval_score = eval_results["ep_returns"].mean()
                 eval_best_score = getattr(self, "eval_best_score", -np.infty)
@@ -198,7 +235,14 @@ class RARL(BaseController):
             if self.log_interval and self.total_steps % self.log_interval == 0:
                 self.log_step(results)
 
-    def run(self, env=None, render=False, n_episodes=10, verbose=False, use_adv=False, **kwargs):
+    def run(
+            self,
+            env=None,
+            render=False,
+            n_episodes=10,
+            verbose=False,
+            use_adv=False,
+            **kwargs):
         """Runs evaluation with current policy."""
         self.agent.eval()
         self.adversary.eval()
@@ -252,7 +296,8 @@ class RARL(BaseController):
             eval_results["frames"] = frames
         # Other episodic stats from evaluation env.
         if len(env.queued_stats) > 0:
-            queued_stats = {k: np.asarray(v) for k, v in env.queued_stats.items()}
+            queued_stats = {k: np.asarray(v)
+                            for k, v in env.queued_stats.items()}
             eval_results.update(queued_stats)
         return eval_results
 
@@ -269,7 +314,8 @@ class RARL(BaseController):
         results.update(adversary_results)
 
         # miscellaneous
-        results.update({"step": self.total_steps, "elapsed_time": time.time() - start})
+        results.update({"step": self.total_steps,
+                        "elapsed_time": time.time() - start})
         return results
 
     def log_step(self, results):
@@ -290,23 +336,24 @@ class RARL(BaseController):
         # learning stats
         self.logger.add_scalars(
             {
-                k: results[k] 
+                k: results[k]
                 for k in ["policy_loss", "value_loss", "entropy_loss"]
-            }, 
-            step, 
+            },
+            step,
             prefix="loss")
         self.logger.add_scalars(
             {
-                k: results[k + "_adv"] 
+                k: results[k + "_adv"]
                 for k in ["policy_loss", "value_loss", "entropy_loss"]
-            }, 
-            step, 
+            },
+            step,
             prefix="loss_adv")
 
         # performance stats
         ep_lengths = np.asarray(self.env.length_queue)
         ep_returns = np.asarray(self.env.return_queue)
-        ep_constraint_violation = np.asarray(self.env.queued_stats["constraint_violation"])
+        ep_constraint_violation = np.asarray(
+            self.env.queued_stats["constraint_violation"])
         self.logger.add_scalars(
             {
                 "ep_length": ep_lengths.mean(),
@@ -318,7 +365,8 @@ class RARL(BaseController):
             prefix="stat")
         # Total constraint violation during learning.
         total_violations = self.env.accumulated_stats["constraint_violation"]
-        self.logger.add_scalars({"constraint_violation": total_violations}, step, prefix="stat")
+        self.logger.add_scalars(
+            {"constraint_violation": total_violations}, step, prefix="stat")
         if "eval" in results:
             eval_ep_lengths = results["eval"]["ep_lengths"]
             eval_ep_returns = results["eval"]["ep_returns"]
@@ -340,18 +388,28 @@ class RARL(BaseController):
     def collect_rollouts(self, adversary=False):
         """Uses current agent and adversary to collect trajectories."""
         if adversary:
-            rollouts = PPOBuffer(self.adv_obs_space, self.adv_act_space, self.rollout_steps, self.rollout_batch_size)
+            rollouts = PPOBuffer(
+                self.adv_obs_space,
+                self.adv_act_space,
+                self.rollout_steps,
+                self.rollout_batch_size)
         else:
-            rollouts = PPOBuffer(self.env.observation_space, self.env.action_space, self.rollout_steps, self.rollout_batch_size)
+            rollouts = PPOBuffer(
+                self.env.observation_space,
+                self.env.action_space,
+                self.rollout_steps,
+                self.rollout_batch_size)
         obs = self.obs
 
         # get rollouts/trajectories
         for step in range(self.rollout_steps):
             with torch.no_grad():
                 # protagnist action
-                act, v, logp = self.agent.ac.step(torch.FloatTensor(obs).to(self.device))
+                act, v, logp = self.agent.ac.step(
+                    torch.FloatTensor(obs).to(self.device))
                 # adversary action
-                act_adv, v_adv, logp_adv = self.adversary.ac.step(torch.FloatTensor(obs).to(self.device))
+                act_adv, v_adv, logp_adv = self.adversary.ac.step(
+                    torch.FloatTensor(obs).to(self.device))
 
             # step env
             act_adv_list = [[act] for act in act_adv]
@@ -365,18 +423,22 @@ class RARL(BaseController):
             # time truncation is not true termination
             terminal_v = np.zeros_like(v)
             for idx, inf in enumerate(info["n"]):
-                # if "TimeLimit.truncated" in inf and inf["TimeLimit.truncated"]:
+                # if "TimeLimit.truncated" in inf and
+                # inf["TimeLimit.truncated"]:
                 if "terminal_info" not in inf:
                     continue
                 inff = inf["terminal_info"]
                 if "TimeLimit.truncated" in inff and inff["TimeLimit.truncated"]:
                     terminal_obs = inf["terminal_observation"]
-                    terminal_obs_tensor = torch.FloatTensor(terminal_obs).unsqueeze(0).to(self.device)
+                    terminal_obs_tensor = torch.FloatTensor(
+                        terminal_obs).unsqueeze(0).to(self.device)
                     # estimate value for terminated state
                     if adversary:
-                        terminal_val = self.adversary.ac.critic(terminal_obs_tensor).squeeze().detach().numpy()
+                        terminal_val = self.adversary.ac.critic(
+                            terminal_obs_tensor).squeeze().detach().numpy()
                     else:
-                        terminal_val = self.agent.ac.critic(terminal_obs_tensor).squeeze().detach().numpy()
+                        terminal_val = self.agent.ac.critic(
+                            terminal_obs_tensor).squeeze().detach().numpy()
                     terminal_v[idx] = terminal_val
 
             # collect rollout data
@@ -403,9 +465,13 @@ class RARL(BaseController):
 
         # postprocess
         if adversary:
-            last_val = self.adversary.ac.critic(torch.FloatTensor(obs).to(self.device)).detach().numpy()
+            last_val = self.adversary.ac.critic(
+                torch.FloatTensor(obs).to(
+                    self.device)).detach().numpy()
         else:
-            last_val = self.agent.ac.critic(torch.FloatTensor(obs).to(self.device)).detach().numpy()
+            last_val = self.agent.ac.critic(
+                torch.FloatTensor(obs).to(
+                    self.device)).detach().numpy()
         ret, adv = compute_returns_and_advantages(rollouts.rew,
                                                   rollouts.v,
                                                   rollouts.mask,

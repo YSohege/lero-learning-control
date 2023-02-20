@@ -16,10 +16,9 @@ def check_mpc_hsl_solver_in_path():
         print(
             "Please run this command in terminal at " +
             "working directory root folder:"
-            )
+        )
         print(hsl_path)
         print(
             r'export LD_LIBRARY_PATH=' +
             r'"$LD_LIBRARY_PATH:' + hsl_path + r'"')
         exit(1)
-

@@ -12,26 +12,27 @@ import matplotlib.gridspec as gridspec
 from lero_control_gym.tasks.Quadcopter3D_Trajectory_Tracking.Quadcopter3D_Trajectory_Tracking import Task
 from lero_control_gym.utils.configuration import ConfigFactory
 
+
 class ClusteredParticleFilteringOptimization():
     DefaultTask = []
     DefaultController = []
     DefaultRanges = []
 
     def __init__(self,
-                 NumberParticlesPerDimension= 20,
-                 numberOfParticlesToSample= 50,
-                 averagePerformanceLength= 10,
-                 MaxIter= 100,
-                 StartingPerformance= -3000,
-                 performanceThreshold= -1000,
-                 min_samples = 4,
-                 epsilon= 2000,
+                 NumberParticlesPerDimension=20,
+                 numberOfParticlesToSample=50,
+                 averagePerformanceLength=10,
+                 MaxIter=100,
+                 StartingPerformance=-3000,
+                 performanceThreshold=-1000,
+                 min_samples=4,
+                 epsilon=2000,
                  ParameterRanges=DefaultRanges,
                  Task=DefaultTask,
                  Controller=DefaultController,
-                 random_seed = None,
+                 random_seed=None,
                  render=False):
-        if random_seed != None:
+        if random_seed is not None:
             random.seed(random_seed)
 
         self.NumberParticlesPerDimension = NumberParticlesPerDimension
@@ -51,7 +52,8 @@ class ClusteredParticleFilteringOptimization():
         }
         if bool(self.databaseConfig['NewFile']):
             dt = str(datetime.datetime.now())[:16].replace(":", "-")
-            FileName = self.databaseConfig['folder'] + "CPF_Results-" + dt + ".json"
+            FileName = self.databaseConfig['folder'] + \
+                "CPF_Results-" + dt + ".json"
             # print(FileName)
             if not os.path.exists(FileName):
                 with open(FileName, 'w') as db:
@@ -60,26 +62,27 @@ class ClusteredParticleFilteringOptimization():
             self.databaseConfig['path'] = FileName
         self.database = []
 
-
         self.IntermediateHulls = []
         self.FinalHull = []
         self.currentHull = []
 
         # equal probability for all particles at the start
 
-
-
         # self.initilizeParticles()
 
         self.render = render
         if self.render:
-            self.fig = plt.figure(figsize=(8,6))
+            self.fig = plt.figure(figsize=(8, 6))
             self.ax = plt.subplot(111, projection='3d')
             # self.ax = plt.subplot(111)
             # self.ax1 = plt.subplot(222)
-            self.ax.set_xlim(self.ParameterRanges.P.min, self.ParameterRanges.P.max)
+            self.ax.set_xlim(
+                self.ParameterRanges.P.min,
+                self.ParameterRanges.P.max)
             # self.ax.set_ylim(self.CPFConfig['ParameterRanges']["I"]['min'], self.CPFConfig['ParameterRanges']["I"]['max'])
-            self.ax.set_ylim(self.ParameterRanges.D.min, self.ParameterRanges.D.max)
+            self.ax.set_ylim(
+                self.ParameterRanges.D.min,
+                self.ParameterRanges.D.max)
             # self.ax1.set_xlim(self.CPFConfig['ParameterRanges']["P"]['min'], self.CPFConfig['ParameterRanges']["P"]['max'])
             # # self.ax1.set_ylim(self.CPFConfig['ParameterRanges']["I"]['min'], self.CPFConfig['ParameterRanges']["I"]['max'])
             # self.ax1.set_ylim(self.CPFConfig['ParameterRanges']["D"]['min'], self.CPFConfig['ParameterRanges']["D"]['max'])
@@ -101,32 +104,31 @@ class ClusteredParticleFilteringOptimization():
 
         numParticles = self.NumberParticlesPerDimension
         P_min = int(self.ParameterRanges.P.min)
-        P_max =int(self.ParameterRanges.P.max)
-        P_step = round((P_max-P_min)/numParticles)
+        P_max = int(self.ParameterRanges.P.max)
+        P_step = round((P_max - P_min) / numParticles)
         # I_min =self.CPFConfig['ParameterRanges']["I"]['min']
         # I_max =self.CPFConfig['ParameterRanges']["I"]['max']
         # I_step =  round((I_max - I_min) / numParticles)
-        D_min =int(self.ParameterRanges.D.min)
-        D_max =int(self.ParameterRanges.D.max)
+        D_min = int(self.ParameterRanges.D.min)
+        D_max = int(self.ParameterRanges.D.max)
         D_step = round((D_max - D_min) / numParticles)
         for p in range(P_min, P_max, P_step):
             # for i  in range(I_min, I_max, I_step):
-                for d  in range(D_min, D_max, D_step):
-                    # self.particles.append((p, i, d))
-                    # startPerf = random.uniform(self.StartingPerformance, -500)
-                    startPerf = self.StartingPerformance
-                    self.particles.append((p, d))
-                    self.performances.append([startPerf])
-                    self.avgPerformances.append(startPerf)
+            for d in range(D_min, D_max, D_step):
+                # self.particles.append((p, i, d))
+                # startPerf = random.uniform(self.StartingPerformance, -500)
+                startPerf = self.StartingPerformance
+                self.particles.append((p, d))
+                self.performances.append([startPerf])
+                self.avgPerformances.append(startPerf)
 
         for _ in self.particles:
             self.weights.append(1 / len(self.particles))
         self.finished = False
         return
 
-
-    def setTaskEnv(self,env):
-        if env != None:
+    def setTaskEnv(self, env):
+        if env is not None:
             self.activeEnv = env
             self.TaskEnv = self.Task.Env[self.activeEnv]
         else:
@@ -136,10 +138,10 @@ class ClusteredParticleFilteringOptimization():
 
     def setRandomEnvironmentMagnitude(self):
         # self.TaskEnv = self.Environment[env]
-        if self.TaskEnv != None:
+        if self.TaskEnv is not None:
             min = self.TaskEnv.min_magnitude
             max = self.TaskEnv.max_magnitude
-            self.TaskEnv.magnitude = random.uniform(min,max)
+            self.TaskEnv.magnitude = random.uniform(min, max)
 
     # def setFixedEnvironment(self, percent):
     #     min = self.TaskEnv['min_magnitude']
@@ -178,7 +180,7 @@ class ClusteredParticleFilteringOptimization():
         results = task.executeTask()
         # print(str(controller) + " " + str(results))
         # self.saveResult(controlConfig, results)
-        return  results
+        return results
 
     def saveResult(self, controllerParameters, particlePerformance):
         datapoint = {'ControllerParameters': controllerParameters,
@@ -200,7 +202,8 @@ class ClusteredParticleFilteringOptimization():
         return
 
     def sampleAndEvaluateParticles(self):
-        sampleInd = np.random.choice(len(self.particles), self.numberOfParticlesToSample, p=self.weights)
+        sampleInd = np.random.choice(
+            len(self.particles), self.numberOfParticlesToSample, p=self.weights)
 
         for ind in sampleInd:
             particle = self.particles[ind]
@@ -210,7 +213,8 @@ class ClusteredParticleFilteringOptimization():
             # ki = np.random.uniform(max(particle[1] - 500, self.CPFConfig['ParameterRanges']["I"]['min']),
             #                        min(particle[1] + 500, self.CPFConfig['ParameterRanges']["I"]['max']))
             # kd = np.random.uniform(max(particle[2] - 500, self.CPFConfig['ParameterRanges']["D"]['min']),
-            #                        min(particle[2] + 500, self.CPFConfig['ParameterRanges']["D"]['max']))
+            # min(particle[2] + 500,
+            # self.CPFConfig['ParameterRanges']["D"]['max']))
             kp = particle[0]
             kd = particle[1]
 
@@ -239,7 +243,9 @@ class ClusteredParticleFilteringOptimization():
 
     def updateParticleWeights(self):
         for ind in range(0, len(self.weights)):
-            self.weights[ind] = (self.avgPerformances[ind] / self.totalPerformance)
+            self.weights[ind] = (
+                self.avgPerformances[ind] /
+                self.totalPerformance)
 
         return
 
@@ -257,8 +263,6 @@ class ClusteredParticleFilteringOptimization():
         else:
             self.finished = True
 
-
-
         return
 
     def clusterParticles(self):
@@ -271,19 +275,20 @@ class ClusteredParticleFilteringOptimization():
         # self.epsilon = (avgMaxParameterRange/self.NumberParticlesPerDimension)*1.5
         # epsilon = 1300
 
-
-        #remove bad performing particles
+        # remove bad performing particles
         index = 0
         goodParticles = []
         for particle in self.particles:
             # print(self.avgPerformances[index])
             if self.avgPerformances[index] > self.performanceThreshold:
-            # if self.avgPerformances[index] >= self.CPFConfig['StartingPerformance']:
+                # if self.avgPerformances[index] >=
+                # self.CPFConfig['StartingPerformance']:
                 goodParticles.append(particle)
             index += 1
         # print(len(goodParticles))
         if (len(goodParticles) > self.min_sample):
-            dbClusters = DBSCAN(eps=self.epsilon, min_samples=self.min_sample).fit(goodParticles)
+            dbClusters = DBSCAN(eps=self.epsilon,
+                                min_samples=self.min_sample).fit(goodParticles)
             labels = dbClusters.labels_
             # print(labels)
             numClusters = max(labels) + 1
@@ -303,13 +308,13 @@ class ClusteredParticleFilteringOptimization():
                             largestClusterIndex = clusterIndex
                             largestClusterSize = clusterSize
                 counter = 0
-                ClusterIndexes= []
+                ClusterIndexes = []
                 ClusterParticles = []
                 for cindex in labels:
                     if cindex == largestClusterIndex:
                         ClusterIndexes.append(counter)
                         ClusterParticles.append(goodParticles[counter])
-                    counter+=1
+                    counter += 1
                 #
                 # ClusterIndexes = list(filter(lambda x : x == largestClusterIndex, labels))
                 # # ClusterParticles = []
@@ -342,7 +347,6 @@ class ClusteredParticleFilteringOptimization():
             print("No Hull Found")
         return
 
-
     #     cluster = self.clusterParticles()
     #     clusterPoints = np.array(cluster)
     #     if not cluster == []:
@@ -363,7 +367,6 @@ class ClusteredParticleFilteringOptimization():
             for point in hull:
                 allpoints.append(point)
 
-
         if not allpoints == []:
             hull = ConvexHull(allpoints)
             hull_indices = np.array(hull.vertices)
@@ -378,9 +381,8 @@ class ClusteredParticleFilteringOptimization():
             print("Failed combined hull")
             return []
 
-
     def render3D(self):
-        self.renderCount +=1
+        self.renderCount += 1
         if self.render:
             self.ax.cla()
 
@@ -388,19 +390,19 @@ class ClusteredParticleFilteringOptimization():
             # self.clusterPoints = [(1000,2000),(2000,2000),(2000,1000), (4000,4000)]
             # self.currentHull = ConvexHull(self.clusterPoints)
             clusterPoints = np.array(self.clusterPoints)
-            ClusterS = [ 50 for a in clusterPoints ]
-            ClusterC = [ 1 for a in clusterPoints ]
+            ClusterS = [50 for a in clusterPoints]
+            ClusterC = [1 for a in clusterPoints]
             # print(clusterPoints)
             ind = 0
 
-            tileSize =1000/self.NumberParticlesPerDimension
-            particles= []
-            xdata= []
-            ydata= []
+            tileSize = 1000 / self.NumberParticlesPerDimension
+            particles = []
+            xdata = []
+            ydata = []
             particleS = []
             particleC = [[]]
-            row=0
-            threshold=[[]]
+            row = 0
+            threshold = [[]]
             for entry in self.particles:
                 # if self.avgPerformances[ind] > -:
                 particles.append(entry)
@@ -409,14 +411,15 @@ class ClusteredParticleFilteringOptimization():
                 # zdata.append(entry[2])
                 # print(self.avgPerformances[ind])
 
-                if len(particleC[row]) == self.NumberParticlesPerDimension :
+                if len(particleC[row]) == self.NumberParticlesPerDimension:
                     particleC.append([])
                     threshold.append([])
-                    row +=1
-                particleC[row].append(3000 + max(self.avgPerformances[ind], -3000) )
-                threshold[row].append( 3000 - abs(self.performanceThreshold))
-                if (self.avgPerformances[ind] >= self.performanceThreshold ):
-                    particleS.append(tileSize*3)
+                    row += 1
+                particleC[row].append(
+                    3000 + max(self.avgPerformances[ind], -3000))
+                threshold[row].append(3000 - abs(self.performanceThreshold))
+                if (self.avgPerformances[ind] >= self.performanceThreshold):
+                    particleS.append(tileSize * 3)
                 else:
                     particleS.append(tileSize)
 
@@ -428,30 +431,37 @@ class ClusteredParticleFilteringOptimization():
             #               ((self.ParameterRanges.D.max - self.ParameterRanges.D.min) / self.NumberParticlesPerDimension))
 
             # self.ax1.scatter(particles.T[0], particles.T[1], particles.T[2], alpha=0.01, s=particleS, c=particleC, cmap="Set1")
-            p = self.ax.scatter(xdata,ydata, particleC,
-                            s=particleS,
-                            alpha=0.5 ,
-                            c=particleC,
-                            cmap='PiYG',
-                            # marker='s' ,
-                            edgecolor="k",
-                            vmin=0,
-                            vmax=3000)
+            p = self.ax.scatter(xdata, ydata, particleC,
+                                s=particleS,
+                                alpha=0.5,
+                                c=particleC,
+                                cmap='PiYG',
+                                # marker='s' ,
+                                edgecolor="k",
+                                vmin=0,
+                                vmax=3000)
 
             if (len(clusterPoints) > 0):
                 # self.ax.scatter(clusterPoints.T[0], clusterPoints.T[1], clusterPints.T[2], alpha=0.01 , s=ClusterS, c=ClusterC, cmap="Set1")
-                self.ax.scatter(clusterPoints.T[0], clusterPoints.T[1], alpha=1 , marker="s", s=ClusterS, edgecolor="k")
+                self.ax.scatter(
+                    clusterPoints.T[0],
+                    clusterPoints.T[1],
+                    alpha=1,
+                    marker="s",
+                    s=ClusterS,
+                    edgecolor="k")
 
                 for s in self.currentHull.simplices:
-                    s = np.append(s, s[0])  # Here we cycle back to the first coordinate
-                    self.ax.plot(clusterPoints[s, 0], clusterPoints[s, 1], "k-", linewidth=3)
+                    # Here we cycle back to the first coordinate
+                    s = np.append(s, s[0])
+                    self.ax.plot(
+                        clusterPoints[s, 0], clusterPoints[s, 1], "k-", linewidth=3)
 
             # for hull in self.IntermediateHulls:
             #     for s in hull.simplices:
             #         s = np.append(s, s[0])  # Here we cycle back to the first coordinate
             #         self.ax.plot(clusterPoints[s, 0], clusterPoints[s, 1], "k-")
             # =======
-
 
             # p = self.ax.pcolormesh(X,
             #                      Y,
@@ -464,13 +474,15 @@ class ClusteredParticleFilteringOptimization():
                 self.cbar.remove()
             self.cbar = plt.colorbar(p)
 
-
-            self.ax.set_title("Clustered Particle Filtering -" + str(self.title))
+            self.ax.set_title(
+                "Clustered Particle Filtering -" + str(self.title))
             # self.ax.set_xlim(self.ParameterRanges.P.min,
             #                  self.ParameterRanges.P.max)
             #
             # self.ax.set_ylim(self.CPFConfig['ParameterRanges']["I"]['min'], self.CPFConfig['ParameterRanges']["I"]['max'])
-            self.ax.set_ylim(self.ParameterRanges.D.min,self.ParameterRanges.D.max)
+            self.ax.set_ylim(
+                self.ParameterRanges.D.min,
+                self.ParameterRanges.D.max)
             self.ax.set_xlabel("P-Gain")
             self.ax.set_ylabel("D-Gain")
             # self.ax.set_zlabel("Performance")
@@ -512,14 +524,13 @@ class ClusteredParticleFilteringOptimization():
             if self.Task.Env[env].enabled:
                 Envs.append(env)
 
-
         if Envs == []:
             Envs.append(None)
 
         for env in Envs:
-            print( "Running " + env)
+            print("Running " + env)
             self.title = env
-            EnvCount +=1
+            EnvCount += 1
             self.initilizeParticles()
 
             if self.render:
@@ -531,10 +542,7 @@ class ClusteredParticleFilteringOptimization():
 
             self.calculateClusterAndHull()
 
-
             self.currentHull = []
-
-
 
         ControllerParameterSet = self.getCombinedHull()
         if self.render:
@@ -553,8 +561,6 @@ def main():
         algo = ClusteredParticleFilteringOptimization(**config.CPF)
         result = algo.run()
         results.append(result)
-
-
 
     # p_average = 0
     # # i_average = 0
@@ -575,9 +581,7 @@ def main():
     # print(p_average)
     # print(d_average)
 
-
     return
-
 
 
 if __name__ == "__main__":

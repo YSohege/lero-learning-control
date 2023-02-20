@@ -35,13 +35,12 @@ class Disturbance:
 
         """
         return target
-    
+
     def seed(self, env):
         """Reset seed from env.
-        
+
         """
         self.np_random = env.np_random
-        
 
 
 class DisturbanceList:
@@ -77,10 +76,10 @@ class DisturbanceList:
         for disturb in self.disturbances:
             disturbed = disturb.apply(disturbed, env)
         return disturbed
-    
+
     def seed(self, env):
         """Reset seed from env.
-        
+
         """
         for disturb in self.disturbances:
             disturb.seed(env)
@@ -88,11 +87,11 @@ class DisturbanceList:
 
 class ImpulseDisturbance(Disturbance):
     """Impulse applied during a short time interval.
-    
+
     Examples:
         * single step, square (duration=1, decay_rate=1): ______|-|_______
         * multiple step, square (duration>1, decay_rate=1): ______|-----|_____
-        * multiple step, triangle (duration>1, decay_rate<1): ______/\_____
+        * multiple step, triangle (duration>1, decay_rate<1): ______/\\_____
 
     """
 
@@ -123,7 +122,8 @@ class ImpulseDisturbance(Disturbance):
             self.current_step_offset = self.np_random.randint(self.max_step)
         else:
             self.current_step_offset = self.step_offset
-        self.current_peak_step = int(self.current_step_offset + self.duration / 2)
+        self.current_peak_step = int(
+            self.current_step_offset + self.duration / 2)
 
     def apply(self,
               target,
@@ -131,7 +131,9 @@ class ImpulseDisturbance(Disturbance):
               ):
         noise = 0
         if env.ctrl_step_counter >= self.current_step_offset:
-            peak_offset = np.abs(env.ctrl_step_counter - self.current_peak_step)
+            peak_offset = np.abs(
+                env.ctrl_step_counter -
+                self.current_peak_step)
             if peak_offset < self.duration / 2:
                 decay = self.decay_rate**peak_offset
             else:
@@ -145,7 +147,7 @@ class ImpulseDisturbance(Disturbance):
 
 class StepDisturbance(Disturbance):
     """Constant disturbance at all time steps (but after offset).
-    
+
     Applied after offset step (randomized or given): _______|---------
 
     """
@@ -183,6 +185,7 @@ class StepDisturbance(Disturbance):
         disturbed = target + noise
         return disturbed
 
+
 class UniformNoise(Disturbance):
     """i.i.d uniform noise ~ U(low, high) per time step."""
 
@@ -195,14 +198,16 @@ class UniformNoise(Disturbance):
         elif isinstance(low, list):
             self.low = np.asarray(low)
         else:
-            raise ValueError("[ERROR] UniformNoise.__init__(): low must be specified as a float or list.")
+            raise ValueError(
+                "[ERROR] UniformNoise.__init__(): low must be specified as a float or list.")
 
         if isinstance(high, float):
             self.high = np.asarray([high] * self.dim)
         elif isinstance(low, list):
             self.high = np.asarray(high)
         else:
-            raise ValueError("[ERROR] UniformNoise.__init__(): high must be specified as a float or list.")
+            raise ValueError(
+                "[ERROR] UniformNoise.__init__(): high must be specified as a float or list.")
 
     def apply(self, target, env):
         noise = self.np_random.uniform(self.low, self.high, size=self.dim)
@@ -231,15 +236,17 @@ class WhiteNoise(Disturbance):
         elif isinstance(std, list):
             self.std = np.asarray(std)
         else:
-            raise ValueError("[ERROR] WhiteNoise.__init__(): std must be specified as a float or list.")
-        assert self.dim == len(self.std), "std shape should be the same as dim."
+            raise ValueError(
+                "[ERROR] WhiteNoise.__init__(): std must be specified as a float or list.")
+        assert self.dim == len(
+            self.std), "std shape should be the same as dim."
 
     def apply(self,
               target,
               env
               ):
         noise = self.np_random.normal(0, self.std, size=self.dim)
-        # # TODO: hack for debug 
+        # # TODO: hack for debug
         # noise = np.clip(noise, -self.std, self.std)
 
         if self.mask is not None:
@@ -290,7 +297,7 @@ class PeriodicNoise(Disturbance):
 
 class StateDependentDisturbance(Disturbance):
     """Time varying and state varying, e.g. friction.
-    
+
     Here to provide an explicit form, can also enable friction in simulator directly.
 
     """
@@ -323,13 +330,13 @@ def create_disturbance_list(disturbance_specs, shared_args, env):
     disturb_list = []
     # Each disturbance for the mode.
     for disturb in disturbance_specs:
-        assert "disturbance_func" in disturb.keys(), "[ERROR]: Every distrubance must specify a disturbance_func."
+        assert "disturbance_func" in disturb.keys(
+        ), "[ERROR]: Every distrubance must specify a disturbance_func."
         disturb_func = disturb["disturbance_func"]
         assert disturb_func in DISTURBANCE_TYPES, "[ERROR] in BenchmarkEnv._setup_disturbances(), disturbance type not available."
         disturb_cls = DISTURBANCE_TYPES[disturb_func]
-        cfg = {key: disturb[key] for key in disturb if key != "disturbance_func"}
+        cfg = {key: disturb[key]
+               for key in disturb if key != "disturbance_func"}
         disturb = disturb_cls(env, **shared_args, **cfg)
         disturb_list.append(disturb)
     return DisturbanceList(disturb_list)
-            
-

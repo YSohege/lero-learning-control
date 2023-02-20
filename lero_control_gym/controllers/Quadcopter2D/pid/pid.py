@@ -15,6 +15,7 @@ from lero_control_gym.controllers.base_controller import BaseController
 from lero_control_gym.envs.benchmark_env import Task
 import time
 
+
 class PID(BaseController):
     """ PID Class.
 
@@ -22,20 +23,20 @@ class PID(BaseController):
 
     def __init__(self,
                  env_func=None,
-                 g = 9.8,
-                 KF = 3.16e-10,
-                 KM = 7.94e-12,
-                 P_COEFF_FOR = np.array([.4, .4, 1.25]),
-                 I_COEFF_FOR = np.array([.05, .05, .05]),
-                 D_COEFF_FOR = np.array([.2, .2, .5]),
-                 P_COEFF_TOR = np.array([70000., 70000., 60000.]),
-                 I_COEFF_TOR = np.array([.0, .0, 500.]),
-                 D_COEFF_TOR = np.array([20000., 20000., 12000.]),
-                 PWM2RPM_SCALE = 0.2685,
-                 PWM2RPM_CONST = 4070.3,
-                 MIN_PWM = 20000,
-                 MAX_PWM = 65535,
-                 MIXER_MATRIX = np.array([ [.5, -.5,  -1], [.5, .5, 1], [-.5,  .5,  -1], [-.5, -.5, 1] ]),
+                 g=9.8,
+                 KF=3.16e-10,
+                 KM=7.94e-12,
+                 P_COEFF_FOR=np.array([.4, .4, 1.25]),
+                 I_COEFF_FOR=np.array([.05, .05, .05]),
+                 D_COEFF_FOR=np.array([.2, .2, .5]),
+                 P_COEFF_TOR=np.array([70000., 70000., 60000.]),
+                 I_COEFF_TOR=np.array([.0, .0, 500.]),
+                 D_COEFF_TOR=np.array([20000., 20000., 12000.]),
+                 PWM2RPM_SCALE=0.2685,
+                 PWM2RPM_CONST=4070.3,
+                 MIN_PWM=20000,
+                 MAX_PWM=65535,
+                 MIXER_MATRIX=np.array([[.5, -.5, -1], [.5, .5, 1], [-.5, .5, -1], [-.5, -.5, 1]]),
                  **kwargs
                  ):
         """Common control classes __init__ method.
@@ -96,28 +97,29 @@ class PID(BaseController):
             # Step the environment and print all returned information.
             obs, reward, done, info = self.env.step(action)
 
-            cur_pos=np.array([obs[0], 0, obs[2]])
-            cur_quat=np.array(p.getQuaternionFromEuler([0, obs[4], 0]))
-            cur_vel=np.array([obs[1], 0, obs[3]])
-            cur_ang_vel=np.array([0, obs[4], 0])
+            cur_pos = np.array([obs[0], 0, obs[2]])
+            cur_quat = np.array(p.getQuaternionFromEuler([0, obs[4], 0]))
+            cur_vel = np.array([obs[1], 0, obs[3]])
+            cur_ang_vel = np.array([0, obs[4], 0])
 
             if self.env.TASK == Task.TRAJ_TRACKING:
-                target_pos=np.array([
-                                        self.reference[i-1,0],
-                                        0,
-                                        self.reference[i-1,2]
-                                    ])
-                target_vel=np.array([
-                                        self.reference[i-1,1],
-                                        0,
-                                        self.reference[i-1,3]
-                                    ])
+                target_pos = np.array([
+                    self.reference[i - 1, 0],
+                    0,
+                    self.reference[i - 1, 2]
+                ])
+                target_vel = np.array([
+                    self.reference[i - 1, 1],
+                    0,
+                    self.reference[i - 1, 3]
+                ])
             elif self.env.TASK == Task.STABILIZATION:
-                target_pos=np.array([self.reference[0], 0, self.reference[2] ])
-                target_vel=np.array([0, 0, 0 ])
+                target_pos = np.array(
+                    [self.reference[0], 0, self.reference[2]])
+                target_vel = np.array([0, 0, 0])
             else:
                 raise NotImplementedError
-            
+
             target_rpy = np.zeros(3)
             target_rpy_rates = np.zeros(3)
 
@@ -126,27 +128,20 @@ class PID(BaseController):
             # print(obs)
             # time.sleep(1)
 
-
-            thrust, computed_target_rpy, pos_e = self._dslPIDPositionControl(self.control_timestep,
-                                                                             cur_pos,
-                                                                             cur_quat,
-                                                                             cur_vel,
-                                                                             target_pos,
-                                                                             target_rpy,
-                                                                             target_vel
-                                                                             )
+            thrust, computed_target_rpy, pos_e = self._dslPIDPositionControl(
+                self.control_timestep, cur_pos, cur_quat, cur_vel, target_pos, target_rpy, target_vel)
             rpm = self._dslPIDAttitudeControl(self.control_timestep,
-                                             thrust,
-                                             cur_quat,
-                                             computed_target_rpy,
-                                             target_rpy_rates
-                                             )
+                                              thrust,
+                                              cur_quat,
+                                              computed_target_rpy,
+                                              target_rpy_rates
+                                              )
             cur_rpy = p.getEulerFromQuaternion(cur_quat)
-            
+
             action = rpm
 
             action = self.KF * action**2
-            action = np.array([action[0]+action[3], action[1]+action[2]])
+            action = np.array([action[0] + action[3], action[1] + action[2]])
 
             self.results_dict['obs'].append(obs)
             self.results_dict['reward'].append(reward)
@@ -159,7 +154,7 @@ class PID(BaseController):
         self.close_results_dict()
 
         return self.results_dict
-    
+
     def _dslPIDPositionControl(self,
                                control_timestep,
                                cur_pos,
@@ -186,33 +181,47 @@ class PID(BaseController):
             float: The current position error.
 
         """
-        cur_rotation = np.array(p.getMatrixFromQuaternion(cur_quat)).reshape(3, 3)
+        cur_rotation = np.array(
+            p.getMatrixFromQuaternion(cur_quat)).reshape(
+            3, 3)
         pos_e = target_pos - cur_pos
         vel_e = target_vel - cur_vel
-        self.integral_pos_e = self.integral_pos_e + pos_e*control_timestep
+        self.integral_pos_e = self.integral_pos_e + pos_e * control_timestep
         self.integral_pos_e = np.clip(self.integral_pos_e, -2., 2.)
         self.integral_pos_e[2] = np.clip(self.integral_pos_e[2], -0.15, .15)
-        
+
         # PID target thrust.
-        target_thrust = np.multiply(self.P_COEFF_FOR, pos_e) \
-                        + np.multiply(self.I_COEFF_FOR, self.integral_pos_e) \
-                        + np.multiply(self.D_COEFF_FOR, vel_e) + np.array([0, 0, self.GRAVITY])
-        scalar_thrust = max(0., np.dot(target_thrust, cur_rotation[:,2]))
-        thrust = (math.sqrt(scalar_thrust / (4*self.KF)) - self.PWM2RPM_CONST) / self.PWM2RPM_SCALE
+        target_thrust = np.multiply(self.P_COEFF_FOR,
+                                    pos_e) + np.multiply(self.I_COEFF_FOR,
+                                                         self.integral_pos_e) + np.multiply(self.D_COEFF_FOR,
+                                                                                            vel_e) + np.array([0,
+                                                                                                               0,
+                                                                                                               self.GRAVITY])
+        scalar_thrust = max(0., np.dot(target_thrust, cur_rotation[:, 2]))
+        thrust = (math.sqrt(scalar_thrust / (4 * self.KF)) -
+                  self.PWM2RPM_CONST) / self.PWM2RPM_SCALE
         target_z_ax = target_thrust / np.linalg.norm(target_thrust)
-        target_x_c = np.array([math.cos(target_rpy[2]), math.sin(target_rpy[2]), 0])
-        target_y_ax = np.cross(target_z_ax, target_x_c) / np.linalg.norm(np.cross(target_z_ax, target_x_c))
+        target_x_c = np.array(
+            [math.cos(target_rpy[2]), math.sin(target_rpy[2]), 0])
+        target_y_ax = np.cross(target_z_ax, target_x_c) / \
+            np.linalg.norm(np.cross(target_z_ax, target_x_c))
         target_x_ax = np.cross(target_y_ax, target_z_ax)
-        target_rotation = (np.vstack([target_x_ax, target_y_ax, target_z_ax])).transpose()
-        
+        target_rotation = (
+            np.vstack([target_x_ax, target_y_ax, target_z_ax])).transpose()
+
         # Target rotation.
-        target_euler = (Rotation.from_matrix(target_rotation)).as_euler('XYZ', degrees=False)
-        
+        target_euler = (
+            Rotation.from_matrix(target_rotation)).as_euler(
+            'XYZ', degrees=False)
+
         if np.any(np.abs(target_euler) > math.pi):
-            print("\n[ERROR] ctrl it", self.control_counter, "in Control._dslPIDPositionControl(), values outside range [-pi,pi]")
-        
+            print(
+                "\n[ERROR] ctrl it",
+                self.control_counter,
+                "in Control._dslPIDPositionControl(), values outside range [-pi,pi]")
+
         return thrust, target_euler, pos_e
-    
+
     def _dslPIDAttitudeControl(self,
                                control_timestep,
                                thrust,
@@ -233,27 +242,37 @@ class PID(BaseController):
             ndarray: (4,1)-shaped array of integers containing the RPMs to apply to each of the 4 motors.
 
         """
-        cur_rotation = np.array(p.getMatrixFromQuaternion(cur_quat)).reshape(3, 3)
+        cur_rotation = np.array(
+            p.getMatrixFromQuaternion(cur_quat)).reshape(
+            3, 3)
         cur_rpy = np.array(p.getEulerFromQuaternion(cur_quat))
-        target_quat = (Rotation.from_euler('XYZ', target_euler, degrees=False)).as_quat()
-        w,x,y,z = target_quat
+        target_quat = (
+            Rotation.from_euler(
+                'XYZ',
+                target_euler,
+                degrees=False)).as_quat()
+        w, x, y, z = target_quat
         target_rotation = (Rotation.from_quat([w, x, y, z])).as_matrix()
-        rot_matrix_e = np.dot((target_rotation.transpose()),cur_rotation) - np.dot(cur_rotation.transpose(),target_rotation)
-        rot_e = np.array([rot_matrix_e[2, 1], rot_matrix_e[0, 2], rot_matrix_e[1, 0]]) 
-        rpy_rates_e = target_rpy_rates - (cur_rpy - self.last_rpy)/control_timestep
+        rot_matrix_e = np.dot((target_rotation.transpose()),
+                              cur_rotation) - np.dot(cur_rotation.transpose(),
+                                                     target_rotation)
+        rot_e = np.array(
+            [rot_matrix_e[2, 1], rot_matrix_e[0, 2], rot_matrix_e[1, 0]])
+        rpy_rates_e = target_rpy_rates - \
+            (cur_rpy - self.last_rpy) / control_timestep
         self.last_rpy = cur_rpy
-        self.integral_rpy_e = self.integral_rpy_e - rot_e*control_timestep
+        self.integral_rpy_e = self.integral_rpy_e - rot_e * control_timestep
         self.integral_rpy_e = np.clip(self.integral_rpy_e, -1500., 1500.)
         self.integral_rpy_e[0:2] = np.clip(self.integral_rpy_e[0:2], -1., 1.)
 
         # PID target torques.
         target_torques = - np.multiply(self.P_COEFF_TOR, rot_e) \
-                         + np.multiply(self.D_COEFF_TOR, rpy_rates_e) \
-                         + np.multiply(self.I_COEFF_TOR, self.integral_rpy_e)
+            + np.multiply(self.D_COEFF_TOR, rpy_rates_e) \
+            + np.multiply(self.I_COEFF_TOR, self.integral_rpy_e)
         target_torques = np.clip(target_torques, -3200, 3200)
         pwm = thrust + np.dot(self.MIXER_MATRIX, target_torques)
         pwm = np.clip(pwm, self.MIN_PWM, self.MAX_PWM)
-        
+
         return self.PWM2RPM_SCALE * pwm + self.PWM2RPM_CONST
 
     def close(self):
@@ -286,19 +305,19 @@ class PID(BaseController):
         self.reference = initial_info['x_reference']
 
         self.control_counter = 0
-        
+
         # Clear the last roll, pitch, and yaw.
         self.last_rpy = np.zeros(3)
-        
+
         # Clear PID control variables.
         self.last_pos_e = np.zeros(3)
         self.integral_pos_e = np.zeros(3)
         self.last_rpy_e = np.zeros(3)
         self.integral_rpy_e = np.zeros(3)
 
-        self.results_dict = { 'obs': [],
-                        'reward': [],
-                        'done': [],
-                        'info': [],
-                        'action': [],
-                        }
+        self.results_dict = {'obs': [],
+                             'reward': [],
+                             'done': [],
+                             'info': [],
+                             'action': [],
+                             }

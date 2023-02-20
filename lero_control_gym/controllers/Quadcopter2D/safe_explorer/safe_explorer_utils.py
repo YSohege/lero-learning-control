@@ -32,10 +32,10 @@ class SafetyLayer:
         # Seperate model per constraint.
         input_dim = obs_space.shape[0]
         output_dim = act_space.shape[0]
-        
-        # default 1 layer 
+
+        # default 1 layer
         if isinstance(hidden_dim, int):
-            hidden_dims=[hidden_dim]
+            hidden_dims = [hidden_dim]
         elif isinstance(hidden_dim, list):
             hidden_dims = hidden_dim
         else:
@@ -48,7 +48,7 @@ class SafetyLayer:
         # Constraint slack variables/values.
         assert slack is not None and isinstance(slack, (int, float, list))
         if isinstance(slack, (int, float)):
-            slack = [slack]*obs_space.shape[0]
+            slack = [slack] * obs_space.shape[0]
         self.slack = np.array(slack)
         # Optimizers.
         self.optimizers = [
@@ -148,7 +148,7 @@ class SafetyLayer:
             obs (torch.FloatTensor): observations, shape (B,O).
             act (torch.FloatTensor): actions, shape (B,A).
             c (torch.FloatTensor): constraints, shape (B,C).
-            
+
         Returns:
             torch.FloatTensor: transformed/projected actions, shape (B,A).
 

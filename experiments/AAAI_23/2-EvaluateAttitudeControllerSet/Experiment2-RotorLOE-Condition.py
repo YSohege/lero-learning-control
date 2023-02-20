@@ -9,8 +9,8 @@ from lero_control_gym.tasks.Quadcopter3D_Optimal_Switching.Quadcopter3D_Optimal_
 
 
 class Experiment():
-    def __init__(self, experiment_config ,
-                        quadcopter3D ,
+    def __init__(self, experiment_config,
+                 quadcopter3D,
                  baseline_controller1,
                  baseline_controller2,
                  uniform_rbc_pid
@@ -24,7 +24,6 @@ class Experiment():
         self.baseline_controller1 = baseline_controller1
         self.baseline_controller2 = baseline_controller2
 
-
         self.uniform_rbcpid = uniform_rbc_pid
         self.uniform_rbcpid.SEED = self.generalConfig.random_seed
 
@@ -35,8 +34,6 @@ class Experiment():
         Baseline1 = []
         Baseline2 = []
 
-
-
         for i in range(self.generalConfig.number_iterations):
             self.quadcopter_config.Path.randomSeed = random.randint(0, 100000)
             faultStart = random.randint(0, 1000)
@@ -45,16 +42,15 @@ class Experiment():
             self.quadcopter_config.Env.PositionNoise.starttime = faultStart
             self.quadcopter_config.Env.AttitudeNoise.starttime = faultStart
 
-            baseline_task1 = Optimal_Switching_Task(self.quadcopter_config, self.baseline_controller1)
+            baseline_task1 = Optimal_Switching_Task(
+                self.quadcopter_config, self.baseline_controller1)
             baseline_result1 = baseline_task1.executeTask()
             Baseline1.append(baseline_result1)
 
-            baseline_task2 = Optimal_Switching_Task(self.quadcopter_config, self.baseline_controller2)
+            baseline_task2 = Optimal_Switching_Task(
+                self.quadcopter_config, self.baseline_controller2)
             baseline_result2 = baseline_task2.executeTask()
             Baseline2.append(baseline_result2)
-
-
-
 
             results = [Baseline1,
                        Baseline2,
@@ -67,6 +63,7 @@ class Experiment():
         # print(results)
         # print("----------------")
         return wilcoxon_results, results
+
 
 def main():
     # Create an environment
@@ -82,10 +79,10 @@ def main():
     print("Baseline Controller 2 -  MEAN, STD")
     print(np.mean(experimental_results[1]), np.std(experimental_results[1]))
 
-
     # print(experimental_results)
 
     return
+
 
 if __name__ == "__main__":
     main()

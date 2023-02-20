@@ -3,6 +3,7 @@
 """
 import torch
 
+
 class BaseController:
     """Template for controller/agent, implement the following methods as needed.
 
@@ -78,7 +79,6 @@ class BaseController:
         pass
 
     def run(self,
-            env=None,
             render=False,
             n_episodes=10,
             verbose=False,

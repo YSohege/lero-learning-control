@@ -12,7 +12,7 @@ class SymbolicModel():
     (e.g. cost, constraints), serve as priors for the controllers.
 
     Notes:
-        * naming convention on symbolic variable and functions. 
+        * naming convention on symbolic variable and functions.
             * for single-letter symbol, use {}_sym, otherwise use underscore for delimiter.
             * for symbolic functions to be exposed, use {}_func.
 
@@ -65,14 +65,22 @@ class SymbolicModel():
 
         """
         # Continuous time dynamics.
-        self.fc_func = cs.Function('fc', [self.x_sym, self.u_sym], [self.x_dot], ['x', 'u'], ['f'])
+        self.fc_func = cs.Function(
+            'fc', [
+                self.x_sym, self.u_sym], [
+                self.x_dot], [
+                'x', 'u'], ['f'])
         # Discrete time dynamics.
-        self.fd_func = cs.integrator('fd', self.integration_algo, {'x': self.x_sym,
-                                                                   'p': self.u_sym,
-                                                                   'ode': self.x_dot}, {'tf': self.dt}
-                                    )
+        self.fd_func = cs.integrator(
+            'fd', self.integration_algo, {
+                'x': self.x_sym, 'p': self.u_sym, 'ode': self.x_dot}, {
+                'tf': self.dt})
         # Observation model.
-        self.g_func = cs.Function('g', [self.x_sym, self.u_sym], [self.y_sym], ['x', 'u'], ['g'])
+        self.g_func = cs.Function(
+            'g', [
+                self.x_sym, self.u_sym], [
+                self.y_sym], [
+                'x', 'u'], ['g'])
 
     def setup_linearization(self):
         """Exposes functions for the linearized model.
@@ -118,6 +126,17 @@ class SymbolicModel():
         self.l_xu = cs.jacobian(self.l_x, self.u_sym)
         l_inputs = [self.x_sym, self.u_sym, self.Xr, self.Ur, self.Q, self.R]
         l_inputs_str = ['x', 'u', 'Xr', 'Ur', 'Q', 'R']
-        l_outputs = [self.cost_func, self.l_x, self.l_xx, self.l_u, self.l_uu, self.l_xu]
+        l_outputs = [
+            self.cost_func,
+            self.l_x,
+            self.l_xx,
+            self.l_u,
+            self.l_uu,
+            self.l_xu]
         l_outputs_str = ['l', 'l_x', 'l_xx', 'l_u', 'l_uu', 'l_xu']
-        self.loss = cs.Function('loss', l_inputs, l_outputs, l_inputs_str, l_outputs_str)
+        self.loss = cs.Function(
+            'loss',
+            l_inputs,
+            l_outputs,
+            l_inputs_str,
+            l_outputs_str)

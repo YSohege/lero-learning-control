@@ -40,7 +40,11 @@ class SACAgent:
         self.use_entropy_tuning = use_entropy_tuning
 
         # model
-        self.ac = MLPActorCritic(obs_space, act_space, hidden_dims=[hidden_dim] * 2, activation="relu")
+        self.ac = MLPActorCritic(
+            obs_space,
+            act_space,
+            hidden_dims=[hidden_dim] * 2,
+            activation="relu")
         self.log_alpha = torch.tensor(np.log(init_temperature))
 
         if self.use_entropy_tuning:
@@ -58,7 +62,12 @@ class SACAgent:
 
         # optimizers
         self.actor_opt = torch.optim.Adam(self.ac.actor.parameters(), actor_lr)
-        self.critic_opt = torch.optim.Adam(list(self.ac.q1.parameters()) + list(self.ac.q2.parameters()), critic_lr)
+        self.critic_opt = torch.optim.Adam(
+            list(
+                self.ac.q1.parameters()) +
+            list(
+                self.ac.q2.parameters()),
+            critic_lr)
         self.alpha_opt = torch.optim.Adam([self.log_alpha], entropy_lr)
 
     @property
@@ -113,7 +122,8 @@ class SACAgent:
 
         entropy_loss = torch.zeros(1)
         if self.use_entropy_tuning:
-            entropy_loss = -(self.log_alpha * (logp + self.target_entropy).detach()).mean()
+            entropy_loss = -(self.log_alpha *
+                             (logp + self.target_entropy).detach()).mean()
         return policy_loss, entropy_loss
 
     def compute_q_loss(self, batch):
@@ -123,12 +133,14 @@ class SACAgent:
         q2 = self.ac.q2(obs, act)
 
         with torch.no_grad():
-            next_act, next_logp = self.ac.actor(next_obs, deterministic=False, with_logprob=True)
+            next_act, next_logp = self.ac.actor(
+                next_obs, deterministic=False, with_logprob=True)
             next_q1_targ = self.ac_targ.q1(next_obs, next_act)
             next_q2_targ = self.ac_targ.q2(next_obs, next_act)
             next_q_targ = torch.min(next_q1_targ, next_q2_targ)
             # q value regression target
-            q_targ = rew + self.gamma * mask * (next_q_targ - self.alpha * next_logp)
+            q_targ = rew + self.gamma * mask * \
+                (next_q_targ - self.alpha * next_logp)
 
         q1_loss = (q1 - q_targ).pow(2).mean()
         q2_loss = (q2 - q_targ).pow(2).mean()
@@ -172,7 +184,13 @@ class SACAgent:
 
 class MLPActor(nn.Module):
 
-    def __init__(self, obs_dim, act_dim, hidden_dims, activation, postprocess_fn=lambda x: x):
+    def __init__(
+            self,
+            obs_dim,
+            act_dim,
+            hidden_dims,
+            activation,
+            postprocess_fn=lambda x: x):
         super().__init__()
         self.net = MLP(obs_dim, hidden_dims[-1], hidden_dims[:-1], activation)
         self.postprocess_fn = postprocess_fn
@@ -198,7 +216,8 @@ class MLPActor(nn.Module):
 
         if with_logprob:
             logp = dist.log_prob(action)
-            logp -= (2 * (np.log(2) - action - F.softplus(-2 * action))).sum(axis=1, keepdim=True)
+            logp -= (2 * (np.log(2) - action - F.softplus(-2 * action))
+                     ).sum(axis=1, keepdim=True)
         else:
             logp = None
 
@@ -209,7 +228,13 @@ class MLPActor(nn.Module):
 
 class MLPActorDiscrete(nn.Module):
 
-    def __init__(self, obs_dim, act_dim, hidden_dims, activation, postprocess_fn=lambda x: x):
+    def __init__(
+            self,
+            obs_dim,
+            act_dim,
+            hidden_dims,
+            activation,
+            postprocess_fn=lambda x: x):
         super().__init__()
         self.net = MLP(obs_dim, hidden_dims[-1], hidden_dims[:-1], activation)
         self.postprocess_fn = postprocess_fn
@@ -255,7 +280,14 @@ class MLPActorCritic(nn.Module):
         q1, q2 (MLPQFunction): q-value networks.
     """
 
-    def __init__(self, obs_space, act_space, hidden_dims=(64, 64), activation="relu"):
+    def __init__(
+            self,
+            obs_space,
+            act_space,
+            hidden_dims=(
+                64,
+                64),
+            activation="relu"):
         super().__init__()
 
         obs_dim = obs_space.shape[0]
@@ -268,14 +300,21 @@ class MLPActorCritic(nn.Module):
 
         # policy
         if discrete:
-            self.actor = MLPActorDiscrete(obs_dim, act_dim, hidden_dims, activation)
+            self.actor = MLPActorDiscrete(
+                obs_dim, act_dim, hidden_dims, activation)
         else:
             low, high = act_space.low, act_space.high
             low = torch.FloatTensor(low)
             high = torch.FloatTensor(high)
             # Rescale action from [-1, 1] to [low, high]
-            unscale_fn = lambda x: low.to(x.device) + (0.5 * (x + 1.0) * (high.to(x.device) - low.to(x.device)))
-            self.actor = MLPActor(obs_dim, act_dim, hidden_dims, activation, postprocess_fn=unscale_fn)
+            def unscale_fn(x): return low.to(x.device) + (0.5 *
+                                                          (x + 1.0) * (high.to(x.device) - low.to(x.device)))
+            self.actor = MLPActor(
+                obs_dim,
+                act_dim,
+                hidden_dims,
+                activation,
+                postprocess_fn=unscale_fn)
 
         # Q functions
         self.q1 = MLPQFunction(obs_dim, act_dim, hidden_dims, activation)
@@ -337,7 +376,8 @@ class SACBuffer(object):
     def reset(self):
         """Allocate space for containers."""
         for k, info in self.scheme.items():
-            assert "vshape" in info, "Scheme must define vshape for {}".format(k)
+            assert "vshape" in info, "Scheme must define vshape for {}".format(
+                k)
             vshape = info["vshape"]
             dtype = info.get("dtype", np.float32)
             init = info.get("init", np.zeros)
@@ -414,7 +454,8 @@ class SACBuffer(object):
 def soft_update(source, target, tau):
     """Synchronizes target networks with exponential moving average."""
     for target_param, param in zip(target.parameters(), source.parameters()):
-        target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
+        target_param.data.copy_(
+            target_param.data * (1.0 - tau) + param.data * tau)
 
 
 def hard_update(source, target):

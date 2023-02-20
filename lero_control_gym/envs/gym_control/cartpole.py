@@ -62,14 +62,22 @@ class CartPole(BenchmarkEnv):
     """
     NAME = "cartpole"
 
-    URDF_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "cartpole_template.urdf")
+    URDF_PATH = os.path.join(
+        os.path.dirname(
+            os.path.abspath(__file__)),
+        "assets",
+        "cartpole_template.urdf")
 
     AVAILABLE_CONSTRAINTS = {
         "abs_bound": SymmetricStateConstraint
     }
     AVAILABLE_CONSTRAINTS.update(deepcopy(GENERAL_CONSTRAINTS))
 
-    DISTURBANCE_MODES = {"observation": {"dim": 4}, "action": {"dim": 1}, "dynamics": {"dim": 2}}
+    DISTURBANCE_MODES = {
+        "observation": {
+            "dim": 4}, "action": {
+            "dim": 1}, "dynamics": {
+                "dim": 2}}
 
     INERTIAL_PROP_RAND_INFO = {
         "pole_length": {  # Nominal: 1
@@ -125,7 +133,7 @@ class CartPole(BenchmarkEnv):
                  init_state=None,
                  prior_prop=None,
                  inertial_prop=None,
-                 # custom args 
+                 # custom args
                  obs_wrap_angle=False,
                  rew_state_weight=1.0,
                  rew_act_weight=0.0001,
@@ -136,7 +144,7 @@ class CartPole(BenchmarkEnv):
         """Initialize a cartpole environment.
 
         Args:
-            init_state  (ndarray/dict, optional): The initial state of the environment 
+            init_state  (ndarray/dict, optional): The initial state of the environment
                 (x, x_dot, theta, theta_dot).
             prior_prop (dict, optional): The prior inertial properties of the environment.
             inertial_prop (dict, optional): The ground truth inertial properties of the environment.
@@ -147,14 +155,20 @@ class CartPole(BenchmarkEnv):
             done_on_out_of_bound (bool): if to termiante when state is out of bound.
         """
         self.obs_wrap_angle = obs_wrap_angle
-        self.rew_state_weight = np.array(rew_state_weight, ndmin=1, dtype=float)
+        self.rew_state_weight = np.array(
+            rew_state_weight, ndmin=1, dtype=float)
         self.rew_act_weight = np.array(rew_act_weight, ndmin=1, dtype=float)
         self.rew_exponential = rew_exponential
         self.done_on_out_of_bound = done_on_out_of_bound
-        # BenchmarkEnv constructor, called after defining the custom args, 
-        # since some BenchmarkEnv init setup can be task(custom args)-dependent. 
-        super().__init__(init_state=init_state, prior_prop=prior_prop, inertial_prop=inertial_prop, **kwargs)
-        
+        # BenchmarkEnv constructor, called after defining the custom args,
+        # since some BenchmarkEnv init setup can be task(custom
+        # args)-dependent.
+        super().__init__(
+            init_state=init_state,
+            prior_prop=prior_prop,
+            inertial_prop=inertial_prop,
+            **kwargs)
+
         # Create PyBullet client connection.
         self.PYB_CLIENT = -1
         if self.GUI:
@@ -166,11 +180,12 @@ class CartPole(BenchmarkEnv):
 
         # Set GUI and rendering constants.
         self.RENDER_HEIGHT = int(200)
-        self.RENDER_WIDTH = int(320)   
-             
+        self.RENDER_WIDTH = int(320)
+
         # Set the initial state.
         if init_state is None:
-            self.INIT_X, self.INIT_X_DOT, self.INIT_THETA, self.INIT_THETA_DOT = np.zeros(4)
+            self.INIT_X, self.INIT_X_DOT, self.INIT_THETA, self.INIT_THETA_DOT = np.zeros(
+                4)
         elif isinstance(init_state, np.ndarray):
             self.INIT_X, self.INIT_X_DOT, self.INIT_THETA, self.INIT_THETA_DOT = init_state
         elif isinstance(init_state, dict):
@@ -179,11 +194,13 @@ class CartPole(BenchmarkEnv):
             self.INIT_THETA = init_state.get("init_theta", 0)
             self.INIT_THETA_DOT = init_state.get("init_theta_dot", 0)
         else:
-            raise ValueError("[ERROR] in CartPole.__init__(), init_state incorrect format.")
-            
+            raise ValueError(
+                "[ERROR] in CartPole.__init__(), init_state incorrect format.")
+
         # Get physical properties from URDF (as default parameters).
         self.GRAVITY_ACC = 9.8
-        EFFECTIVE_POLE_LENGTH, POLE_MASS, CART_MASS = self._parse_urdf_parameters(self.URDF_PATH)
+        EFFECTIVE_POLE_LENGTH, POLE_MASS, CART_MASS = self._parse_urdf_parameters(
+            self.URDF_PATH)
 
         # Store ground truth parameters.
         if inertial_prop is None:
@@ -191,41 +208,47 @@ class CartPole(BenchmarkEnv):
             self.POLE_MASS = POLE_MASS
             self.CART_MASS = CART_MASS
         elif isinstance(inertial_prop, dict):
-            self.EFFECTIVE_POLE_LENGTH = inertial_prop.get("pole_length", EFFECTIVE_POLE_LENGTH)
+            self.EFFECTIVE_POLE_LENGTH = inertial_prop.get(
+                "pole_length", EFFECTIVE_POLE_LENGTH)
             self.POLE_MASS = inertial_prop.get("pole_mass", POLE_MASS)
             self.CART_MASS = inertial_prop.get("cart_mass", CART_MASS)
         else:
-            raise ValueError("[ERROR] in CartPole.__init__(), inertial_prop incorrect format.")
-        
+            raise ValueError(
+                "[ERROR] in CartPole.__init__(), inertial_prop incorrect format.")
+
         # Store prior parameters.
         if prior_prop is None:
             self.PRIOR_EFFECTIVE_POLE_LENGTH = EFFECTIVE_POLE_LENGTH
             self.PRIOR_POLE_MASS = POLE_MASS
             self.PRIOR_CART_MASS = CART_MASS
         elif isinstance(prior_prop, dict):
-            self.PRIOR_EFFECTIVE_POLE_LENGTH = prior_prop.get("pole_length", EFFECTIVE_POLE_LENGTH)
+            self.PRIOR_EFFECTIVE_POLE_LENGTH = prior_prop.get(
+                "pole_length", EFFECTIVE_POLE_LENGTH)
             self.PRIOR_POLE_MASS = prior_prop.get("pole_mass", POLE_MASS)
             self.PRIOR_CART_MASS = prior_prop.get("cart_mass", CART_MASS)
         else:
-            raise ValueError("[ERROR] in CartPole.__init__(), prior_prop incorrect format.")
+            raise ValueError(
+                "[ERROR] in CartPole.__init__(), prior_prop incorrect format.")
         # Set prior/symbolic info.
         self._setup_symbolic()
-        
+
         # Create X_GOAL and U_GOAL references for the assigned task.
         self.U_GOAL = np.zeros(1)
         if self.TASK == Task.STABILIZATION:
-            self.X_GOAL = np.hstack([self.TASK_INFO["stabilization_goal"][0], 0., 0., 0.])  # x = {x, x_dot, theta, theta_dot}.
+            # x = {x, x_dot, theta, theta_dot}.
+            self.X_GOAL = np.hstack(
+                [self.TASK_INFO["stabilization_goal"][0], 0., 0., 0.])
         elif self.TASK == Task.TRAJ_TRACKING:
             POS_REF, \
-            VEL_REF, \
-            SPEED = self._generate_trajectory(traj_type=self.TASK_INFO["trajectory_type"],
-                                              traj_length=self.EPISODE_LEN_SEC,
-                                              num_cycles=self.TASK_INFO["num_cycles"],
-                                              traj_plane=self.TASK_INFO["trajectory_plane"],
-                                              position_offset=np.array(self.TASK_INFO["trajectory_position_offset"]),
-                                              scaling=self.TASK_INFO["trajectory_scale"],
-                                              sample_time=self.CTRL_TIMESTEP
-                                              )
+                VEL_REF, \
+                SPEED = self._generate_trajectory(traj_type=self.TASK_INFO["trajectory_type"],
+                                                  traj_length=self.EPISODE_LEN_SEC,
+                                                  num_cycles=self.TASK_INFO["num_cycles"],
+                                                  traj_plane=self.TASK_INFO["trajectory_plane"],
+                                                  position_offset=np.array(self.TASK_INFO["trajectory_position_offset"]),
+                                                  scaling=self.TASK_INFO["trajectory_scale"],
+                                                  sample_time=self.CTRL_TIMESTEP
+                                                  )
             self.X_GOAL = np.vstack([
                 POS_REF[:, 0],  # Possible feature: add initial position.
                 VEL_REF[:, 0],
@@ -251,8 +274,16 @@ class CartPole(BenchmarkEnv):
         self._advance_simulation(force)
         # Update the state.
         self.state = np.hstack(
-            (p.getJointState(self.CARTPOLE_ID, jointIndex=0,
-                             physicsClientId=self.PYB_CLIENT)[0:2], p.getJointState(self.CARTPOLE_ID, jointIndex=1, physicsClientId=self.PYB_CLIENT)[0:2]))
+            (p.getJointState(
+                self.CARTPOLE_ID,
+                jointIndex=0,
+                physicsClientId=self.PYB_CLIENT)[
+                0:2],
+                p.getJointState(
+                self.CARTPOLE_ID,
+                jointIndex=1,
+                physicsClientId=self.PYB_CLIENT)[
+                    0:2]))
         # Standard Gym return.
         obs = self._get_observation()
         rew = self._get_reward()
@@ -277,22 +308,35 @@ class CartPole(BenchmarkEnv):
         p.setGravity(0, 0, -self.GRAVITY_ACC, physicsClientId=self.PYB_CLIENT)
         p.setTimeStep(self.PYB_TIMESTEP, physicsClientId=self.PYB_CLIENT)
         p.setRealTimeSimulation(0, physicsClientId=self.PYB_CLIENT)
-        p.setAdditionalSearchPath(pybullet_data.getDataPath(), physicsClientId=self.PYB_CLIENT)
+        p.setAdditionalSearchPath(
+            pybullet_data.getDataPath(),
+            physicsClientId=self.PYB_CLIENT)
         # p.loadURDF("plane.urdf", [0, 0, -1], physicsClientId=self.PYB_CLIENT)
         # Choose randomized or deterministic inertial properties.
-        prop_values = {"pole_length": self.EFFECTIVE_POLE_LENGTH, "cart_mass": self.CART_MASS, "pole_mass": self.POLE_MASS}
+        prop_values = {
+            "pole_length": self.EFFECTIVE_POLE_LENGTH,
+            "cart_mass": self.CART_MASS,
+            "pole_mass": self.POLE_MASS}
         if self.RANDOMIZED_INERTIAL_PROP:
-            prop_values = self._randomize_values_by_info(prop_values, self.INERTIAL_PROP_RAND_INFO)
+            prop_values = self._randomize_values_by_info(
+                prop_values, self.INERTIAL_PROP_RAND_INFO)
             if any(phy_quantity < 0 for phy_quantity in prop_values.values()):
-                raise ValueError("[ERROR] in CartPole.reset(), negative randomized inertial properties.")
+                raise ValueError(
+                    "[ERROR] in CartPole.reset(), negative randomized inertial properties.")
         self.OVERRIDDEN_EFFECTIVE_POLE_LENGTH = prop_values["pole_length"]
         self.OVERRIDDEN_CART_MASS = prop_values["cart_mass"]
         self.OVERRIDDEN_POLE_MASS = prop_values["pole_mass"]
-        # See `slender rod`, https://en.wikipedia.org/wiki/List_of_moments_of_inertia.
-        OVERRIDDEN_POLE_INERTIA = (1 / 12) * self.OVERRIDDEN_POLE_MASS * (2 * self.OVERRIDDEN_EFFECTIVE_POLE_LENGTH)**2
+        # See `slender rod`,
+        # https://en.wikipedia.org/wiki/List_of_moments_of_inertia.
+        OVERRIDDEN_POLE_INERTIA = (
+            1 / 12) * self.OVERRIDDEN_POLE_MASS * (2 * self.OVERRIDDEN_EFFECTIVE_POLE_LENGTH)**2
         # Load the cartpole with new urdf.
-        override_urdf_tree = self._create_urdf(self.URDF_PATH, length=self.OVERRIDDEN_EFFECTIVE_POLE_LENGTH, inertia=OVERRIDDEN_POLE_INERTIA)
-        self.override_path = os.path.join(self.output_dir, "pid-{}_id-{}_cartpole.urdf".format(os.getpid(), self.id))
+        override_urdf_tree = self._create_urdf(
+            self.URDF_PATH,
+            length=self.OVERRIDDEN_EFFECTIVE_POLE_LENGTH,
+            inertia=OVERRIDDEN_POLE_INERTIA)
+        self.override_path = os.path.join(
+            self.output_dir, "pid-{}_id-{}_cartpole.urdf".format(os.getpid(), self.id))
         override_urdf_tree.write(self.override_path)
         self.CARTPOLE_ID = p.loadURDF(
             self.override_path,
@@ -303,9 +347,19 @@ class CartPole(BenchmarkEnv):
         os.remove(self.override_path)
         # Cartpole settings.
         for i in [-1, 0, 1]:  # Slider, cart, and pole.
-            p.changeDynamics(self.CARTPOLE_ID, linkIndex=i, linearDamping=0, angularDamping=0, physicsClientId=self.PYB_CLIENT)
+            p.changeDynamics(
+                self.CARTPOLE_ID,
+                linkIndex=i,
+                linearDamping=0,
+                angularDamping=0,
+                physicsClientId=self.PYB_CLIENT)
         for i in [0, 1]:  # Slider-to-cart and cart-to-pole joints.
-            p.setJointMotorControl2(self.CARTPOLE_ID, jointIndex=i, controlMode=p.VELOCITY_CONTROL, force=0, physicsClientId=self.PYB_CLIENT)
+            p.setJointMotorControl2(
+                self.CARTPOLE_ID,
+                jointIndex=i,
+                controlMode=p.VELOCITY_CONTROL,
+                force=0,
+                physicsClientId=self.PYB_CLIENT)
         # Override inertial properties.
         p.changeDynamics(
             self.CARTPOLE_ID,
@@ -318,9 +372,14 @@ class CartPole(BenchmarkEnv):
             mass=self.OVERRIDDEN_POLE_MASS,
             physicsClientId=self.PYB_CLIENT)
         # Randomize initial state.
-        init_values = {"init_x": self.INIT_X, "init_x_dot": self.INIT_X_DOT, "init_theta": self.INIT_THETA, "init_theta_dot": self.INIT_THETA_DOT}
+        init_values = {
+            "init_x": self.INIT_X,
+            "init_x_dot": self.INIT_X_DOT,
+            "init_theta": self.INIT_THETA,
+            "init_theta_dot": self.INIT_THETA_DOT}
         if self.RANDOMIZED_INIT:
-            init_values = self._randomize_values_by_info(init_values, self.INIT_STATE_RAND_INFO)
+            init_values = self._randomize_values_by_info(
+                init_values, self.INIT_STATE_RAND_INFO)
         OVERRIDDEN_INIT_X = init_values["init_x"]
         OVERRIDDEN_INIT_X_DOT = init_values["init_x_dot"]
         OVERRIDDEN_INIT_THETA = init_values["init_theta"]
@@ -339,8 +398,16 @@ class CartPole(BenchmarkEnv):
             physicsClientId=self.PYB_CLIENT)
         # Compute state (x, x_dot, theta, theta_dot).
         self.state = np.hstack(
-            (p.getJointState(self.CARTPOLE_ID, jointIndex=0,
-                             physicsClientId=self.PYB_CLIENT)[0:2], p.getJointState(self.CARTPOLE_ID, jointIndex=1, physicsClientId=self.PYB_CLIENT)[0:2]))
+            (p.getJointState(
+                self.CARTPOLE_ID,
+                jointIndex=0,
+                physicsClientId=self.PYB_CLIENT)[
+                0:2],
+                p.getJointState(
+                self.CARTPOLE_ID,
+                jointIndex=1,
+                physicsClientId=self.PYB_CLIENT)[
+                    0:2]))
         # Debug visualization if GUI enabled
         self.line = None
         obs, info = self._get_observation(), self._get_reset_info()
@@ -362,18 +429,25 @@ class CartPole(BenchmarkEnv):
 
         """
         if self.PYB_CLIENT >= 0:
-            VIEW_MATRIX = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0, 0, 0],
-                                                              distance=2,
-                                                              yaw=0,
-                                                              pitch=0.3,
-                                                              roll=0,
-                                                              upAxisIndex=2,
-                                                              physicsClientId=self.PYB_CLIENT)
-            PROJ_MATRIX = p.computeProjectionMatrixFOV(fov=60,
-                                                       aspect=float(self.RENDER_WIDTH) / self.RENDER_HEIGHT,
-                                                       nearVal=0.1,
-                                                       farVal=100.0,
-                                                       physicsClientId=self.PYB_CLIENT)
+            VIEW_MATRIX = p.computeViewMatrixFromYawPitchRoll(
+                cameraTargetPosition=[
+                    0,
+                    0,
+                    0],
+                distance=2,
+                yaw=0,
+                pitch=0.3,
+                roll=0,
+                upAxisIndex=2,
+                physicsClientId=self.PYB_CLIENT)
+            PROJ_MATRIX = p.computeProjectionMatrixFOV(
+                fov=60,
+                aspect=float(
+                    self.RENDER_WIDTH) /
+                self.RENDER_HEIGHT,
+                nearVal=0.1,
+                farVal=100.0,
+                physicsClientId=self.PYB_CLIENT)
             (w, h, rgb, _, _) = p.getCameraImage(width=self.RENDER_WIDTH,
                                                  height=self.RENDER_HEIGHT,
                                                  renderer=p.ER_BULLET_HARDWARE_OPENGL,
@@ -410,8 +484,17 @@ class CartPole(BenchmarkEnv):
         nu = 1
         # Dynamics.
         temp_factor = (U + ml * theta_dot**2 * cs.sin(theta)) / Mm
-        theta_dot_dot = ((g * cs.sin(theta) - cs.cos(theta) * temp_factor) / (l * (4.0 / 3.0 - m * cs.cos(theta)**2 / Mm)))
-        X_dot = cs.vertcat(x_dot, temp_factor - ml * theta_dot_dot * cs.cos(theta) / Mm, theta_dot, theta_dot_dot)
+        theta_dot_dot = ((g * cs.sin(theta) - cs.cos(theta) * \
+                         temp_factor) / (l * (4.0 / 3.0 - m * cs.cos(theta)**2 / Mm)))
+        X_dot = cs.vertcat(
+            x_dot,
+            temp_factor -
+            ml *
+            theta_dot_dot *
+            cs.cos(theta) /
+            Mm,
+            theta_dot,
+            theta_dot_dot)
         # Observation.
         Y = cs.vertcat(x, x_dot, theta, theta_dot)
         # Define cost (quadratic form).
@@ -419,10 +502,19 @@ class CartPole(BenchmarkEnv):
         R = cs.MX.sym('R', nu, nu)
         Xr = cs.MX.sym('Xr', nx, 1)
         Ur = cs.MX.sym('Ur', nu, 1)
-        cost_func = 0.5 * (X - Xr).T @ Q @ (X - Xr) + 0.5 * (U - Ur).T @ R @ (U - Ur)
+        cost_func = 0.5 * (X - Xr).T @ Q @ (X - Xr) + \
+            0.5 * (U - Ur).T @ R @ (U - Ur)
         # Define dynamics and cost dictionaries.
         dynamics = {"dyn_eqn": X_dot, "obs_eqn": Y, "vars": {"X": X, "U": U}}
-        cost = {"cost_func": cost_func, "vars": {"X": X, "U": U, "Xr": Xr, "Ur": Ur, "Q": Q, "R": R}}
+        cost = {
+            "cost_func": cost_func,
+            "vars": {
+                "X": X,
+                "U": U,
+                "Xr": Xr,
+                "Ur": Ur,
+                "Q": Q,
+                "R": R}}
         # Setup symbolic model.
         self.symbolic = SymbolicModel(dynamics=dynamics, cost=cost, dt=dt)
 
@@ -432,10 +524,17 @@ class CartPole(BenchmarkEnv):
         """
         self.action_scale = 10
         self.action_threshold = 1 if self.NORMALIZED_RL_ACTION_SPACE else self.action_scale
-        self.action_space = spaces.Box(low=-self.action_threshold, high=self.action_threshold, shape=(1,))
+        self.action_space = spaces.Box(
+            low=-
+            self.action_threshold,
+            high=self.action_threshold,
+            shape=(
+                1,
+            ))
         # Define action/input labels and units.
         self.ACTION_LABELS = ['U']
-        self.ACTION_UNITS = ['N'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-']   
+        self.ACTION_UNITS = [
+            'N'] if not self.NORMALIZED_RL_ACTION_SPACE else ['-']
 
     def _set_observation_space(self):
         """Returns the observation space of the environment.
@@ -447,8 +546,12 @@ class CartPole(BenchmarkEnv):
         # NOTE: different value in PyBullet gym (0.4) and OpenAI gym (2.4).
         self.x_threshold = 2.4
         # Limit set to 2x: i.e. a failing observation is still within bounds.
-        obs_bound = np.array([self.x_threshold * 2, np.finfo(np.float32).max, self.theta_threshold_radians * 2, np.finfo(np.float32).max])
-        self.observation_space = spaces.Box(-obs_bound, obs_bound, dtype=np.float32)
+        obs_bound = np.array([self.x_threshold * 2,
+                              np.finfo(np.float32).max,
+                              self.theta_threshold_radians * 2,
+                              np.finfo(np.float32).max])
+        self.observation_space = spaces.Box(-obs_bound,
+                                            obs_bound, dtype=np.float32)
         # Define obs/state labels and units.
         self.STATE_LABELS = ['x', 'x_dot', 'theta', 'theta_dot']
         self.STATE_UNITS = ['m', 'm/s', 'rad', 'rad/s']
@@ -517,12 +620,31 @@ class CartPole(BenchmarkEnv):
                     physicsClientId=self.PYB_CLIENT)
                 # Debug visualization
                 if self.GUI:
-                    center = np.asarray(p.getLinkState(self.CARTPOLE_ID, linkIndex=1, physicsClientId=self.PYB_CLIENT)[0])
+                    center = np.asarray(
+                        p.getLinkState(
+                            self.CARTPOLE_ID,
+                            linkIndex=1,
+                            physicsClientId=self.PYB_CLIENT)[0])
                     ff = np.asarray(tab_force_3d) * 10
                     if self.line is None:
-                        self.line = p.addUserDebugLine(center.tolist(), (center - ff).tolist(), lineColorRGB=[0, 0, 0], lineWidth=1)
+                        self.line = p.addUserDebugLine(
+                            center.tolist(),
+                            (center - ff).tolist(),
+                            lineColorRGB=[
+                                0,
+                                0,
+                                0],
+                            lineWidth=1)
                     else:
-                        p.addUserDebugLine(center.tolist(), (center - ff).tolist(), lineColorRGB=[0, 0, 0], lineWidth=1, replaceItemUniqueId=self.line)
+                        p.addUserDebugLine(
+                            center.tolist(),
+                            (center - ff).tolist(),
+                            lineColorRGB=[
+                                0,
+                                0,
+                                0],
+                            lineWidth=1,
+                            replaceItemUniqueId=self.line)
             # Apply control.
             p.setJointMotorControl2(
                 self.CARTPOLE_ID,
@@ -540,7 +662,12 @@ class CartPole(BenchmarkEnv):
             ndarray: The state (x, x_dot, theta, theta_dot) of the cartpole.
 
         """
-        if not np.array_equal(self.state, np.clip(self.state, self.observation_space.low, self.observation_space.high)) and self.VERBOSE:
+        if not np.array_equal(
+            self.state,
+            np.clip(
+                self.state,
+                self.observation_space.low,
+                self.observation_space.high)) and self.VERBOSE:
             print("[WARNING]: observation was clipped in CartPole._get_observation().")
         # Apply observation disturbance.
         obs = deepcopy(self.state)
@@ -557,12 +684,12 @@ class CartPole(BenchmarkEnv):
         Returns:
             float: The evaluated reward/cost.
 
-        """   
+        """
         if self.COST == Cost.RL_REWARD:
-            # negative quadratic reward with angle wrapped around 
+            # negative quadratic reward with angle wrapped around
             state = deepcopy(self.state)
-            # TODO: should use angle wrapping 
-            # TODO: should use `current_preprocessed_action` 
+            # TODO: should use angle wrapping
+            # TODO: should use `current_preprocessed_action`
             # state[2] = normalize_angle(state[2])
             act = np.asarray(self.current_raw_input_action)
             act = np.clip(act, self.action_space.low, self.action_space.high)
@@ -574,7 +701,7 @@ class CartPole(BenchmarkEnv):
             if self.rew_exponential:
                 rew = np.exp(rew)
             return rew
-            # TODO: legacy code to match paper results 
+            # TODO: legacy code to match paper results
             # if self.constraints is not None and self.use_constraint_penalty and self.constraints.is_almost_active(self):
             #     return self.constraint_penalty
             # # Constant reward if episode not done (pole stays upright).
@@ -589,13 +716,13 @@ class CartPole(BenchmarkEnv):
                                             Q=self.Q,
                                             R=self.R)["l"])
             if self.TASK == Task.TRAJ_TRACKING:
-                return float(
-                    -1 * self.symbolic.loss(x=self.state,
-                                            Xr=self.X_GOAL[self.ctrl_step_counter,:],
-                                            u=self.current_preprocessed_action,
-                                            Ur=self.U_GOAL,
-                                            Q=self.Q,
-                                            R=self.R)["l"])
+                return float(-1 * self.symbolic.loss(x=self.state,
+                                                     Xr=self.X_GOAL[self.ctrl_step_counter,
+                                                                    :],
+                                                     u=self.current_preprocessed_action,
+                                                     Ur=self.U_GOAL,
+                                                     Q=self.Q,
+                                                     R=self.R)["l"])
 
     def _get_done(self):
         """Computes the conditions for termination of an episode.
@@ -606,7 +733,10 @@ class CartPole(BenchmarkEnv):
         """
         # Done if goal reached for stabilization task with quadratic cost.
         if self.TASK == Task.STABILIZATION and self.COST == Cost.QUADRATIC:
-            self.goal_reached = bool(np.linalg.norm(self.state - self.X_GOAL) < self.TASK_INFO["stabilization_goal_tolerance"])
+            self.goal_reached = bool(
+                np.linalg.norm(
+                    self.state -
+                    self.X_GOAL) < self.TASK_INFO["stabilization_goal_tolerance"])
             if self.goal_reached:
                 return True
         # # Done if the episode length is exceeded.
@@ -619,9 +749,10 @@ class CartPole(BenchmarkEnv):
         # Done if state is out-of-bounds.
         if self.done_on_out_of_bound:
             x, _, theta, _ = self.state
-            if x < -self.x_threshold or x > self.x_threshold or theta < -self.theta_threshold_radians or theta > self.theta_threshold_radians:
-                return True 
-        return False 
+            if x < -self.x_threshold or x > self.x_threshold or theta < - \
+                    self.theta_threshold_radians or theta > self.theta_threshold_radians:
+                return True
+        return False
 
     def _get_info(self):
         """Generates the info dictionary returned by every call to .step().
@@ -632,7 +763,8 @@ class CartPole(BenchmarkEnv):
         """
         info = {}
         if self.TASK == Task.STABILIZATION and self.COST == Cost.QUADRATIC:
-            info["goal_reached"] = self.goal_reached  # Add boolean flag for the goal being reached.
+            # Add boolean flag for the goal being reached.
+            info["goal_reached"] = self.goal_reached
         # if self.constraints is not None:
         #     info["constraint_values"] = self.constraints.get_values(self)
         #     violation = np.any(np.greater(info["constraint_values"], 0.))
@@ -645,8 +777,8 @@ class CartPole(BenchmarkEnv):
         #             done = True
         #     info['TimeLimit.truncated'] = not done
         # Add MSE.
-        state = deepcopy(self.state) 
-        info["mse"] = np.sum(state ** 2)  
+        state = deepcopy(self.state)
+        info["mse"] = np.sum(state ** 2)
         return info
 
     def _get_reset_info(self):
@@ -668,7 +800,8 @@ class CartPole(BenchmarkEnv):
         if self.constraints is not None:
             info["symbolic_constraints"] = self.constraints.get_all_symbolic_models()
             # NOTE: Cannot evaluate constraints on reset/without inputs.
-            info["constraint_values"] = self.constraints.get_values(self, only_state=True) # Fix for input constraints only
+            info["constraint_values"] = self.constraints.get_values(
+                self, only_state=True)  # Fix for input constraints only
         return info
 
     def _parse_urdf_parameters(self, file_name):
@@ -684,22 +817,24 @@ class CartPole(BenchmarkEnv):
 
         """
         URDF_TREE = (etxml.parse(file_name)).getroot()
-        EFFECTIVE_POLE_LENGTH = 0.5 * float(URDF_TREE[3][0][0][0].attrib["size"].split(" ")[-1])  # Note: HALF length of pole.
+        # Note: HALF length of pole.
+        EFFECTIVE_POLE_LENGTH = 0.5 * \
+            float(URDF_TREE[3][0][0][0].attrib["size"].split(" ")[-1])
         POLE_MASS = float(URDF_TREE[3][1][1].attrib["value"])
         CART_MASS = float(URDF_TREE[1][2][0].attrib["value"])
         return EFFECTIVE_POLE_LENGTH, POLE_MASS, CART_MASS
 
     def _create_urdf(self, file_name, length=None, inertia=None):
         """For domain randomization.
-        
+
         Args:
             file_name (str): path to the base URDF with attributes to modify.
-            length (float): overriden effective pole length. 
+            length (float): overriden effective pole length.
             inertia (float): pole inertia (symmetric, Ixx & Iyy).
-            
+
         Returns:
             xml tree object.
-            
+
         """
         tree = etxml.parse(file_name)
         root = tree.getroot()

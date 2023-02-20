@@ -39,7 +39,7 @@ def eval_token(token):
 
 def read_file(file_path, sep=","):
     """Loads content from a file (json, yaml, csv, txt).
-    
+
     For json & yaml files returns a dict.
     Ror csv & txt returns list of lines.
 
@@ -71,8 +71,11 @@ def merge_dict(source_dict, update_dict):
 
     """
     for k, v in update_dict.items():
-        if k in source_dict and isinstance(source_dict[k], dict) and isinstance(
-                v, dict):
+        if k in source_dict and isinstance(
+                source_dict[k],
+                dict) and isinstance(
+                v,
+                dict):
             merge_dict(source_dict[k], v)
         else:
             source_dict[k] = v
@@ -122,7 +125,7 @@ def set_seed(seed, cuda=False):
 
 def set_dir_from_config(config):
     """Creates a output folder for experiment (and save config files).
-    
+
     Naming format: {root (e.g. results)}/{tag (exp id)}/{seed}_{timestamp}_{git commit id}
 
     """
@@ -134,7 +137,7 @@ def set_dir_from_config(config):
             ["git", "describe", "--tags", "--always"]
         ).decode("utf-8").strip()
         commit_id = str(commit_id)
-    except:
+    except BaseException:
         commit_id = "-"
     run_dir = "seed{}_{}_{}".format(seed, timestamp, commit_id)
     # Make output folder.
@@ -198,7 +201,8 @@ def str2bool(val):
     elif val.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
-        raise argparse.ArgumentTypeError("[ERROR] in str2bool(), a Boolean value is expected")
+        raise argparse.ArgumentTypeError(
+            "[ERROR] in str2bool(), a Boolean value is expected")
 
 
 def unwrap_wrapper(env, wrapper_class):

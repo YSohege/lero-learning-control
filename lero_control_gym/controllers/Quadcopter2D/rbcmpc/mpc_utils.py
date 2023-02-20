@@ -26,7 +26,7 @@ def discretize_linear_system(A,
                              exact=False
                              ):
     """Discretize a linear system.
-    
+
     dx/dt = A x + B u
     --> xd[k+1] = Ad xd[k] + Bd ud[k] where xd[k] = x(k*dt)
 

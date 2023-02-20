@@ -16,12 +16,12 @@ from lero_control_gym.math_and_models.distributions import Normal, Categorical
 
 def split_obs_by_adversary(obs, indices_splits):
     """Splits and groups the observations by adversaries.
-    
+
     Args:
         obs (np.array | dict): batch of observations, (N,*obs_dim).
-        indices_splits (np.array): shape (n,), 
+        indices_splits (np.array): shape (n,),
             first occurence indices of the obs batch for each adversary.
-    
+
     Returns:
         list: groups of observations for adversaries.
 

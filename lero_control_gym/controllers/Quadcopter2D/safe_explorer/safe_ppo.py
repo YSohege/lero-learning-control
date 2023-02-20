@@ -33,14 +33,27 @@ class SafeExplorerPPO(BaseController):
                  seed=0,
                  **kwargs
                  ):
-        super().__init__(env_func, training, checkpoint_path, output_dir, use_gpu, seed, **kwargs)
+        super().__init__(
+            env_func,
+            training,
+            checkpoint_path,
+            output_dir,
+            use_gpu,
+            seed,
+            **kwargs)
         # Task.
         if self.training:
             # Training and testing.
-            self.env = make_vec_envs(env_func, None, self.rollout_batch_size, self.num_workers, seed)
+            self.env = make_vec_envs(
+                env_func,
+                None,
+                self.rollout_batch_size,
+                self.num_workers,
+                seed)
             self.env = VecRecordEpisodeStatistics(self.env, self.deque_size)
             self.eval_env = env_func(seed=seed * 111)
-            self.eval_env = RecordEpisodeStatistics(self.eval_env, self.deque_size)
+            self.eval_env = RecordEpisodeStatistics(
+                self.eval_env, self.deque_size)
             self.num_constraints = self.env.envs[0].num_constraints
         else:
             # Testing only.
@@ -74,10 +87,12 @@ class SafeExplorerPPO(BaseController):
         # Pre-/post-processing.
         self.obs_normalizer = BaseNormalizer()
         if self.norm_obs:
-            self.obs_normalizer = MeanStdNormalizer(shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
+            self.obs_normalizer = MeanStdNormalizer(
+                shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
         self.reward_normalizer = BaseNormalizer()
         if self.norm_reward:
-            self.reward_normalizer = RewardStdNormalizer(gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
+            self.reward_normalizer = RewardStdNormalizer(
+                gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
         # Logging.
         if self.training:
             log_file_out = True
@@ -86,7 +101,10 @@ class SafeExplorerPPO(BaseController):
             # Disable logging to texts and tfboard for evaluation.
             log_file_out = False
             use_tensorboard = False
-        self.logger = ExperimentLogger(output_dir, log_file_out=log_file_out, use_tensorboard=use_tensorboard)
+        self.logger = ExperimentLogger(
+            output_dir,
+            log_file_out=log_file_out,
+            use_tensorboard=use_tensorboard)
 
     def reset(self):
         """Do initializations for training or evaluation.
@@ -94,18 +112,24 @@ class SafeExplorerPPO(BaseController):
         """
         if self.training:
             if self.pretraining:
-                self.constraint_buffer = ConstraintBuffer(self.env.observation_space, self.env.action_space, self.num_constraints, self.constraint_buffer_size)
+                self.constraint_buffer = ConstraintBuffer(
+                    self.env.observation_space,
+                    self.env.action_space,
+                    self.num_constraints,
+                    self.constraint_buffer_size)
             else:
                 # Load safety layer for 2nd stage training.
                 assert self.pretrained, "Must provide a pre-trained model for adaptation."
                 if os.path.isdir(self.pretrained):
-                    self.pretrained = os.path.join(self.pretrained, "model_latest.pt")
+                    self.pretrained = os.path.join(
+                        self.pretrained, "model_latest.pt")
                 state = torch.load(self.pretrained)
                 self.safety_layer.load_state_dict(state["safety_layer"])
                 # Set up stats tracking.
                 self.env.add_tracker("constraint_violation", 0)
                 self.env.add_tracker("constraint_violation", 0, mode="queue")
-                self.eval_env.add_tracker("constraint_violation", 0, mode="queue")
+                self.eval_env.add_tracker(
+                    "constraint_violation", 0, mode="queue")
                 self.eval_env.add_tracker("mse", 0, mode="queue")
             self.total_steps = 0
             obs, info = self.env.reset()
@@ -174,7 +198,8 @@ class SafeExplorerPPO(BaseController):
             self.env.set_env_random_state(state["env_random_state"])
             self.logger.load(self.total_steps)
             if self.pretraining:
-                self.constraint_buffer.load_state_dict(state["constraint_buffer"])
+                self.constraint_buffer.load_state_dict(
+                    state["constraint_buffer"])
 
     def learn(self,
               env=None,
@@ -192,13 +217,22 @@ class SafeExplorerPPO(BaseController):
         while self.total_steps < final_step:
             results = train_func()
             # Checkpoint.
-            if self.total_steps >= final_step or (self.save_interval and self.total_steps % self.save_interval == 0):
+            if self.total_steps >= final_step or (
+                    self.save_interval and self.total_steps %
+                    self.save_interval == 0):
                 # Latest/final checkpoint.
                 self.save(self.checkpoint_path)
-                self.logger.info("Checkpoint | {}".format(self.checkpoint_path))
-            if self.num_checkpoints and self.total_steps % (final_step // self.num_checkpoints) == 0:
+                self.logger.info(
+                    "Checkpoint | {}".format(
+                        self.checkpoint_path))
+            if self.num_checkpoints and self.total_steps % (
+                    final_step // self.num_checkpoints) == 0:
                 # Intermediate checkpoint.
-                path = os.path.join(self.output_dir, "checkpoints", "model_{}.pt".format(self.total_steps))
+                path = os.path.join(
+                    self.output_dir,
+                    "checkpoints",
+                    "model_{}.pt".format(
+                        self.total_steps))
                 self.save(path)
             # Evaluation.
             if self.eval_interval and self.total_steps % self.eval_interval == 0:
@@ -206,18 +240,25 @@ class SafeExplorerPPO(BaseController):
                     eval_results = self.eval_constraint_models()
                     results["eval"] = eval_results
                 else:
-                    eval_results = self.run(env=self.eval_env, n_episodes=self.eval_batch_size)
+                    eval_results = self.run(
+                        env=self.eval_env, n_episodes=self.eval_batch_size)
                     results["eval"] = eval_results
-                    self.logger.info("Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(eval_results["ep_lengths"].mean(),
-                                                                                                                eval_results["ep_lengths"].std(),
-                                                                                                                eval_results["ep_returns"].mean(),
-                                                                                                                eval_results["ep_returns"].std()))
+                    self.logger.info(
+                        "Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(
+                            eval_results["ep_lengths"].mean(),
+                            eval_results["ep_lengths"].std(),
+                            eval_results["ep_returns"].mean(),
+                            eval_results["ep_returns"].std()))
                     # Save the best model.
                     eval_score = eval_results["ep_returns"].mean()
-                    eval_best_score = getattr(self, "eval_best_score", -np.infty)
+                    eval_best_score = getattr(
+                        self, "eval_best_score", -np.infty)
                     if self.eval_save_best and eval_best_score < eval_score:
                         self.eval_best_score = eval_score
-                        self.save(os.path.join(self.output_dir, "model_best.pt"))
+                        self.save(
+                            os.path.join(
+                                self.output_dir,
+                                "model_best.pt"))
             # Logging.
             if self.log_interval and self.total_steps % self.log_interval == 0:
                 self.log_step(results)
@@ -273,7 +314,8 @@ class SafeExplorerPPO(BaseController):
             eval_results["frames"] = frames
         # Other episodic stats from evaluation env.
         if len(env.queued_stats) > 0:
-            queued_stats = {k: np.asarray(v) for k, v in env.queued_stats.items()}
+            queued_stats = {k: np.asarray(v)
+                            for k, v in env.queued_stats.items()}
             eval_results.update(queued_stats)
         return eval_results
 
@@ -289,13 +331,15 @@ class SafeExplorerPPO(BaseController):
         self.collect_constraint_data(self.constraint_steps_per_epoch)
         self.total_steps += 1
         # Do the update from memory.
-        for batch in self.constraint_buffer.sampler(self.constraint_batch_size):
+        for batch in self.constraint_buffer.sampler(
+                self.constraint_batch_size):
             res = self.safety_layer.update(batch)
             for k, v in res.items():
                 results[k].append(v)
         self.constraint_buffer.reset()
         results = {k: sum(v) / len(v) for k, v in results.items()}
-        results.update({"step": self.total_steps, "elapsed_time": time.time() - start})
+        results.update({"step": self.total_steps,
+                        "elapsed_time": time.time() - start})
         return results
 
     def train_step(self):
@@ -314,7 +358,10 @@ class SafeExplorerPPO(BaseController):
         start = time.time()
         for step in range(self.rollout_steps):
             with torch.no_grad():
-                act, v, logp = self.agent.ac.step(torch.FloatTensor(obs).to(self.device), c=torch.FloatTensor(c).to(self.device))
+                act, v, logp = self.agent.ac.step(
+                    torch.FloatTensor(obs).to(
+                        self.device), c=torch.FloatTensor(c).to(
+                        self.device))
             next_obs, rew, done, info = self.env.step(act)
             next_obs = self.obs_normalizer(next_obs)
             rew = self.reward_normalizer(rew, done)
@@ -327,8 +374,10 @@ class SafeExplorerPPO(BaseController):
                 inff = inf["terminal_info"]
                 if "TimeLimit.truncated" in inff and inff["TimeLimit.truncated"]:
                     terminal_obs = inf["terminal_observation"]
-                    terminal_obs_tensor = torch.FloatTensor(terminal_obs).unsqueeze(0).to(self.device)
-                    terminal_val = self.agent.ac.critic(terminal_obs_tensor).squeeze().detach().numpy()
+                    terminal_obs_tensor = torch.FloatTensor(
+                        terminal_obs).unsqueeze(0).to(self.device)
+                    terminal_val = self.agent.ac.critic(
+                        terminal_obs_tensor).squeeze().detach().numpy()
                     terminal_v[idx] = terminal_val
             rollouts.push({
                 "obs": obs,
@@ -346,7 +395,9 @@ class SafeExplorerPPO(BaseController):
         self.c = c
         self.total_steps += self.rollout_batch_size * self.rollout_steps
         # Learn from rollout batch.
-        last_val = self.agent.ac.critic(torch.FloatTensor(obs).to(self.device)).detach().numpy()
+        last_val = self.agent.ac.critic(
+            torch.FloatTensor(obs).to(
+                self.device)).detach().numpy()
         ret, adv = compute_returns_and_advantages(rollouts.rew,
                                                   rollouts.v,
                                                   rollouts.mask,
@@ -359,7 +410,8 @@ class SafeExplorerPPO(BaseController):
         # Prevent divide-by-0 for repetitive tasks.
         rollouts.adv = (adv - adv.mean()) / (adv.std() + 1e-6)
         results = self.agent.update(rollouts, self.device)
-        results.update({"step": self.total_steps, "elapsed_time": time.time() - start})
+        results.update({"step": self.total_steps,
+                        "elapsed_time": time.time() - start})
         return results
 
     def log_step(self,
@@ -385,22 +437,25 @@ class SafeExplorerPPO(BaseController):
             # Constraint learning stats.
             for i in range(self.safety_layer.num_constraints):
                 name = "constraint_{}_loss".format(i)
-                self.logger.add_scalars({name: results[name]}, step, prefix="constraint_loss")
+                self.logger.add_scalars(
+                    {name: results[name]}, step, prefix="constraint_loss")
                 if "eval" in results:
-                    self.logger.add_scalars({name: results["eval"][name]}, step, prefix="constraint_loss_eval")
+                    self.logger.add_scalars(
+                        {name: results["eval"][name]}, step, prefix="constraint_loss_eval")
         else:
             # Learning stats.
             self.logger.add_scalars(
                 {
-                    k: results[k] 
+                    k: results[k]
                     for k in ["policy_loss", "value_loss", "entropy_loss", "approx_kl"]
-                }, 
-                step, 
+                },
+                step,
                 prefix="loss")
             # Performance stats.
             ep_lengths = np.asarray(self.env.length_queue)
             ep_returns = np.asarray(self.env.return_queue)
-            ep_constraint_violation = np.asarray(self.env.queued_stats["constraint_violation"])
+            ep_constraint_violation = np.asarray(
+                self.env.queued_stats["constraint_violation"])
             self.logger.add_scalars(
                 {
                     "ep_length": ep_lengths.mean(),
@@ -412,7 +467,8 @@ class SafeExplorerPPO(BaseController):
                 prefix="stat")
             # Total constraint violation during learning.
             total_violations = self.env.accumulated_stats["constraint_violation"]
-            self.logger.add_scalars({"constraint_violation": total_violations}, step, prefix="stat")
+            self.logger.add_scalars(
+                {"constraint_violation": total_violations}, step, prefix="stat")
             if "eval" in results:
                 eval_ep_lengths = results["eval"]["ep_lengths"]
                 eval_ep_returns = results["eval"]["ep_returns"]
@@ -422,10 +478,11 @@ class SafeExplorerPPO(BaseController):
                     {
                         "ep_length": eval_ep_lengths.mean(),
                         "ep_return": eval_ep_returns.mean(),
-                        "ep_reward": (eval_ep_returns / eval_ep_lengths).mean(),
+                        "ep_reward": (
+                            eval_ep_returns /
+                            eval_ep_lengths).mean(),
                         "constraint_violation": eval_constraint_violation.mean(),
-                        "mse": eval_mse.mean()
-                    },
+                        "mse": eval_mse.mean()},
                     step,
                     prefix="stat_eval")
         # Print summary table.
@@ -454,7 +511,8 @@ class SafeExplorerPPO(BaseController):
                     c_next_i = info["n"][i]["constraint_values"]
                 c_next.append(c_next_i)
             c_next = np.array(c_next)
-            self.constraint_buffer.push({"act": action, "obs": obs, "c": c, "c_next": c_next})
+            self.constraint_buffer.push(
+                {"act": action, "obs": obs, "c": c, "c_next": c_next})
             obs = obs_next
             c = np.array([inf["constraint_values"] for inf in info["n"]])
             step += self.rollout_batch_size
@@ -468,10 +526,12 @@ class SafeExplorerPPO(BaseController):
         self.obs_normalizer.set_read_only()
         # Collect evaluation data.
         self.collect_constraint_data(self.constraint_eval_steps)
-        for batch in self.constraint_buffer.sampler(self.constraint_batch_size):
+        for batch in self.constraint_buffer.sampler(
+                self.constraint_batch_size):
             losses = self.safety_layer.compute_loss(batch)
             for i, loss in enumerate(losses):
-                eval_resutls["constraint_{}_loss".format(i)].append(loss.item())
+                eval_resutls["constraint_{}_loss".format(
+                    i)].append(loss.item())
         self.constraint_buffer.reset()
         eval_resutls = {k: sum(v) / len(v) for k, v in eval_resutls.items()}
         return eval_resutls

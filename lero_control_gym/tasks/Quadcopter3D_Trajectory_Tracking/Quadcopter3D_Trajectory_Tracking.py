@@ -15,7 +15,7 @@ from lero_control_gym.utils.registration import make
 
 class Task():
 
-    def __init__(self, quadcopter3D , mmac_pid ):
+    def __init__(self, quadcopter3D, mmac_pid):
         self.quadcopter = quadcopter3D
         self.controller = mmac_pid
 
@@ -35,7 +35,6 @@ class Task():
                            **self.quadcopter
                            )
 
-
         ctrl = make("quad3d_mmacpid",
                     env_func,
                     **self.controller
@@ -48,8 +47,8 @@ class Task():
         # Plot the experiment.
         for i in range(len(results['info'])):
             # Step the environment and print all returned information.
-            obs, reward, done, info, action = results['obs'][i], results['reward'][i], results['done'][i], results['info'][
-                i], results['action'][i]
+            obs, reward, done, info, action = results['obs'][i], results['reward'][
+                i], results['done'][i], results['info'][i], results['action'][i]
             err = float(info[0]['mse'])
             total_trajectory_loss += err
 
@@ -58,7 +57,6 @@ class Task():
         END = time.time()
         ctrl.close()
         return total_trajectory_loss
-
 
 
 # if __name__ == "__main__":

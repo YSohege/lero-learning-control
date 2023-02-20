@@ -80,8 +80,7 @@ class ZeroMeanIndependentMultitaskGPModel(gpytorch.models.ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultitaskMultivariateNormal.from_batch_mvn(
-            gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
-        )
+            gpytorch.distributions.MultivariateNormal(mean_x, covar_x))
 
 
 class ZeroMeanIndependentGPModel(gpytorch.models.ExactGP):
@@ -90,6 +89,7 @@ class ZeroMeanIndependentGPModel(gpytorch.models.ExactGP):
     Or constant mean and radial basis function kernel (SE).
 
     """
+
     def __init__(self,
                  train_x,
                  train_y,
@@ -192,13 +192,18 @@ class GaussianProcessCollection:
         gp_K_plus_noise_list = []
         gp_K_plus_noise_inv_list = []
         for gp_ind, gp in enumerate(self.gp_list):
-            path = os.path.join(path_to_statedicts, 'best_model_%s.pth'  % self.target_mask[gp_ind])
+            path = os.path.join(
+                path_to_statedicts,
+                'best_model_%s.pth' %
+                self.target_mask[gp_ind])
             print("#########################################")
-            print("#       Loading GP dimension %s         #" % self.target_mask[gp_ind])
+            print(
+                "#       Loading GP dimension %s         #" %
+                self.target_mask[gp_ind])
             print("#########################################")
             print('Path: %s' % path)
             gp.init_with_hyperparam(train_inputs,
-                                    train_targets[:,self.target_mask[gp_ind]],
+                                    train_targets[:, self.target_mask[gp_ind]],
                                     path)
             gp_K_plus_noise_list.append(gp.model.K_plus_noise.detach())
             gp_K_plus_noise_inv_list.append(gp.model.K_plus_noise_inv.detach())
@@ -219,14 +224,17 @@ class GaussianProcessCollection:
         output_scale_list = []
         noise_list = []
         for gp in self.gp_list:
-            lengthscale_list.append(gp.model.covar_module.base_kernel.lengthscale.detach())
-            output_scale_list.append(gp.model.covar_module.outputscale.detach())
+            lengthscale_list.append(
+                gp.model.covar_module.base_kernel.lengthscale.detach())
+            output_scale_list.append(
+                gp.model.covar_module.outputscale.detach())
             noise_list.append(gp.model.likelihood.noise.detach())
         lengthscale = torch.cat(lengthscale_list)
         outputscale = torch.Tensor(output_scale_list)
         noise = torch.Tensor(noise_list)
         if as_numpy:
-            return lengthscale.numpy(), outputscale.numpy(), noise.numpy(), self.K_plus_noise.detach().numpy()
+            return lengthscale.numpy(), outputscale.numpy(
+            ), noise.numpy(), self.K_plus_noise.detach().numpy()
         else:
             return lengthscale, outputscale, noise, self.K_plus_noise
 
@@ -254,25 +262,29 @@ class GaussianProcessCollection:
             lr = learning_rate[self.target_mask[gp_ind]]
             n_t = n_train[self.target_mask[gp_ind]]
             print("#########################################")
-            print("#      Training GP dimension %s         #" % self.target_mask[gp_ind])
+            print(
+                "#      Training GP dimension %s         #" %
+                self.target_mask[gp_ind])
             print("#########################################")
             print("Train iterations: %s" % n_t)
             print("Learning Rate:: %s" % lr)
             gp_K_plus_noise_list = []
             gp.train(train_x_raw,
-                     train_y_raw[:,self.target_mask[gp_ind]],
+                     train_y_raw[:,
+                                 self.target_mask[gp_ind]],
                      test_x_raw,
-                     test_y_raw[:, self.target_mask[gp_ind]],
+                     test_y_raw[:,
+                                self.target_mask[gp_ind]],
                      n_train=n_t,
                      learning_rate=lr,
                      gpu=gpu,
-                     fname=os.path.join(dir, 'best_model_%s.pth' % self.target_mask[gp_ind]))
+                     fname=os.path.join(dir,
+                                        'best_model_%s.pth' % self.target_mask[gp_ind]))
             self.model_paths.append(dir)
             gp_K_plus_noise_list.append(gp.model.K_plus_noise)
         gp_K_plus_noise = torch.stack(gp_K_plus_noise_list)
         self.K_plus_noise = gp_K_plus_noise
         self.casadi_predict = self.make_casadi_predict_func()
-
 
     def predict(self,
                 x,
@@ -296,10 +308,12 @@ class GaussianProcessCollection:
         pred_list = []
         for gp in self.gp_list:
             if return_pred:
-                mean, cov, pred = gp.predict(x, requires_grad=requires_grad, return_pred=return_pred)
+                mean, cov, pred = gp.predict(
+                    x, requires_grad=requires_grad, return_pred=return_pred)
                 pred_list.append(pred)
             else:
-                mean, cov = gp.predict(x, requires_grad=requires_grad, return_pred=return_pred)
+                mean, cov = gp.predict(
+                    x, requires_grad=requires_grad, return_pred=return_pred)
             means_list.append(mean)
             cov_list.append(cov)
         means = torch.tensor(means_list)
@@ -328,8 +342,6 @@ class GaussianProcessCollection:
                                      ['mean'])
         return casadi_predict
 
-
-
     def prediction_jacobian(self,
                             query
                             ):
@@ -348,7 +360,7 @@ class GaussianProcessCollection:
         """
         for gp_ind, gp in enumerate(self.gp_list):
             fig_count = gp.plot_trained_gp(inputs,
-                                           targets[:,self.target_mask[gp_ind],None],
+                                           targets[:, self.target_mask[gp_ind], None],
                                            self.target_mask[gp_ind],
                                            fig_count=fig_count)
             fig_count += 1
@@ -370,7 +382,7 @@ class GaussianProcessCollection:
         if x2 is None:
             x2 = x1
         # todo: Make normalization at the GPCollection level?
-        #if self.NORMALIZE:
+        # if self.NORMALIZE:
         #    x1 = torch.from_numpy(self.gp_list[0].scaler.transform(x1.numpy()))
         #    x2 = torch.from_numpy(self.gp_list[0].scaler.transform(x2.numpy()))
         k_list = []
@@ -414,12 +426,17 @@ class GaussianProcessCollection:
         """
         if x2 is None:
             x2 = x1
-        assert x1.shape == x2.shape, ValueError("x1 and x2 need to have the same shape.")
+        assert x1.shape == x2.shape, ValueError(
+            "x1 and x2 need to have the same shape.")
         k_list = self._kernel_list(x1, x2)
         num_of_points = x1.shape[0]
-        # Efficient inversion is performed VIA inv_matmul on the laze tensor with Identity.
-        non_lazy_tensors = [k.inv_matmul(torch.eye(num_of_points).double()) for k in k_list]
+        # Efficient inversion is performed VIA inv_matmul on the laze tensor
+        # with Identity.
+        non_lazy_tensors = [
+            k.inv_matmul(
+                torch.eye(num_of_points).double()) for k in k_list]
         return torch.stack(non_lazy_tensors)
+
 
 class GaussianProcess:
     """Gaussian Process decorator for gpytorch.
@@ -427,14 +444,14 @@ class GaussianProcess:
     """
 
     def __init__(self,
-                  model_type,
-                  likelihood,
-                  input_mask=None,
-                  target_mask=None,
-                  normalize=False
-                  ):
+                 model_type,
+                 likelihood,
+                 input_mask=None,
+                 target_mask=None,
+                 normalize=False
+                 ):
         """Initialize Gaussian Process.
-       
+
         Args:
             model_type (gpytorch model class): Model class for the GP (ZeroMeanIndependentMultitaskGPModel).
             likelihood (gpytorch.likelihood): likelihood function.
@@ -464,7 +481,8 @@ class GaussianProcess:
         # Define normalization scaler.
         self.scaler = preprocessing.StandardScaler().fit(train_inputs.numpy())
         if self.NORMALIZE:
-            train_inputs = torch.from_numpy(self.scaler.transform(train_inputs.numpy()))
+            train_inputs = torch.from_numpy(
+                self.scaler.transform(train_inputs.numpy()))
 
         if self.model is None:
             self.model = self.model_type(train_inputs,
@@ -474,7 +492,6 @@ class GaussianProcess:
         self.input_dimension = train_inputs.shape[1]
         self.output_dimension = target_dimension
         self.n_training_samples = train_inputs.shape[0]
-
 
     def _compute_GP_covariances(self,
                                 train_x
@@ -486,8 +503,10 @@ class GaussianProcess:
         K_lazy = self.model.covar_module(train_x.double())
         K_lazy_plus_noise = K_lazy.add_diag(self.model.likelihood.noise)
         n_samples = train_x.shape[0]
-        self.model.K_plus_noise = K_lazy_plus_noise.matmul(torch.eye(n_samples).double())
-        self.model.K_plus_noise_inv = K_lazy_plus_noise.inv_matmul(torch.eye(n_samples).double())
+        self.model.K_plus_noise = K_lazy_plus_noise.matmul(
+            torch.eye(n_samples).double())
+        self.model.K_plus_noise_inv = K_lazy_plus_noise.inv_matmul(
+            torch.eye(n_samples).double())
 
     def init_with_hyperparam(self,
                              train_inputs,
@@ -505,11 +524,13 @@ class GaussianProcess:
         state_dict = torch.load(path_to_statedict, map_location=device)
         self._init_model(train_inputs, train_targets)
         if self.NORMALIZE:
-            train_inputs = torch.from_numpy(self.scaler.transform(train_inputs.numpy()))
+            train_inputs = torch.from_numpy(
+                self.scaler.transform(train_inputs.numpy()))
         self.model.load_state_dict(state_dict)
-        self.model.double() # needed otherwise loads state_dict as float32
+        self.model.double()  # needed otherwise loads state_dict as float32
         self._compute_GP_covariances(train_inputs)
-        self.casadi_predict = self.make_casadi_prediction_func(train_inputs, train_targets)
+        self.casadi_predict = self.make_casadi_prediction_func(
+            train_inputs, train_targets)
 
     def train(self,
               train_input_data,
@@ -560,8 +581,10 @@ class GaussianProcess:
         self.likelihood.double()
         self.model.train()
         self.likelihood.train()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
-        mll = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=learning_rate)
+        mll = gpytorch.mlls.ExactMarginalLogLikelihood(
+            self.likelihood, self.model)
         last_loss = 99999999
         best_loss = 99999999
         loss = torch.tensor(0)
@@ -578,7 +601,9 @@ class GaussianProcess:
             loss = -mll(output, train_y)
             loss.backward()
             if i % 100 == 0:
-                print('Iter %d/%d - Train Loss: %.3f, Posterior loss on test data: %0.3f' % (i + 1, n_train, loss.item(), test_loss.item()))
+                print(
+                    'Iter %d/%d - Train Loss: %.3f, Posterior loss on test data: %0.3f' %
+                    (i + 1, n_train, loss.item(), test_loss.item()))
             self.optimizer.step()
             if loss < best_loss:
                 best_loss = loss
@@ -586,9 +611,9 @@ class GaussianProcess:
                 torch.save(state_dict, fname)
                 best_epoch = i
 
-            i+=1
+            i += 1
         print("Training Complete")
-        print("Lowest epoch: %s" %best_epoch)
+        print("Lowest epoch: %s" % best_epoch)
         print("Lowest Loss: %s" % best_loss)
         self.model = self.model.cpu()
         self.likelihood = self.likelihood.cpu()
@@ -596,7 +621,8 @@ class GaussianProcess:
         train_y = train_y.cpu()
         self.model.load_state_dict(torch.load(fname))
         self._compute_GP_covariances(train_x)
-        self.casadi_predict = self.make_casadi_prediction_func(train_x, train_y)
+        self.casadi_predict = self.make_casadi_prediction_func(
+            train_x, train_y)
 
     def predict(self,
                 x,
@@ -617,10 +643,10 @@ class GaussianProcess:
         """
         self.model.eval()
         self.likelihood.eval()
-        if type(x) is np.ndarray:
+        if isinstance(x, np.ndarray):
             x = torch.from_numpy(x).double()
         if self.input_mask is not None:
-            x = x[:,self.input_mask]
+            x = x[:, self.input_mask]
         if self.NORMALIZE:
             x = torch.from_numpy(self.scaler.transform(x))
         if requires_grad:
@@ -637,13 +663,12 @@ class GaussianProcess:
         else:
             return mean, cov
 
-
     def prediction_jacobian(self,
                             query
                             ):
         mean_der, cov_der = torch.autograd.functional.jacobian(
-                                lambda x: self.predict(x, requires_grad=True, return_pred=False),
-                                query.double())
+            lambda x: self.predict(x, requires_grad=True, return_pred=False),
+            query.double())
         return mean_der.detach().squeeze()
 
     def make_casadi_prediction_func(self, train_inputs, train_targets):
@@ -656,16 +681,14 @@ class GaussianProcess:
         output_scale = self.model.covar_module.outputscale.detach().numpy()
         Nx = len(self.input_mask)
         z = ca.SX.sym('z', Nx)
-        K_z_ztrain = ca.Function('k_z_ztrain',
-                                 [z],
-                                 [covSEard(z, train_inputs.T, lengthscale.T, output_scale)],
-                                 ['z'],
-                                 ['K'])
-        predict = ca.Function('pred',
-                              [z],
-                              [K_z_ztrain(z=z)['K'] @ self.model.K_plus_noise_inv.detach().numpy() @ train_targets],
-                              ['z'],
-                              ['mean'])
+        K_z_ztrain = ca.Function(
+            'k_z_ztrain', [z], [
+                covSEard(
+                    z, train_inputs.T, lengthscale.T, output_scale)], ['z'], ['K'])
+        predict = ca.Function(
+            'pred', [z], [
+                K_z_ztrain(
+                    z=z)['K'] @ self.model.K_plus_noise_inv.detach().numpy() @ train_targets], ['z'], ['mean'])
         return predict
 
     def plot_trained_gp(self,
@@ -683,11 +706,17 @@ class GaussianProcess:
             fig_count += 1
             plt.figure(fig_count)
             if lower.ndim > 1:
-                plt.fill_between(t, lower[:,i].detach().numpy(), upper[:,i].detach().numpy(), alpha=0.5, label='95%')
+                plt.fill_between(t, lower[:, i].detach().numpy(
+                ), upper[:, i].detach().numpy(), alpha=0.5, label='95%')
                 plt.plot(t, means[:, i], 'r', label='GP Mean')
                 plt.plot(t, targets[:, i], '*k', label='Data')
             else:
-                plt.fill_between(t, lower.detach().numpy(), upper.detach().numpy(), alpha=0.5, label='95%')
+                plt.fill_between(
+                    t,
+                    lower.detach().numpy(),
+                    upper.detach().numpy(),
+                    alpha=0.5,
+                    label='95%')
                 plt.plot(t, means, 'r', label='GP Mean')
                 plt.plot(t, targets, '*k', label='Data')
             plt.legend()

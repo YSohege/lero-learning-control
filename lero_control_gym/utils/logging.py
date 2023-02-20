@@ -45,10 +45,10 @@ class StdoutLogger:
 
 
 class FileLogger:
-    """Logger for saving statistics and other outputs to text files.  
-    
+    """Logger for saving statistics and other outputs to text files.
+
     Based on https://github.com/michaelrzhang/logger
-    
+
     Initializes the log directory and creates log files given by name in arguments.
     Can be used to append future log values to each file.
 
@@ -139,8 +139,8 @@ class ExperimentLogger:
 
         Args:
             log_dir (str): name of folder to save logs.
-            log_std_out (bool): if to save terminal logs.  
-            log_file_out (bool): if to write data logs to text files.  
+            log_std_out (bool): if to save terminal logs.
+            log_file_out (bool): if to write data logs to text files.
             use_tensorboard (bool): if to use tensorboard.
 
         """
@@ -228,21 +228,23 @@ class ExperimentLogger:
     def dump_scalars(self):
         """Produce a summary of stats within the log period (from buffer).
 
-        Currently only dump to terminal as a table summary, 
-        can dump to a CSV file in the future, 
+        Currently only dump to terminal as a table summary,
+        can dump to a CSV file in the future,
         but feels repetitive & less flexible than `add_scalar(..., write=True)`.
 
         """
         keys, values = [], []
         tag = None
-        # Important: sorted keys are important for consistency betwen log steps.
+        # Important: sorted keys are important for consistency betwen log
+        # steps.
         for key, val_list in sorted(self.stats_buffer.items()):
             if len(val_list) == 1:
                 # Left align.
                 val_str = "{:<8.3g}".format(val_list[0])
             else:
                 val_np = np.asarray(val_list)
-                val_str = "{:.3f} +/- {:.3f}".format(val_np.mean(), val_np.std())
+                val_str = "{:.3f} +/- {:.3f}".format(
+                    val_np.mean(), val_np.std())
             # Find tag and add it to the dict.
             if key.find("/") > 0:
                 tag = key[:key.find("/") + 1]
@@ -268,7 +270,9 @@ class ExperimentLogger:
         for key, value in zip(keys, values):
             key_space = " " * (key_width - len(key))
             val_space = " " * (val_width - len(value))
-            lines.append("| {}{} | {}{} |".format(key, key_space, value, val_space))
+            lines.append(
+                "| {}{} | {}{} |".format(
+                    key, key_space, value, val_space))
         lines.append(dashes)
         summary = "\n" + "\n".join(lines) + "\n"
         self.info(summary)

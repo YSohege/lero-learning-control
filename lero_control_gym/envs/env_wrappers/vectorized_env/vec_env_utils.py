@@ -22,11 +22,11 @@ class CloudpickleWrapper(object):
 
 @contextlib.contextmanager
 def clear_mpi_env_vars():
-    """From mpi4py import MPI will call MPI_Init by default.  
-    
+    """From mpi4py import MPI will call MPI_Init by default.
+
     If the child process has MPI environment variables, MPI will think that the child process
     is an MPI process just like the parent and do bad things such as hang.
-    
+
     This context manager is a hacky way to clear those environment variables temporarily such
     as when we are starting multiprocessing Processes.
 
@@ -48,7 +48,7 @@ def tile_images(img_nhwc):
 
     (P,Q) are chosen to be as close as possible, and if N is square, then P=Q.
 
-    Args: 
+    Args:
         img_nhwc: list or array of images, ndim=4 once turned into array,
                   n = batch index, h = height, w = width, c = channel.
 
@@ -84,9 +84,10 @@ def _flatten_obs(obs):
 
 def _unflatten_obs(obs):
     """
-    
+
     """
     assert isinstance(obs, (np.ndarray, dict))
+
     def split_batch(data):
         return [d[0] for d in np.split(data, len(data))]
     if isinstance(obs, dict):
@@ -101,7 +102,7 @@ def _unflatten_obs(obs):
 
 def _flatten_list(l):
     """
-    
+
     """
     assert isinstance(l, (list, tuple))
     assert len(l) > 0

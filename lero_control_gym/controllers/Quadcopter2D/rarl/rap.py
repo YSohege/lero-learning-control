@@ -7,9 +7,9 @@ References papers & code:
     * [rllab-adv](https://github.com/lerrel/rllab-adv)
     * [Robust Reinforcement Learning via adversary pools](https://github.com/eugenevinitsky/robust_RL_multi_adversary)
 
-Example: 
+Example:
     train on cartpole_adversary::
-    
+
         $ python tests/test_main.py --mode train_two_phase --exp_id rap_cartpole_adv \
         --algo rap --task cartpole_adversary --num_workers 2 --max_env_steps 2000000 \
         --tensorboard --use_gae --num_adversaries 2
@@ -38,22 +38,35 @@ from lero_control_gym.controllers.Quadcopter2D.rarl.rarl_utils import split_obs_
 class RAP(BaseController):
     """rarl via adersarial population with PPO."""
 
-    def __init__(self, 
-                 env_func, 
-                 training=True, 
-                 checkpoint_path="model_latest.pt", 
-                 output_dir="temp", 
-                 use_gpu=False, 
-                 seed=0, 
+    def __init__(self,
+                 env_func,
+                 training=True,
+                 checkpoint_path="model_latest.pt",
+                 output_dir="temp",
+                 use_gpu=False,
+                 seed=0,
                  **kwargs):
-        super().__init__(env_func, training, checkpoint_path, output_dir, use_gpu, seed, **kwargs)
+        super().__init__(
+            env_func,
+            training,
+            checkpoint_path,
+            output_dir,
+            use_gpu,
+            seed,
+            **kwargs)
         # task
         if self.training:
             # training (+ evaluation)
-            self.env = make_vec_envs(env_func, None, self.rollout_batch_size, self.num_workers, seed)
+            self.env = make_vec_envs(
+                env_func,
+                None,
+                self.rollout_batch_size,
+                self.num_workers,
+                seed)
             self.env = VecRecordEpisodeStatistics(self.env, self.deque_size)
             self.eval_env = env_func(seed=seed * 111)
-            self.eval_env = RecordEpisodeStatistics(self.eval_env, self.deque_size)
+            self.eval_env = RecordEpisodeStatistics(
+                self.eval_env, self.deque_size)
         else:
             # testing only
             self.env = env_func()
@@ -70,28 +83,39 @@ class RAP(BaseController):
                                  opt_epochs=self.opt_epochs,
                                  mini_batch_size=self.mini_batch_size)
 
-        self.agent = PPOAgent(self.env.observation_space, self.env.action_space, **shared_agent_args)
+        self.agent = PPOAgent(
+            self.env.observation_space,
+            self.env.action_space,
+            **shared_agent_args)
         self.agent.to(self.device)
 
-        # fetch adversary specs from env 
+        # fetch adversary specs from env
         if self.training:
-            self.adv_obs_space = self.env.get_attr("adversary_observation_space")[0]
+            self.adv_obs_space = self.env.get_attr(
+                "adversary_observation_space")[0]
             self.adv_act_space = self.env.get_attr("adversary_action_space")[0]
         else:
             self.adv_obs_space = self.env.adversary_observation_space
             self.adv_act_space = self.env.adversary_action_space
-        self.adversaries = [PPOAgent(self.adv_obs_space, self.adv_act_space, **shared_agent_args) for _ in range(self.num_adversaries)]
+        self.adversaries = [
+            PPOAgent(
+                self.adv_obs_space,
+                self.adv_act_space,
+                **shared_agent_args) for _ in range(
+                self.num_adversaries)]
         for adv in self.adversaries:
             adv.to(self.device)
 
         # pre-/post-processing
         self.obs_normalizer = BaseNormalizer()
         if self.norm_obs:
-            self.obs_normalizer = MeanStdNormalizer(shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
+            self.obs_normalizer = MeanStdNormalizer(
+                shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
 
         self.reward_normalizer = BaseNormalizer()
         if self.norm_reward:
-            self.reward_normalizer = RewardStdNormalizer(gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
+            self.reward_normalizer = RewardStdNormalizer(
+                gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
 
         # logging
         if self.training:
@@ -101,7 +125,10 @@ class RAP(BaseController):
             # disable logging to texts and tfboard for evaluation
             log_file_out = False
             use_tensorboard = False
-        self.logger = ExperimentLogger(output_dir, log_file_out=log_file_out, use_tensorboard=use_tensorboard)
+        self.logger = ExperimentLogger(
+            output_dir,
+            log_file_out=log_file_out,
+            use_tensorboard=use_tensorboard)
 
     def reset(self):
         """Do initializations for training or evaluation."""
@@ -111,7 +138,7 @@ class RAP(BaseController):
             self.env.add_tracker("constraint_violation", 0, mode="queue")
             self.eval_env.add_tracker("constraint_violation", 0, mode="queue")
             self.eval_env.add_tracker("mse", 0, mode="queue")
-            
+
             self.total_steps = 0
             obs, _ = self.env.reset()
             self.obs = self.obs_normalizer(obs)
@@ -174,23 +201,35 @@ class RAP(BaseController):
             results = self.train_step()
 
             # checkpoint
-            if self.total_steps >= self.max_env_steps or (self.save_interval and self.total_steps % self.save_interval == 0):
+            if self.total_steps >= self.max_env_steps or (
+                    self.save_interval and self.total_steps %
+                    self.save_interval == 0):
                 # latest/final checkpoint
                 self.save(self.checkpoint_path)
-                self.logger.info("Checkpoint | {}".format(self.checkpoint_path))
-            if self.num_checkpoints and self.total_steps % (self.max_env_steps // self.num_checkpoints) == 0:
+                self.logger.info(
+                    "Checkpoint | {}".format(
+                        self.checkpoint_path))
+            if self.num_checkpoints and self.total_steps % (
+                    self.max_env_steps // self.num_checkpoints) == 0:
                 # intermediate checkpoint
-                path = os.path.join(self.output_dir, "checkpoints", "model_{}.pt".format(self.total_steps))
+                path = os.path.join(
+                    self.output_dir,
+                    "checkpoints",
+                    "model_{}.pt".format(
+                        self.total_steps))
                 self.save(path)
 
             # eval
             if self.eval_interval and self.total_steps % self.eval_interval == 0:
-                eval_results = self.run(env=self.eval_env, n_episodes=self.eval_batch_size)
+                eval_results = self.run(
+                    env=self.eval_env, n_episodes=self.eval_batch_size)
                 results["eval"] = eval_results
-                self.logger.info("Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(eval_results["ep_lengths"].mean(),
-                                                                                                            eval_results["ep_lengths"].std(),
-                                                                                                            eval_results["ep_returns"].mean(),
-                                                                                                            eval_results["ep_returns"].std()))
+                self.logger.info(
+                    "Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(
+                        eval_results["ep_lengths"].mean(),
+                        eval_results["ep_lengths"].std(),
+                        eval_results["ep_returns"].mean(),
+                        eval_results["ep_returns"].std()))
                 # save best model
                 eval_score = eval_results["ep_returns"].mean()
                 eval_best_score = getattr(self, "eval_best_score", -np.infty)
@@ -202,7 +241,14 @@ class RAP(BaseController):
             if self.log_interval and self.total_steps % self.log_interval == 0:
                 self.log_step(results)
 
-    def run(self, env=None, render=False, n_episodes=10, verbose=False, use_adv=False, **kwargs):
+    def run(
+            self,
+            env=None,
+            render=False,
+            n_episodes=10,
+            verbose=False,
+            use_adv=False,
+            **kwargs):
         """Runs evaluation with current policy."""
         self.agent.eval()
         for adv in self.adversaries:
@@ -258,7 +304,8 @@ class RAP(BaseController):
             eval_results["frames"] = frames
         # Other episodic stats from evaluation env.
         if len(env.queued_stats) > 0:
-            queued_stats = {k: np.asarray(v) for k, v in env.queued_stats.items()}
+            queued_stats = {k: np.asarray(v)
+                            for k, v in env.queued_stats.items()}
             eval_results.update(queued_stats)
         return eval_results
 
@@ -280,11 +327,14 @@ class RAP(BaseController):
 
         for adv_idx, adv_rollouts in rollout_splits:
             adv_results = self.adversaries[adv_idx].update(adv_rollouts)
-            adv_results = {k + "_adv{}".format(adv_idx): v for k, v in adv_results.items()}
+            adv_results = {
+                k + "_adv{}".format(adv_idx): v for k,
+                v in adv_results.items()}
             results.update(adv_results)
 
         # miscellaneous
-        results.update({"step": self.total_steps, "elapsed_time": time.time() - start, "adv_indices": [adv_idx for adv_idx, _ in rollout_splits]})
+        results.update({"step": self.total_steps, "elapsed_time": time.time(
+        ) - start, "adv_indices": [adv_idx for adv_idx, _ in rollout_splits]})
         return results
 
     def log_step(self, results):
@@ -305,15 +355,15 @@ class RAP(BaseController):
         # learning stats
         self.logger.add_scalars(
             {
-                k: results[k] 
+                k: results[k]
                 for k in ["policy_loss", "value_loss", "entropy_loss"]
-            }, 
-            step, 
+            },
+            step,
             prefix="loss")
         for adv_idx in results["adv_indices"]:
             self.logger.add_scalars(
                 {
-                    k: results[k + "_adv{}".format(adv_idx)] 
+                    k: results[k + "_adv{}".format(adv_idx)]
                     for k in ["policy_loss", "value_loss", "entropy_loss"]
                 },
                 step,
@@ -322,7 +372,8 @@ class RAP(BaseController):
         # performance stats
         ep_lengths = np.asarray(self.env.length_queue)
         ep_returns = np.asarray(self.env.return_queue)
-        ep_constraint_violation = np.asarray(self.env.queued_stats["constraint_violation"])
+        ep_constraint_violation = np.asarray(
+            self.env.queued_stats["constraint_violation"])
         self.logger.add_scalars(
             {
                 "ep_length": ep_lengths.mean(),
@@ -334,7 +385,8 @@ class RAP(BaseController):
             prefix="stat")
         # Total constraint violation during learning.
         total_violations = self.env.accumulated_stats["constraint_violation"]
-        self.logger.add_scalars({"constraint_violation": total_violations}, step, prefix="stat")
+        self.logger.add_scalars(
+            {"constraint_violation": total_violations}, step, prefix="stat")
         if "eval" in results:
             eval_ep_lengths = results["eval"]["ep_lengths"]
             eval_ep_returns = results["eval"]["ep_returns"]
@@ -356,13 +408,24 @@ class RAP(BaseController):
     def collect_rollouts(self):
         """Gets trajectories (full episodes) for both agent and adversaries."""
         # agent & adversary must have same obs & act space
-        rollouts = PPOBuffer(self.env.observation_space, self.env.action_space, self.rollout_steps, self.rollout_batch_size)
-        rollouts_adv = PPOBuffer(self.adv_obs_space, self.adv_act_space, self.rollout_steps, self.rollout_batch_size)
+        rollouts = PPOBuffer(
+            self.env.observation_space,
+            self.env.action_space,
+            self.rollout_steps,
+            self.rollout_batch_size)
+        rollouts_adv = PPOBuffer(
+            self.adv_obs_space,
+            self.adv_act_space,
+            self.rollout_steps,
+            self.rollout_batch_size)
 
         # sample adversaries
-        adv_indices = np.random.randint(self.num_adversaries, size=self.rollout_batch_size)
-        adv_indices.sort()
-        indices_groups, indices_splits = np.unique(adv_indices, return_index=True)
+        adv_indices = sorted(
+            np.random.randint(
+                self.num_adversaries,
+                size=self.rollout_batch_size))
+        indices_groups, indices_splits = np.unique(
+            adv_indices, return_index=True)
 
         # sample trajectories
         # TODO: fix it, never finish a full trajectory
@@ -372,15 +435,18 @@ class RAP(BaseController):
         for step in range(self.rollout_steps):
             # get actions
             with torch.no_grad():
-                act, v, logp = self.agent.ac.step(torch.FloatTensor(obs).to(self.device))
+                act, v, logp = self.agent.ac.step(
+                    torch.FloatTensor(obs).to(self.device))
 
                 # adversary actions
                 obs_groups = split_obs_by_adversary(obs, indices_splits)
                 out_adv = []
                 for idx, obs_adv in zip(indices_groups, obs_groups):
-                    out = self.adversaries[idx].ac.step(torch.FloatTensor(obs_adv).to(self.device))
+                    out = self.adversaries[idx].ac.step(
+                        torch.FloatTensor(obs_adv).to(self.device))
                     out_adv.append(out)
-                act_adv, v_adv, logp_adv = [np.concatenate(item) for item in zip(*out_adv)]
+                act_adv, v_adv, logp_adv = [
+                    np.concatenate(item) for item in zip(*out_adv)]
 
             # step env
             # self.env.set_adversary_control(act_adv)
@@ -396,25 +462,35 @@ class RAP(BaseController):
             terminal_v = np.zeros_like(v)
             terminal_v_adv = np.zeros_like(v_adv)
             for idx, inf in enumerate(info["n"]):
-                # if "TimeLimit.truncated" in inf and inf["TimeLimit.truncated"]:
+                # if "TimeLimit.truncated" in inf and
+                # inf["TimeLimit.truncated"]:
                 if "terminal_info" not in inf:
                     continue
                 inff = inf["terminal_info"]
                 if "TimeLimit.truncated" in inff and inff["TimeLimit.truncated"]:
                     terminal_obs = inf["terminal_observation"]
-                    terminal_obs_tensor = torch.FloatTensor(terminal_obs).unsqueeze(0).to(self.device)
+                    terminal_obs_tensor = torch.FloatTensor(
+                        terminal_obs).unsqueeze(0).to(self.device)
 
                     # estimate value for terminated state
-                    terminal_val = self.agent.ac.critic(terminal_obs_tensor).squeeze().detach().numpy()
+                    terminal_val = self.agent.ac.critic(
+                        terminal_obs_tensor).squeeze().detach().numpy()
                     terminal_v[idx] = terminal_val
 
                     # estimate terminal value for adversary
                     adversary = self.adversaries[adv_indices[idx]]
-                    terminal_val_adv = adversary.ac.critic(terminal_obs_tensor).squeeze().detach().numpy()
+                    terminal_val_adv = adversary.ac.critic(
+                        terminal_obs_tensor).squeeze().detach().numpy()
                     terminal_v_adv[idx] = terminal_val_adv
 
             # collect rollout data
-            rollouts.push({"obs": obs, "act": act, "rew": rew, "mask": mask, "v": v, "logp": logp, "terminal_v": terminal_v})
+            rollouts.push({"obs": obs,
+                           "act": act,
+                           "rew": rew,
+                           "mask": mask,
+                           "v": v,
+                           "logp": logp,
+                           "terminal_v": terminal_v})
             # no need to push `obs`, `mask` since they are the same
             rollouts_adv.push({
                 "act": act_adv,
@@ -429,7 +505,9 @@ class RAP(BaseController):
         self.total_steps += self.rollout_batch_size * self.rollout_steps
 
         # postprocess for main agent
-        last_val = self.agent.ac.critic(torch.FloatTensor(obs).to(self.device)).detach().numpy()
+        last_val = self.agent.ac.critic(
+            torch.FloatTensor(obs).to(
+                self.device)).detach().numpy()
         ret, adv = compute_returns_and_advantages(rollouts.rew,
                                                   rollouts.v,
                                                   rollouts.mask,
@@ -448,7 +526,9 @@ class RAP(BaseController):
         obs_groups = split_obs_by_adversary(obs, indices_splits)
         last_val_adv = []
         for idx, obs_adv in zip(indices_groups, obs_groups):
-            out = self.adversaries[idx].ac.critic(torch.FloatTensor(obs_adv).to(self.device)).detach().numpy()
+            out = self.adversaries[idx].ac.critic(
+                torch.FloatTensor(obs_adv).to(
+                    self.device)).detach().numpy()
             last_val_adv.append(out)
         last_val_adv = np.concatenate(last_val_adv)
 
@@ -470,10 +550,17 @@ class RAP(BaseController):
 
         for idx, s_idx, e_idx in zip(indices_groups, start, end):
             split_batch_size = e_idx - s_idx
-            rollout_split = PPOBuffer(self.adv_obs_space, self.adv_act_space, self.rollout_steps, split_batch_size)
+            rollout_split = PPOBuffer(
+                self.adv_obs_space,
+                self.adv_act_space,
+                self.rollout_steps,
+                split_batch_size)
             for k in rollouts_adv.scheme:
                 # rollout_split[k] = rollouts_adv[k][:, s_idx:e_idx]
-                setattr(rollout_split, k, getattr(rollouts_adv, k)[:, s_idx:e_idx])
+                setattr(
+                    rollout_split, k, getattr(
+                        rollouts_adv, k)[
+                        :, s_idx:e_idx])
             rollout_splits.append([idx, rollout_split])
 
         return rollouts, rollout_splits

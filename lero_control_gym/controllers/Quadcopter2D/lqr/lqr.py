@@ -24,9 +24,9 @@ from lero_control_gym.envs.benchmark_env import Cost, Task
 class LQR(BaseController):
     """Linear quadratic regulator.
 
-    Attributes: 
+    Attributes:
         env (gym.Env): environment for the task.
-        Q, R (np.array): cost weight matrix. 
+        Q, R (np.array): cost weight matrix.
         x_0, u_0 (np.array): equilibrium state & input.
         gain (np.array): input gain matrix.
 
@@ -89,15 +89,16 @@ class LQR(BaseController):
         self.pyb_freq = pyb_freq
         self.deque_size = deque_size
         self.random_init = random_init
-        self.env = env_func(cost=self.cost,
-                            randomized_init=random_init,
-                            init_state_randomization_info=init_state_randomization_info,
-                            randomized_inertial_prop=False,
-                            episode_len_sec=episode_len_sec,
-                            task=task,
-                            task_info=task_info,
-                            ctrl_freq=ctrl_freq,
-                            pyb_freq=pyb_freq)
+        self.env = env_func(
+            cost=self.cost,
+            randomized_init=random_init,
+            init_state_randomization_info=init_state_randomization_info,
+            randomized_inertial_prop=False,
+            episode_len_sec=episode_len_sec,
+            task=task,
+            task_info=task_info,
+            ctrl_freq=ctrl_freq,
+            pyb_freq=pyb_freq)
         self.env = RecordEpisodeStatistics(self.env, deque_size)
 
         # Controller params.
@@ -111,8 +112,13 @@ class LQR(BaseController):
         self.discrete_dynamics = discrete_dynamics
 
         if self.task == Task.STABILIZATION:
-            self.gain = compute_lqr_gain(self.model, self.x_0, self.u_0,
-                                         self.Q, self.R, self.discrete_dynamics)
+            self.gain = compute_lqr_gain(
+                self.model,
+                self.x_0,
+                self.u_0,
+                self.Q,
+                self.R,
+                self.discrete_dynamics)
 
         # Model step for debugging
         # self.env.reset()
@@ -190,7 +196,7 @@ class LQR(BaseController):
             P = scipy.linalg.solve_discrete_are(A, B, self.Q, self.R)
             btp = np.dot(B.T, P)
             gain = np.dot(np.linalg.inv(self.R + np.dot(btp, B)),
-                               np.dot(btp, A))
+                          np.dot(btp, A))
         else:
             # dx/dt = A x + B u
             P = scipy.linalg.solve_continuous_are(A, B, self.Q, self.R)
@@ -198,7 +204,13 @@ class LQR(BaseController):
 
         return gain
 
-    def run(self, n_episodes=1, render=False, logging=False, verbose=False, use_adv=False):
+    def run(
+            self,
+            n_episodes=1,
+            render=False,
+            logging=False,
+            verbose=False,
+            use_adv=False):
         """Runs evaluation with current policy.
 
         Args:
@@ -207,7 +219,7 @@ class LQR(BaseController):
 
         Returns:
             dict: evaluation results
-            
+
         """
         ep_returns, ep_lengths = [], []
         frames = []
@@ -216,7 +228,7 @@ class LQR(BaseController):
 
         # Reseed for batch-wise consistency.
         obs = self.env.reset()
-        ep_seed = 1 #self.env.SEED
+        ep_seed = 1  # self.env.SEED
 
         while len(ep_returns) < self.eval_batch_size:
             # Current goal.
@@ -240,7 +252,13 @@ class LQR(BaseController):
                 goal_stack = current_goal
 
                 # Print initial state.
-                print(colored("initial state (%d): " % ep_seed + get_arr_str(self.env.state), "green"))
+                print(
+                    colored(
+                        "initial state (%d): " %
+                        ep_seed +
+                        get_arr_str(
+                            self.env.state),
+                        "green"))
 
             else:
                 # Save state and input.
@@ -288,39 +306,58 @@ class LQR(BaseController):
                                                   self.save_data,
                                                   self.plot_dir, self.data_dir)
                     if self.ep_counter == 0:
-                        ep_rmse = np.array([analysis_data["state_rmse_scalar"]])
+                        ep_rmse = np.array(
+                            [analysis_data["state_rmse_scalar"]])
                     else:
-                        ep_rmse = np.vstack((ep_rmse, analysis_data["state_rmse_scalar"]))
+                        ep_rmse = np.vstack(
+                            (ep_rmse, analysis_data["state_rmse_scalar"]))
 
                 # Update iteration return and length lists.
                 assert "episode" in info
                 ep_returns.append(info["episode"]["r"])
                 ep_lengths.append(info["episode"]["l"])
 
-                print(colored("Test Run %d reward %.2f" % (self.ep_counter, ep_returns[-1]), "yellow"))
-                print(colored("initial state: " + get_arr_str(x_init), "yellow"))
+                print(colored("Test Run %d reward %.2f" %
+                              (self.ep_counter, ep_returns[-1]), "yellow"))
+                print(
+                    colored(
+                        "initial state: " +
+                        get_arr_str(x_init),
+                        "yellow"))
                 if self.task == Task.STABILIZATION:
-                    print(colored("final state: " + get_arr_str(self.env.state),  "yellow"))
-                    print(colored("goal state: " + get_arr_str(self.x_0), "yellow"))
+                    print(
+                        colored(
+                            "final state: " +
+                            get_arr_str(
+                                self.env.state),
+                            "yellow"))
+                    print(
+                        colored(
+                            "goal state: " +
+                            get_arr_str(
+                                self.x_0),
+                            "yellow"))
                 print(colored("==========================\n", "yellow"))
 
                 # Save reward
                 if self.save_data:
-                    np.savetxt(self.data_dir + "test%d_rewards.csv" % self.ep_counter, np.array([ep_returns[-1]]), delimiter=',', fmt='%.8f')
+                    np.savetxt(self.data_dir + "test%d_rewards.csv" % self.ep_counter,
+                               np.array([ep_returns[-1]]), delimiter=',', fmt='%.8f')
 
                 self.ep_counter += 1
                 ep_seed += 1
                 self.k = 0
-                self.env = self.env_func(cost=self.cost,
-                                    randomized_init=self.random_init,
-                                    seed=ep_seed,
-                                    init_state_randomization_info=self.init_state_randomization_info,
-                                    randomized_inertial_prop=False,
-                                    episode_len_sec=self.episode_len_sec,
-                                    task=self.task,
-                                    task_info=self.task_info,
-                                    ctrl_freq=self.ctrl_freq,
-                                    pyb_freq=self.pyb_freq)
+                self.env = self.env_func(
+                    cost=self.cost,
+                    randomized_init=self.random_init,
+                    seed=ep_seed,
+                    init_state_randomization_info=self.init_state_randomization_info,
+                    randomized_inertial_prop=False,
+                    episode_len_sec=self.episode_len_sec,
+                    task=self.task,
+                    task_info=self.task_info,
+                    ctrl_freq=self.ctrl_freq,
+                    pyb_freq=self.pyb_freq)
                 self.env = RecordEpisodeStatistics(self.env, self.deque_size)
                 obs = self.env.reset()
 
@@ -330,12 +367,16 @@ class LQR(BaseController):
         if logging:
             msg = "****** Evaluation ******\n"
             msg += "eval_ep_length {:.2f} +/- {:.2f} | eval_ep_return {:.3f} +/- {:.3f}\n".format(
-                ep_lengths.mean(), ep_lengths.std(), ep_returns.mean(),
-                ep_returns.std())
+                ep_lengths.mean(), ep_lengths.std(), ep_returns.mean(), ep_returns.std())
             self.logger.info(msg + "\n")
 
         if self.save_data:
-            np.savetxt(self.data_dir + "all_test_mean_rmse.csv", ep_rmse, delimiter=',', fmt='%.8f')
+            np.savetxt(
+                self.data_dir +
+                "all_test_mean_rmse.csv",
+                ep_rmse,
+                delimiter=',',
+                fmt='%.8f')
 
         eval_results = {"ep_returns": ep_returns, "ep_lengths": ep_lengths}
         if len(frames) > 0 and frames[0] is not None:

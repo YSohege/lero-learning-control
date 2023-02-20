@@ -9,7 +9,8 @@ import importlib
 try:
     import importlib.resources as pkg_resources
 except ImportError:
-    import importlib_resources as pkg_resources  # Try backported to PY<37 `importlib_resources`.
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
 
 
 def load(name):
@@ -63,7 +64,9 @@ class Spec():
             # No default config.
             config = {}
         else:
-            raise Exception("Config type {} is not supported.".format(self.config_entry_point))
+            raise Exception(
+                "Config type {} is not supported.".format(
+                    self.config_entry_point))
         return config
 
     def make(self, *args, **kwargs):
@@ -71,7 +74,9 @@ class Spec():
 
         """
         if self.entry_point is None:
-            raise Exception('Attempting to make deprecated env {}.'.format(self.id))
+            raise Exception(
+                'Attempting to make deprecated env {}.'.format(
+                    self.id))
         if callable(self.entry_point):
             obj = self.entry_point(*args, **kwargs)
         else:
@@ -116,14 +121,15 @@ class Registry():
             mod_name, id = path.split(':')
             try:
                 importlib.import_module(mod_name)
-            except:
-                raise Exception('''A module ({}) was specified for the environment but was not found,make sure the
+            except BaseException:
+                raise Exception(
+                    '''A module ({}) was specified for the environment but was not found,make sure the
                                 package is installed with `pip install` before calling `gym.make()`'''.format(mod_name))
         else:
             id = path
         try:
             return self.specs[id]
-        except:
+        except BaseException:
             raise Exception("Key not found in registry.")
 
     def register(self, id, **kwargs):
@@ -163,5 +169,6 @@ def get_config(id):
     return registry.spec(id).get_config()
 
 
-# Registry: global registry (singleton) used by functions `register`, `make`, `spec` and `get_config`.
+# Registry: global registry (singleton) used by functions `register`,
+# `make`, `spec` and `get_config`.
 registry = Registry()

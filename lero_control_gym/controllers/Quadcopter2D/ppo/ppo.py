@@ -10,7 +10,7 @@ Additional references:
     * pytorch-a2c-ppo-acktr-gail - https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
     * openai spinning up - ppo - https://github.com/openai/spinningup/tree/master/spinup/algos/pytorch/ppo
     * stable baselines3 - ppo - https://github.com/DLR-RM/stable-baselines3/tree/master/stable_baselines3/ppo
-    
+
 """
 import os
 import time
@@ -40,14 +40,27 @@ class PPO(BaseController):
                  use_gpu=False,
                  seed=0,
                  **kwargs):
-        super().__init__(env_func, training, checkpoint_path, output_dir, use_gpu, seed, **kwargs)
+        super().__init__(
+            env_func,
+            training,
+            checkpoint_path,
+            output_dir,
+            use_gpu,
+            seed,
+            **kwargs)
         # Task.
         if self.training:
             # Training and testing.
-            self.env = make_vec_envs(env_func, None, self.rollout_batch_size, self.num_workers, seed)
+            self.env = make_vec_envs(
+                env_func,
+                None,
+                self.rollout_batch_size,
+                self.num_workers,
+                seed)
             self.env = VecRecordEpisodeStatistics(self.env, self.deque_size)
             self.eval_env = env_func(seed=seed * 111)
-            self.eval_env = RecordEpisodeStatistics(self.eval_env, self.deque_size)
+            self.eval_env = RecordEpisodeStatistics(
+                self.eval_env, self.deque_size)
         else:
             # Testing only.
             self.env = env_func()
@@ -68,10 +81,12 @@ class PPO(BaseController):
         # Pre-/post-processing.
         self.obs_normalizer = BaseNormalizer()
         if self.norm_obs:
-            self.obs_normalizer = MeanStdNormalizer(shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
+            self.obs_normalizer = MeanStdNormalizer(
+                shape=self.env.observation_space.shape, clip=self.clip_obs, epsilon=1e-8)
         self.reward_normalizer = BaseNormalizer()
         if self.norm_reward:
-            self.reward_normalizer = RewardStdNormalizer(gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
+            self.reward_normalizer = RewardStdNormalizer(
+                gamma=self.gamma, clip=self.clip_reward, epsilon=1e-8)
         # Logging.
         if self.training:
             log_file_out = True
@@ -80,7 +95,10 @@ class PPO(BaseController):
             # Disable logging to file and tfboard for evaluation.
             log_file_out = False
             use_tensorboard = False
-        self.logger = ExperimentLogger(output_dir, log_file_out=log_file_out, use_tensorboard=use_tensorboard)
+        self.logger = ExperimentLogger(
+            output_dir,
+            log_file_out=log_file_out,
+            use_tensorboard=use_tensorboard)
 
     def reset(self):
         """Do initializations for training or evaluation.
@@ -92,7 +110,7 @@ class PPO(BaseController):
             self.env.add_tracker("constraint_violation", 0, mode="queue")
             self.eval_env.add_tracker("constraint_violation", 0, mode="queue")
             self.eval_env.add_tracker("mse", 0, mode="queue")
-            
+
             self.total_steps = 0
             obs, _ = self.env.reset()
             self.obs = self.obs_normalizer(obs)
@@ -163,22 +181,34 @@ class PPO(BaseController):
         while self.total_steps < self.max_env_steps:
             results = self.train_step()
             # Checkpoint.
-            if self.total_steps >= self.max_env_steps or (self.save_interval and self.total_steps % self.save_interval == 0):
+            if self.total_steps >= self.max_env_steps or (
+                    self.save_interval and self.total_steps %
+                    self.save_interval == 0):
                 # Latest/final checkpoint.
                 self.save(self.checkpoint_path)
-                self.logger.info("Checkpoint | {}".format(self.checkpoint_path))
-            if self.num_checkpoints and self.total_steps % (self.max_env_steps // self.num_checkpoints) == 0:
+                self.logger.info(
+                    "Checkpoint | {}".format(
+                        self.checkpoint_path))
+            if self.num_checkpoints and self.total_steps % (
+                    self.max_env_steps // self.num_checkpoints) == 0:
                 # Intermediate checkpoint.
-                path = os.path.join(self.output_dir, "checkpoints", "model_{}.pt".format(self.total_steps))
+                path = os.path.join(
+                    self.output_dir,
+                    "checkpoints",
+                    "model_{}.pt".format(
+                        self.total_steps))
                 self.save(path)
             # Evaluation.
             if self.eval_interval and self.total_steps % self.eval_interval == 0:
-                eval_results = self.run(env=self.eval_env, n_episodes=self.eval_batch_size)
+                eval_results = self.run(
+                    env=self.eval_env, n_episodes=self.eval_batch_size)
                 results["eval"] = eval_results
-                self.logger.info("Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(eval_results["ep_lengths"].mean(),
-                                                                                                            eval_results["ep_lengths"].std(),
-                                                                                                            eval_results["ep_returns"].mean(),
-                                                                                                            eval_results["ep_returns"].std()))
+                self.logger.info(
+                    "Eval | ep_lengths {:.2f} +/- {:.2f} | ep_return {:.3f} +/- {:.3f}".format(
+                        eval_results["ep_lengths"].mean(),
+                        eval_results["ep_lengths"].std(),
+                        eval_results["ep_returns"].mean(),
+                        eval_results["ep_returns"].std()))
                 # Save best model.
                 eval_score = eval_results["ep_returns"].mean()
                 eval_best_score = getattr(self, "eval_best_score", -np.infty)
@@ -210,7 +240,7 @@ class PPO(BaseController):
                 env.add_tracker("constraint_violation", 0, mode="queue")
                 env.add_tracker("constraint_values", 0, mode="queue")
                 env.add_tracker("mse", 0, mode="queue")
-                
+
         obs, info = env.reset()
         obs = self.obs_normalizer(obs)
         ep_returns, ep_lengths = [], []
@@ -239,7 +269,8 @@ class PPO(BaseController):
             eval_results["frames"] = frames
         # Other episodic stats from evaluation env.
         if len(env.queued_stats) > 0:
-            queued_stats = {k: np.asarray(v) for k, v in env.queued_stats.items()}
+            queued_stats = {k: np.asarray(v)
+                            for k, v in env.queued_stats.items()}
             eval_results.update(queued_stats)
         return eval_results
 
@@ -249,12 +280,17 @@ class PPO(BaseController):
         """
         self.agent.train()
         self.obs_normalizer.unset_read_only()
-        rollouts = PPOBuffer(self.env.observation_space, self.env.action_space, self.rollout_steps, self.rollout_batch_size)
+        rollouts = PPOBuffer(
+            self.env.observation_space,
+            self.env.action_space,
+            self.rollout_steps,
+            self.rollout_batch_size)
         obs = self.obs
         start = time.time()
         for step in range(self.rollout_steps):
             with torch.no_grad():
-                act, v, logp = self.agent.ac.step(torch.FloatTensor(obs).to(self.device))
+                act, v, logp = self.agent.ac.step(
+                    torch.FloatTensor(obs).to(self.device))
             next_obs, rew, done, info = self.env.step(act)
             next_obs = self.obs_normalizer(next_obs)
             rew = self.reward_normalizer(rew, done)
@@ -267,15 +303,25 @@ class PPO(BaseController):
                 inff = inf["terminal_info"]
                 if "TimeLimit.truncated" in inff and inff["TimeLimit.truncated"]:
                     terminal_obs = inf["terminal_observation"]
-                    terminal_obs_tensor = torch.FloatTensor(terminal_obs).unsqueeze(0).to(self.device)
-                    terminal_val = self.agent.ac.critic(terminal_obs_tensor).squeeze().detach().cpu().numpy()
+                    terminal_obs_tensor = torch.FloatTensor(
+                        terminal_obs).unsqueeze(0).to(self.device)
+                    terminal_val = self.agent.ac.critic(
+                        terminal_obs_tensor).squeeze().detach().cpu().numpy()
                     terminal_v[idx] = terminal_val
-            rollouts.push({"obs": obs, "act": act, "rew": rew, "mask": mask, "v": v, "logp": logp, "terminal_v": terminal_v})
+            rollouts.push({"obs": obs,
+                           "act": act,
+                           "rew": rew,
+                           "mask": mask,
+                           "v": v,
+                           "logp": logp,
+                           "terminal_v": terminal_v})
             obs = next_obs
         self.obs = obs
         self.total_steps += self.rollout_batch_size * self.rollout_steps
         # Learn from rollout batch.
-        last_val = self.agent.ac.critic(torch.FloatTensor(obs).to(self.device)).detach().cpu().numpy()
+        last_val = self.agent.ac.critic(
+            torch.FloatTensor(obs).to(
+                self.device)).detach().cpu().numpy()
         ret, adv = compute_returns_and_advantages(rollouts.rew,
                                                   rollouts.v,
                                                   rollouts.mask,
@@ -288,7 +334,8 @@ class PPO(BaseController):
         # Prevent divide-by-0 for repetitive tasks.
         rollouts.adv = (adv - adv.mean()) / (adv.std() + 1e-6)
         results = self.agent.update(rollouts, self.device)
-        results.update({"step": self.total_steps, "elapsed_time": time.time() - start})
+        results.update({"step": self.total_steps,
+                        "elapsed_time": time.time() - start})
         return results
 
     def log_step(self,
@@ -312,15 +359,16 @@ class PPO(BaseController):
         # Learning stats.
         self.logger.add_scalars(
             {
-                k: results[k] 
+                k: results[k]
                 for k in ["policy_loss", "value_loss", "entropy_loss", "approx_kl"]
-            }, 
-            step, 
+            },
+            step,
             prefix="loss")
         # Performance stats.
         ep_lengths = np.asarray(self.env.length_queue)
         ep_returns = np.asarray(self.env.return_queue)
-        ep_constraint_violation = np.asarray(self.env.queued_stats["constraint_violation"])
+        ep_constraint_violation = np.asarray(
+            self.env.queued_stats["constraint_violation"])
         self.logger.add_scalars(
             {
                 "ep_length": ep_lengths.mean(),
@@ -332,7 +380,8 @@ class PPO(BaseController):
             prefix="stat")
         # Total constraint violation during learning.
         total_violations = self.env.accumulated_stats["constraint_violation"]
-        self.logger.add_scalars({"constraint_violation": total_violations}, step, prefix="stat")
+        self.logger.add_scalars(
+            {"constraint_violation": total_violations}, step, prefix="stat")
         if "eval" in results:
             eval_ep_lengths = results["eval"]["ep_lengths"]
             eval_ep_returns = results["eval"]["ep_returns"]

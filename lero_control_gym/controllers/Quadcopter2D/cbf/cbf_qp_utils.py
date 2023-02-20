@@ -30,7 +30,8 @@ def cbf_cartpole(X, x_pos_max, x_vel_max, theta_max, theta_dot_max):
     # cbf_func = cs.Function('barrier', [X], [cbf], ['X'], ['cbf'])
     # cbf = 0.5 * (1 - (X[0]) ** 2 / (x_pos_max) ** 2 - (X[3]) ** 2 / (theta_dot_max) ** 2)
     # cbf_func = cs.Function('barrier', [X], [cbf], ['X'], ['cbf'])
-    cbf = 0.5 * (1 - (X[0]) ** 2 / (x_pos_max) ** 2 - (X[1]) ** 2 / (x_vel_max) ** 2)
+    cbf = 0.5 * (1 - (X[0]) ** 2 / (x_pos_max) **
+                 2 - (X[1]) ** 2 / (x_vel_max) ** 2)
     cbf_func = cs.Function('barrier', [X], [cbf], ['X'], ['cbf'])
     return cbf_func
 
@@ -121,7 +122,8 @@ class CBFBuffer(object):
 
         """
         for k, info in self.scheme.items():
-            assert "vshape" in info, "Scheme must define vshape for {}".format(k)
+            assert "vshape" in info, "Scheme must define vshape for {}".format(
+                k)
             vshape = info["vshape"]
             dtype = info.get("dtype", np.float32)
             init = info.get("init", np.zeros)

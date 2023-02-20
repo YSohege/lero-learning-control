@@ -40,32 +40,47 @@ def plot_is_cbf(infeasible_states, maximum_states):
 
     for i, plot in enumerate(plots):
         if plot[0] == "theta" and plot[1] == "theta_dot":
-            plt.plot(max_states[plot[0]] * np.sin(phi), max_states[plot[1]] * np.cos(phi), label="superlevel set")
+            plt.plot(max_states[plot[0]] *
+                     np.sin(phi), max_states[plot[1]] *
+                     np.cos(phi), label="superlevel set")
         plt.xlabel(plot[0])
         plt.ylabel(plot[1])
 
         if len(infeasible_states) > 0:
             for index, infeasible_state in enumerate(infeasible_states):
                 if index == 0:
-                    plt.plot(infeasible_state[state_ids[plot[0]]], infeasible_state[state_ids[plot[1]]], "rx",
+                    plt.plot(infeasible_state[state_ids[plot[0]]],
+                             infeasible_state[state_ids[plot[1]]],
+                             "rx",
                              label="infeasible state")
                 else:
-                    plt.plot(infeasible_state[state_ids[plot[0]]], infeasible_state[state_ids[plot[1]]], "rx")
+                    plt.plot(infeasible_state[state_ids[plot[0]]],
+                             infeasible_state[state_ids[plot[1]]], "rx")
 
         plt.legend()
         plt.show()
 
 
 def plot_test(stats_buffer, maximum_states):
-    state_ids = {"state/x_pos": 0, "state/x_dot": 1, "state/theta": 2, "state/theta_dot": 3}
+    state_ids = {
+        "state/x_pos": 0,
+        "state/x_dot": 1,
+        "state/theta": 2,
+        "state/theta_dot": 3}
     max_states = {}
     for i, state_id in enumerate(state_ids.keys()):
         max_states[state_id] = maximum_states[i]
 
-    plots = [["t", ["action/safe_input", "action/unsafe_input", "action/applied_input"]],
-             ["state/theta", "state/theta_dot"],
-             ["state/x_pos", "state/x_dot"],
-             ["state/x_pos", "state/theta"]]
+    plots = [["t",
+              ["action/safe_input",
+               "action/unsafe_input",
+               "action/applied_input"]],
+             ["state/theta",
+              "state/theta_dot"],
+             ["state/x_pos",
+              "state/x_dot"],
+             ["state/x_pos",
+              "state/theta"]]
 
     t = range(len(stats_buffer[plots[0][1][0]]))
     print("Num time steps:", len(t))
@@ -81,13 +96,18 @@ def plot_test(stats_buffer, maximum_states):
         else:
             plot_x = stats_buffer[plot[0]]
             if plot[0] == "state/theta" and plot[1] == "state/theta_dot":
-                plt.plot(max_states[plot[0]] * np.sin(phi), max_states[plot[1]] * np.cos(phi), "b-",
-                         label="superlevel set")
+                plt.plot(max_states[plot[0]] *
+                         np.sin(phi), max_states[plot[1]] *
+                         np.cos(phi), "b-", label="superlevel set")
             plt.xlabel(plot[0])
             plt.ylabel(plot[1])
         if isinstance(plot[1], list):
             for index, plot_y_id in enumerate(plot[1]):
-                plt.plot(plot_x, stats_buffer[plot_y_id], line_styles[index], label=plot_y_id)
+                plt.plot(
+                    plot_x,
+                    stats_buffer[plot_y_id],
+                    line_styles[index],
+                    label=plot_y_id)
         else:
             plot_y = stats_buffer[plot[1]]
             plt.plot(plot_x, plot_y)
@@ -146,7 +166,8 @@ def is_cbf(config):
         num_points = config.algo_config.num_points
         tolerance = config.algo_config.tolerance
 
-        is_cbf[i], infeasible_states = control_agent.is_cbf(num_points=num_points, tolerance=tolerance)
+        is_cbf[i], infeasible_states = control_agent.is_cbf(
+            num_points=num_points, tolerance=tolerance)
         control_agent.close()
 
         plot_is_cbf(infeasible_states, maximum_states)
@@ -167,11 +188,11 @@ def is_cbf(config):
 
 def train(config):
     """General training template.
-    
+
     Usage:
         * to start training, use with `--func train`.
-        * to restore from a previous training, additionally use `--restore {dir_path}` 
-            where `dir_path` is the output folder from previous training.  
+        * to restore from a previous training, additionally use `--restore {dir_path}`
+            where `dir_path` is the output folder from previous training.
 
     """
     # Evaluation setup
@@ -188,14 +209,17 @@ def train(config):
                        output_dir=config.output_dir,
                        **config.task_config)
 
-    unsafe_control_agent = make(config.algo_config["unsafe_controller"],
-                                env_func,
-                                training=False,
-                                checkpoint_path=os.path.join(config.output_dir, "model_latest.pt"),
-                                output_dir=config.output_dir,
-                                device=config.device,
-                                seed=config.seed,
-                                **config.algo_config)
+    unsafe_control_agent = make(
+        config.algo_config["unsafe_controller"],
+        env_func,
+        training=False,
+        checkpoint_path=os.path.join(
+            config.output_dir,
+            "model_latest.pt"),
+        output_dir=config.output_dir,
+        device=config.device,
+        seed=config.seed,
+        **config.algo_config)
 
     config.algo_config["unsafe_controller"] = unsafe_control_agent
 
@@ -220,10 +244,10 @@ def train(config):
 
 def test_policy(config):
     """Run the (trained) policy/controller for evaluation.
-    
+
     Usage
         * use with `--func test`.
-        * to test policy from a trained model checkpoint, additionally use 
+        * to test policy from a trained model checkpoint, additionally use
             `--restore {dir_path}` where `dir_path` is folder to the trained model.
         * to test un-trained policy (e.g. non-learning based), use as it is.
 
@@ -242,14 +266,17 @@ def test_policy(config):
                        output_dir=config.output_dir,
                        **config.task_config)
 
-    unsafe_control_agent = make(config.algo_config["unsafe_controller"],
-                                env_func,
-                                training=False,
-                                checkpoint_path=os.path.join(config.output_dir, "model_latest.pt"),
-                                output_dir=config.output_dir,
-                                device=config.device,
-                                seed=config.seed,
-                                **config.algo_config)
+    unsafe_control_agent = make(
+        config.algo_config["unsafe_controller"],
+        env_func,
+        training=False,
+        checkpoint_path=os.path.join(
+            config.output_dir,
+            "model_latest.pt"),
+        output_dir=config.output_dir,
+        device=config.device,
+        seed=config.seed,
+        **config.algo_config)
 
     config.algo_config["unsafe_controller"] = unsafe_control_agent
 
