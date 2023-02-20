@@ -1,14 +1,10 @@
 # Lero Learning Control 
 
-This repository is by [Yves Sohege](https://github.com/YSohege) and produced under the "Grant No"
-as a unified place to host experimental source code and results in a replicable way. 
+The "Lero Learning Control" repository, created by [Dr. Yves Sohege](https://github.com/YSohege) , is a dedicated hub for sharing experimental source code and results related to learning control. This repository is part of a larger effort funded by Science Foundation Ireland, through "Grant No," to support software research and development at [Lero](https://lero.ie/) - University College Cork, a world-renowned software research center.
 
-[Lero](https://lero.ie/) is a world leading software research centre funded by Science Foundation Ireland.
+The repository provides a centralized and replicable location for researchers, practitioners, and other interested parties to access and utilize the experimental source code and results contained within. This allows for improved collaboration and greater transparency in the field of learning control, facilitating further research and experimentation.
 
-
-If you find this repository helpful in your publications, experimentations or other research,
-please consider citing :
-
+If you find the "Lero Learning Control" repository helpful in your own publications, experiments, or other research, the creators kindly request that you consider citing their work in your own publications. This citation will help to promote and support the continued development of this valuable resource for the learning control community:
 ```
 @misc{leroLearningControl2021,
   title={{Lero Learning Control Repository}},
