@@ -65,7 +65,7 @@ Install the required libraries:
 python setup.py install
 ```
 
-Note that you may need to use pyhton3/pip3 instead of python/pip on some Linux distributions.
+Note that you may need to use python3 / pip3 instead of python / pip on some Linux distributions.
 
 
 
