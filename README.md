@@ -77,3 +77,16 @@ Note that you may need to use python3 / pip3 instead of python / pip on some Lin
 - [SafeExplorer](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/safeexplorer)
 - [Randomized Blended MPC Control - RBCMPC](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rbcmpc)
 - [Randomized Blended PID COntrol - RBCPID](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter2D/rbcpid)
+
+
+### 3 Dimensional Quadcopter Environment 
+- [Multiple Model Adaptive PID Control - MMACPID](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/mmacpid)
+- [Fixed Distribution Randomized Blended PID Control](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/fixed_dist_rbcpid)
+- [Switched PID Control ]([https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/mpc](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/optimal_mmacpid))
+- [Randomized Blended PID Control ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/rbcpid)
+- [Reinforcement Learning Randomized Blended PID Control - RLRBCPID ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/rl_rbcpid)
+- [Uniform Randomized Blended Control](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/controllers/Quadcopter3D/uniform_rbcpid)
+
+
+
+
