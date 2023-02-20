@@ -43,12 +43,12 @@ please consider citing :
 
 ## List of Tasks
 Tasks require a Controller / Environment pair and return an performance metric after completion. 
-1) [Blended Control Task (3D Quadcopter / RBCPID Controller) - Set blending weigth at each step - used for reinforcement learning ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Blended_Control_Task)
-2) [Fixed Distribution Blended Control Task (3D Quadcopter / Fixed Distribution RBCPID Controller) - Evaluate the tracking performance of RBCPID using a fixed distribution](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Fixed_Distribution_RBC)
-3) [Optimal Switching Control Task (3D Quadcopter / Switched PID Controller) - Evaluate the tracking performance of Switching Control with no fault identification delay (optimal baseline) ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Optimal_Switching)
-4) [RL Distribuition for Blended Control (3D Quadcopter / RLRBCPID Controller) - Learn optimal randomized blended control distribution ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_RL_Distribution_RBC)
-5) [Simple MMAC Quadcopter tracking (3D Quadcopter / MMACPID Controller) - Simple tractory tracking task ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Trajectory_Tracking)
-6) [Uniform RBCPID Quadcopter tracking (3D Quadcopter / Uni RBCPID Controller) - Evaluate the tracking performance of uniformly sampled blending weights.  ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Uniform_RBC)
+1) [Blended Control Task (3D Quadcopter / RBCPID Controller)](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Blended_Control_Task)- Set blending weigth at each step - used for reinforcement learning
+2) [Fixed Distribution Blended Control Task (3D Quadcopter / Fixed Distribution RBCPID Controller) ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Fixed_Distribution_RBC)- Evaluate the tracking performance of RBCPID using a fixed distribution
+3) [Optimal Switching Control Task (3D Quadcopter / Switched PID Controller)](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Optimal_Switching) - Evaluate the tracking performance of Switching Control with no fault identification delay (optimal baseline) 
+4) [RL Distribuition for Blended Control (3D Quadcopter / RLRBCPID Controller) ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_RL_Distribution_RBC)- Learn optimal randomized blended control distribution 
+5) [Simple MMAC Quadcopter tracking (3D Quadcopter / MMACPID Controller)  ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Trajectory_Tracking)- Simple tractory tracking task
+6) [Uniform RBCPID Quadcopter tracking (3D Quadcopter / Uni RBCPID Controller)  ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/tasks/Quadcopter3D_Uniform_RBC)- Evaluate the tracking performance of uniformly sampled blending weights. 
 
 
 ## List of Tuning Algorithms
