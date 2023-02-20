@@ -19,7 +19,7 @@ please consider citing :
 ```
 
 ## Setup and Dependencies
-Windows
+### Windows
 Install Python 3.x from the official Python website: https://www.python.org/downloads/windows/
 
 Open Command Prompt or PowerShell as an administrator.
@@ -27,40 +27,43 @@ Open Command Prompt or PowerShell as an administrator.
 Navigate to the directory where you want to install Lero Learning Control.
 
 Clone the repository:
-$ git clone https://github.com/YSohege/lero-learning-control.git
-
+```
+git clone https://github.com/YSohege/lero-learning-control.git
+```
 Navigate to the repository:
-$ cd lero_learning_control
-
+```
+cd lero_learning_control
+```
 Install the required libraries:
-$ python setup.py install
+```
+python setup.py install
+```
 
 
-
-Linux
+### Linux
 Install Python 3.x using your system's package manager. For example, on Ubuntu, you can use the following command:
-
-$ sudo apt-get install python3
+```
+sudo apt-get install python3
+```
 
 Open a terminal window.
 
 Navigate to the directory where you want to install Lero Learning Control.
 
 Clone the repository:
-
-
-$ git clone https://github.com/YSohege/lero-learning-control.git
-
+```
+git clone https://github.com/YSohege/lero-learning-control.git
+```
 
 Navigate to the repository:
 ```
-$ cd lero_learning_control
+cd lero_learning_control
 ```
 
 Install the required libraries:
-
-$ python setup.py install
-
+```
+python setup.py install
+```
 
 Note that you may need to use pyhton3/pip3 instead of python/pip on some Linux distributions.
 
