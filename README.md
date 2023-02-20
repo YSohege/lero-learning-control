@@ -53,9 +53,9 @@ $ git clone https://github.com/YSohege/lero-learning-control.git
 
 
 Navigate to the repository:
-
+```
 $ cd lero_learning_control
-
+```
 
 Install the required libraries:
 
