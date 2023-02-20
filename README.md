@@ -1,6 +1,6 @@
 # Lero Learning Control 
 
-The "Lero Learning Control" repository is a dedicated hub for sharing experimental source code and results related to learning control. This repository is part of a larger effort funded by Science Foundation Ireland, through "Grant No," to support software research and development at [Lero](https://lero.ie/) - University College Cork, a world-renowned software research center.
+The "Lero Learning Control" repository is a dedicated hub for sharing experimental source code and results related to learning control. This repository is part of a larger effort funded by Science Foundation Ireland, through "Grant No," to support software research and development at [Lero](https://lero.ie/) - University College Cork, Ireland.
 
 The repository provides a centralized and replicable location for researchers, practitioners, and other interested parties to access and utilize the experimental source code and results contained within. This allows for improved collaboration and greater transparency in the field of learning control, facilitating further research and experimentation.
 
