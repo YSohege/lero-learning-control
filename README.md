@@ -38,30 +38,24 @@ python setup.py install
 
 
 ### Linux
-Install Python 3.x using your system's package manager. For example, on Ubuntu, you can use the following command:
+1) Install Python 3.x using your system's package manager. For example, on Ubuntu, you can use the following command:
 ```
 sudo apt-get install python3
 ```
-
-Open a terminal window.
-
-Navigate to the directory where you want to install Lero Learning Control.
-
-Clone the repository:
+2) Open a terminal window.
+3) Navigate to the directory where you want to install Lero Learning Control.
+4) Clone the repository:
 ```
 git clone https://github.com/YSohege/lero-learning-control.git
 ```
-
-Navigate to the repository:
+5) Navigate to the repository:
 ```
 cd lero_learning_control
 ```
-
-Install the required libraries:
+6) Install the required libraries:
 ```
 python setup.py install
 ```
-
 Note that you may need to use python3 / pip3 instead of python / pip on some Linux distributions.
 
 
