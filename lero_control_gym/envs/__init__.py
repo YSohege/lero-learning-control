@@ -20,3 +20,8 @@ register(
     id="quadcopter3D",
     entry_point="lero_control_gym.envs.quadcopter3D.quadcopter3D:Quadcopter",
     config_entry_point="lero_control_gym.envs.quadcopter3D:quadcopter3D.yaml")
+
+
+register(id="network_underwater_ROV",
+         entry_point="lero_control_gym.envs.Networked_Underwater_ROV.Networked_Underwater_ROV:Networked_Underwater_ROV",
+         config_entry_point="lero_control_gym.envs.Networked_Underwater_ROV:Networked_Underwater_ROV.yaml")
