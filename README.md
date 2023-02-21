@@ -58,13 +58,13 @@ Tuning algorithms execute Tasks repeadedly to maximize the achieved performance 
 
 ## List of Example Experiments
 Experiments run the Tuning algorithms or Tasks in a systematic way based on their configurations. The experiments are repeatable and all random seeds are fixed in the config files.
-1) [2D Quadcopter - RBCMPC versus RBCPID trajectory tracking performance](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment1_2DQuadcopter_Randomized_PID_versus_Randomized_MPC)
-2) [3D Quadcopter - Switched Control](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment2_3DQuadcopter_MMAC_PID)
-3) [3D Quadcopter - Data Generation under various fault and disturbances](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment3_3DQuadcopter_DataGeneration)
+1) [2D Quadcopter - RBCMPC versus RBCPID trajectory tracking performance](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/experiments/Experiment1_2DQuadcopter_Randomized_PID_versus_Randomized_MPC)
+2) [3D Quadcopter - Switched Control](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/experiments/Experiment2_3DQuadcopter_MMAC_PID)
+3) [3D Quadcopter - Data Generation under various fault and disturbances](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/experiments/Experiment3_3DQuadcopter_DataGeneration)
 4) [3D Quadcopter - MPC Test](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment4_QuadSim_MPC_Test)
-5) [3D Quadcopter - Controller Tuning using Clustered Particle Filtering (CPF)](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment5-CPF-3DQuadcopter)
-6) [Execution speed test - numpy versus torch / CPU versus GPU ](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment6_Speedtest)
-7) [3D Quadcopter - Simple MPC control for trajectory tracking](https://github.com/YSohege/lero-learning-control/tree/main/experiments/Experiment7_MPC)
+5) [3D Quadcopter - Controller Tuning using Clustered Particle Filtering (CPF)](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/experiments/Experiment5-CPF-3DQuadcopter)
+6) [Execution speed test - numpy versus torch / CPU versus GPU ](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/experiments/Experiment6_Speedtest)
+7) [3D Quadcopter - Simple MPC control for trajectory tracking](https://github.com/YSohege/lero-learning-control/tree/main/lero_control_gym/experiments/Experiment7_MPC)
 
 
 
