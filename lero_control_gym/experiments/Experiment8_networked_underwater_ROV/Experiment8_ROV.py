@@ -31,7 +31,7 @@ def runExperiment():
                        **config.ROV)
 
     exit()
-    ctrl = make("quad3d_mpc",
+    ctrl = make("nurov_mmacpid",
                 env_func,
                 **config.mpc
                 )

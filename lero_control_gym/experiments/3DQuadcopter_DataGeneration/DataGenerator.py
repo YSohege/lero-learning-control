@@ -83,11 +83,11 @@ def main():
             #UPDATE ENV CONDITIONS HERE
 
             env_func = partial(make,
-                               'quadrotor3D',
+                               'quadcopter3D',
                                **config.quadcopter3D
                                )
 
-            episode_config = config.mmacpid
+            episode_config = config.mmac_pid
 
             p1 = random.randint(1, maxP)
             i1 = random.randint(1, maxI)
@@ -100,7 +100,7 @@ def main():
                           ]
                        ]
 
-            ctrl = make("mmacpid",
+            ctrl = make("quad3d_mmacpid",
                         env_func,
                         **episode_config
                         )

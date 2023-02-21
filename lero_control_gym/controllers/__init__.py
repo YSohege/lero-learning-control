@@ -116,3 +116,8 @@ register(
     id="quad3d_mpc",
     entry_point="lero_control_gym.controllers.Quadcopter3D.mpc.mpc:MPC",
     config_entry_point="lero_control_gym.controllers.Quadcopter3D.mpc:mpc.yaml")
+
+register(
+    id="nurov_mmacpid",
+    entry_point="lero_control_gym/controllers/Networked_Underwater_ROV/mmacpid/mmacpid:MMACPID",
+    config_entry_point="lero_control_gym.controllers.Networked_Underwater_ROV.mmacpid:mmacpid.yaml")

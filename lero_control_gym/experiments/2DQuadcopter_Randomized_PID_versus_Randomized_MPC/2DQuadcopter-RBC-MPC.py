@@ -34,10 +34,10 @@ def main():
 
     # Create controller.
     env_func = partial(make,
-                       "quadrotor",
+                       "quadcopter2D",
                        **config.quadrotor_config
                        )
-    ctrl = make("rbcpid",
+    ctrl = make("quad2d_rbcmpc",
                 env_func,
                 # **config.algo_config
                 )
